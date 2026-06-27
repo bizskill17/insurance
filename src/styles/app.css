@@ -1401,8 +1401,6 @@ button {
   border: 1px solid #d7e1ef;
   border-radius: 12px;
   background: #f8fbff;
-  max-height: 280px;
-  overflow-y: auto;
   overflow-x: auto;
 }
 
@@ -2743,16 +2741,4 @@ button {
   }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
