@@ -273,6 +273,38 @@ function DeleteIcon() {
   );
 }
 
+function PermissionHeaderIcon({ type }) {
+  if (type === "add") {
+    return (
+      <svg className="checklist-field__head-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5z" />
+      </svg>
+    );
+  }
+
+  if (type === "edit") {
+    return (
+      <svg className="checklist-field__head-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" />
+        <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42L18.37 3.29a1.003 1.003 0 0 0-1.42 0L15.13 5.1l3.75 3.75z" />
+      </svg>
+    );
+  }
+
+  if (type === "delete") {
+    return (
+      <svg className="checklist-field__head-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 7h12l-1 14H7L6 7zm3-4h6l1 2h4v2H4V5h4l1-2z" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="checklist-field__head-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
+    </svg>
+  );
+}
 function ViewIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1429,6 +1461,7 @@ export default function MasterPage({
                                   onChange={toggleAllAllowed}
                                   aria-label="Select all allowed menus"
                                 />
+                                <PermissionHeaderIcon type="allow" />
                               </label>
                             </th>
                             {actionFields.map((actionField) => {
@@ -1448,6 +1481,7 @@ export default function MasterPage({
                                       onChange={() => toggleAllAction(actionField)}
                                       aria-label={`Select all ${actionField.label} permissions`}
                                     />
+                                    <PermissionHeaderIcon type={actionField.name.replace("_permissions", "")} />
                                   </label>
                                 </th>
                               );
