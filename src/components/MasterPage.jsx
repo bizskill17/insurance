@@ -1456,7 +1456,7 @@ export default function MasterPage({
                                 const checked = checklistValues.includes(option.value);
                                 const actionCells = actionFields.map((actionField) => {
                                   const actionValues = parseChecklistValue(formState[actionField.name]);
-                                  const actionChecked = checked && actionValues.includes(option.value);
+                                  const actionChecked = actionValues.includes(option.value);
 
                                   return (
                                     <td
@@ -1466,10 +1466,13 @@ export default function MasterPage({
                                       <input
                                         type="checkbox"
                                         checked={actionChecked}
-                                        disabled={!checked}
                                         aria-label={`${actionField.label} ${option.label}`}
                                         onChange={(event) => {
                                           const nextValues = parseChecklistValue(formState[actionField.name]);
+
+                                          if (event.target.checked && !checked) {
+                                            handleChange(field, [...new Set([...checklistValues, option.value])]);
+                                          }
 
                                           handleChange(
                                             { name: actionField.name },
