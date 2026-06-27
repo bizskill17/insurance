@@ -1436,6 +1436,11 @@ button {
   margin-bottom: 8px;
 }
 
+.checklist-field__actions--bottom {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
 .checklist-field__matrix-cell {
   padding: 8px 12px;
   border: 1px solid #d6dee9;

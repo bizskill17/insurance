@@ -1507,6 +1507,15 @@ export default function MasterPage({
                         </tbody>
                       </table>
                     </div>
+                    <div className="checklist-field__actions checklist-field__actions--bottom">
+                      <button
+                        type="button"
+                        className="text-button"
+                        onClick={() => handleChange(field, isAllSelected ? [] : allChecklistValues)}
+                      >
+                        {isAllSelected ? "Clear All" : "Select All"}
+                      </button>
+                    </div>
                   </div>
                 );
               }
