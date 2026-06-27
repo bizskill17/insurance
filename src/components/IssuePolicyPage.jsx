@@ -229,7 +229,6 @@ export default function IssuePolicyPage() {
       }
 
       setMessage(json.message || "Policy issued successfully.");
-      setIsLocked(true);
     } catch (saveError) {
       setError(saveError.message);
     } finally {
@@ -592,7 +591,7 @@ export default function IssuePolicyPage() {
               <button type="button" className="secondary-button" onClick={resetForm}>
                 Reset
               </button>
-              <button type="submit" className="primary-button" disabled={saving || isLocked}>
+              <button type="submit" className="primary-button" disabled={saving}>
                 {saving ? <ButtonSpinner label="Saving..." /> : "Save Policy"}
               </button>
             </div>
@@ -605,7 +604,5 @@ export default function IssuePolicyPage() {
     </div>
   );
 }
-
-
 
 
