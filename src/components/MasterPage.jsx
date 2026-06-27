@@ -562,15 +562,6 @@ export default function MasterPage({
   }, [config.resource, dependencies, deferredSearchTerm]);
 
   const resetForm = () => {
-    if (isFormLocked) {
-      setFormState(emptyState(config));
-      setEditingId(null);
-      setIsFormLocked(false);
-      setMessage("");
-      setError("");
-      return;
-    }
-
     closeForm();
   };
 
@@ -646,9 +637,6 @@ export default function MasterPage({
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (isFormLocked) {
-      return;
-    }
     setMessage("");
     setError("");
 
@@ -727,7 +715,10 @@ export default function MasterPage({
 
       const savedRecordId = method === "POST" ? Number(json.id || 0) : Number(editingId || 0);
       setMessage(json.message || "Saved successfully.");
-      setIsFormLocked(true);
+      setIsFormLocked(false);
+      if (method === "POST" && savedRecordId > 0) {
+        setEditingId(savedRecordId);
+      }
 
       const refresh = await fetch(`${API_BASE}/masters/${config.resource}?limit=500000`);
       const refreshJson = await readApiJson(refresh);
@@ -740,10 +731,6 @@ export default function MasterPage({
       if (onFormSaved) {
         const savedRecord = nextRecords.find((record) => Number(record.id) === savedRecordId) || null;
         onFormSaved(savedRecord);
-      }
-
-      if (editingId) {
-        closeForm({ notifyCancel: false });
       }
     } catch (saveError) {
       setError(saveError.message);
@@ -1333,7 +1320,7 @@ export default function MasterPage({
 
   const formModal = isFormOpen ? (
     <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="master-form-title">
-      <div className="master-modal__backdrop" onClick={isFormLocked ? undefined : resetForm} />
+      <div className="master-modal__backdrop" onClick={resetForm} />
       <section className="master-card master-modal__panel">
         <div className="master-card__header">
           <h3 id="master-form-title">{editingId ? `Edit ${config.title}` : `Add ${config.title}`}</h3>
@@ -1344,7 +1331,7 @@ export default function MasterPage({
 
         <div className="master-modal__body">
           <form className="master-form" onSubmit={handleSubmit}>
-            <fieldset disabled={isFormLocked} className="master-form__fieldset">
+            <fieldset className="master-form__fieldset">
             {config.fields.map((field) => {
               if (field.type === "checklist") {
                 const checklistOptions = (field.optionGroups || []).flatMap((group) =>
@@ -1550,7 +1537,7 @@ export default function MasterPage({
               <button type="button" className="secondary-button form-actions__cancel" onClick={resetForm}>
                 Cancel
               </button>
-              <button type="submit" className="primary-button" disabled={saving || isFormLocked}>
+              <button type="submit" className="primary-button" disabled={saving}>
                 {saving ? <ButtonSpinner label="Saving..." /> : editingId ? "Update Record" : "Save Record"}
               </button>
             </div>
