@@ -305,6 +305,28 @@ function PermissionHeaderIcon({ type }) {
     </svg>
   );
 }
+
+const addOnlyPermissionPaths = new Set([
+  "/leads/add",
+  "/tasks/add",
+  "/policies/issue"
+]);
+
+function supportsTableAction(option, actionFieldName) {
+  if (!option) {
+    return false;
+  }
+
+  if (option.groupLabel === "Masters") {
+    return true;
+  }
+
+  if (actionFieldName === "add_permissions") {
+    return addOnlyPermissionPaths.has(option.value);
+  }
+
+  return false;
+}
 function ViewIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1424,20 +1446,27 @@ export default function MasterPage({
                 const toggleAllAllowed = () => {
                   handleChange(field, isAllSelected ? [] : allChecklistValues);
                 };
+                const getActionEligibleValues = (actionField) =>
+                  checklistOptions
+                    .filter((option) => supportsTableAction(option, actionField.name))
+                    .map((option) => option.value);
                 const toggleAllAction = (actionField) => {
                   const actionValues = parseChecklistValue(formState[actionField.name]);
+                  const actionEligibleValues = getActionEligibleValues(actionField);
                   const isActionAllSelected =
-                    checklistOptions.length > 0 && allChecklistValues.every((value) => actionValues.includes(value));
+                    actionEligibleValues.length > 0 && actionEligibleValues.every((value) => actionValues.includes(value));
 
-                  if (isActionAllSelected) {
-                    handleChange({ name: actionField.name }, actionValues.filter((value) => !allChecklistValues.includes(value)));
+                  if (!actionEligibleValues.length) {
                     return;
                   }
 
-                  if (!isAllSelected) {
-                    handleChange(field, allChecklistValues);
+                  if (isActionAllSelected) {
+                    handleChange({ name: actionField.name }, actionValues.filter((value) => !actionEligibleValues.includes(value)));
+                    return;
                   }
-                  handleChange({ name: actionField.name }, [...new Set([...actionValues, ...allChecklistValues])]);
+
+                  handleChange(field, [...new Set([...checklistValues, ...actionEligibleValues])]);
+                  handleChange({ name: actionField.name }, [...new Set([...actionValues, ...actionEligibleValues])]);
                 };
 
                 return (
@@ -1466,8 +1495,9 @@ export default function MasterPage({
                             </th>
                             {actionFields.map((actionField) => {
                               const actionValues = parseChecklistValue(formState[actionField.name]);
+                              const actionEligibleValues = getActionEligibleValues(actionField);
                               const isActionAllSelected =
-                                checklistOptions.length > 0 && allChecklistValues.every((value) => actionValues.includes(value));
+                                actionEligibleValues.length > 0 && actionEligibleValues.every((value) => actionValues.includes(value));
 
                               return (
                                 <th
@@ -1492,8 +1522,18 @@ export default function MasterPage({
                           {checklistOptions.map((option, rowIndex) => {
                             const checked = checklistValues.includes(option.value);
                             const actionCells = actionFields.map((actionField) => {
+                              const isActionSupported = supportsTableAction(option, actionField.name);
                               const actionValues = parseChecklistValue(formState[actionField.name]);
                               const actionChecked = actionValues.includes(option.value);
+
+                              if (!isActionSupported) {
+                                return (
+                                  <td
+                                    key={`${field.name}-${actionField.name}-${option.value}`}
+                                    className="checklist-field__matrix-cell checklist-field__matrix-cell--action checklist-field__matrix-cell--empty"
+                                  />
+                                );
+                              }
 
                               return (
                                 <td

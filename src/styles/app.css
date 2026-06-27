@@ -1471,6 +1471,9 @@ button {
   text-align: center;
 }
 
+.checklist-field__matrix-cell--empty {
+  background: #fbfcfe;
+}
 .checklist-field__matrix-cell input[type="checkbox"] {
   width: 14px;
   height: 14px;
