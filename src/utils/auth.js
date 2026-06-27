@@ -39,6 +39,7 @@ export function normalizeAuthUser(user) {
     ...user,
     id: user.id ? Number(user.id) : null,
     organization_id: user.organization_id ? Number(user.organization_id) : null,
+    can_manage_organizations: Boolean(user.can_manage_organizations),
     views,
     add_permissions: parseUserPermissions(user.add_permissions, views),
     edit_permissions: parseUserPermissions(user.edit_permissions, views),

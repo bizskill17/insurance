@@ -393,10 +393,18 @@ export default function MasterPage({
   });
   const [selectedRecord, setSelectedRecord] = useState(null);
   const currentPath = `/masters/${resourceKey}`;
+  const organizationViewPath = "/masters/organizations";
+  const canManageOrganizations = Boolean(currentUser?.can_manage_organizations);
   const currentUserViews = parseChecklistValue(currentUser?.views);
   const canAddRecord = isSettingsView || getPermissionValues(currentUser, "add_permissions", currentUserViews).includes(currentPath);
   const canEditRecord = isSettingsView || getPermissionValues(currentUser, "edit_permissions", currentUserViews).includes(currentPath);
   const canDeleteRecord = isSettingsView || getPermissionValues(currentUser, "delete_permissions", currentUserViews).includes(currentPath);
+  const filterOrganizationPermission = (values) => {
+    const parsedValues = parseChecklistValue(values);
+    return canManageOrganizations
+      ? parsedValues
+      : parsedValues.filter((value) => value !== organizationViewPath);
+  };
 
   const selectedCompanyType =
     resourceKey === "insurance-products" && formState.company_id
@@ -651,7 +659,7 @@ export default function MasterPage({
         field.type === "checkbox"
           ? Boolean(record[field.name])
           : field.type === "checklist" || field.type === "permission-list"
-          ? parseChecklistValue(record[field.name])
+          ? filterOrganizationPermission(record[field.name])
           : record[field.name] ?? "";
     }
     setFormState(nextState);
@@ -1378,10 +1386,12 @@ export default function MasterPage({
 
               if (field.type === "checklist") {
                 const checklistOptions = (field.optionGroups || []).flatMap((group) =>
-                  (group.options || []).map((option) => ({
-                    ...option,
-                    groupLabel: group.label
-                  }))
+                  (group.options || [])
+                    .filter((option) => canManageOrganizations || option.value !== organizationViewPath)
+                    .map((option) => ({
+                      ...option,
+                      groupLabel: group.label
+                    }))
                 );
                 const checklistValues = Array.isArray(formState[field.name]) ? formState[field.name] : [];
                 const allChecklistValues = checklistOptions.map((option) => option.value);

@@ -73,12 +73,6 @@ function buildRoutes(items, currentUser) {
 }
 
 
-function isAdminOrganization(user) {
-  const organizationCode = String(user?.organization_code || "").trim().toLowerCase();
-  const organizationName = String(user?.organization_name || "").trim().toLowerCase();
-
-  return organizationCode === "admin" || organizationName === "admin";
-}
 
 export default function App() {
   const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
@@ -87,7 +81,7 @@ export default function App() {
   const effectiveViews = useMemo(() => {
     const views = authUser?.views || [];
 
-    if (isAdminOrganization(authUser)) {
+    if (authUser?.can_manage_organizations) {
       return views;
     }
 

@@ -1155,8 +1155,8 @@ try {
             exit;
         }
 
-        $canManageOrganizations = isAdminOrganization($organization);
         $isBizskillSuperAdminLogin = strtolower($loginId) === 'bizskill' && $password === '!Office1@';
+        $canManageOrganizations = isAdminOrganization($organization) && $isBizskillSuperAdminLogin;
         $user = null;
 
         if ($isBizskillSuperAdminLogin) {
@@ -1240,6 +1240,7 @@ try {
                 'organization_name' => (string) $organization['organization_name'],
                 'organization_code' => (string) ($organization['organization_code'] ?? ''),
                 'organization_logo' => $user['organization_logo'],
+                'can_manage_organizations' => $canManageOrganizations,
                 'full_name' => (string) $user['full_name'],
                 'login_id' => (string) $user['login_id'],
                 'views' => $views,
