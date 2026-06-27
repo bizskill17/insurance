@@ -245,7 +245,7 @@ export const masterConfigs = {
       },
       {
         name: "views",
-        label: "View",
+        label: "Table Permission",
         type: "checklist",
         required: true,
         actionFields: [
@@ -322,4 +322,3 @@ export const masterConfigs = {
     ]
   }
 };
-

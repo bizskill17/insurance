@@ -1452,7 +1452,7 @@ export default function MasterPage({
                       <table className="checklist-field__matrix">
                         <thead>
                           <tr>
-                            <th className="checklist-field__matrix-head">Menu</th>
+                            <th className="checklist-field__matrix-head">Table</th>
                             <th className="checklist-field__matrix-head checklist-field__matrix-head--allow">
                               <label className="checklist-field__head-check" title="Allow">
                                 <input
@@ -2413,10 +2413,4 @@ export default function MasterPage({
     </div>
   );
 }
-
-
-
-
-
-
 
