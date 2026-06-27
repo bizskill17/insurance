@@ -20,7 +20,7 @@ import { filterMenuSectionsByViews, getMenuRouteEntries } from "./data/menu";
 import { masterConfigs } from "./data/masterConfigs";
 import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "./utils/auth";
 
-function buildRoutes(items) {
+function buildRoutes(items, currentUser) {
   return items.map((item) => (
     <Route
       key={item.path}
@@ -63,7 +63,7 @@ function buildRoutes(items) {
         ) : item.section === "Tasks" ? (
           <TasksPage viewPath={item.path} />
         ) : item.section === "Masters" && masterConfigs[item.resourceKey] ? (
-          <MasterPage resourceKey={item.resourceKey} />
+          <MasterPage resourceKey={item.resourceKey} currentUser={currentUser} />
         ) : (
           <PagePlaceholder title={item.label} section={item.section} />
         )
@@ -163,7 +163,7 @@ export default function App() {
         <Route path="/reports/payments-received" element={<Navigate to="/payments/received" replace />} />
         <Route path="/reports/expiry-reports/section/:sectionId" element={<ExpiryReportsPage />} />
         <Route path="/reports/expiry-reports/:reportType/:reportValue" element={<ExpiryReportDetailPage />} />
-        {buildRoutes(allowedRoutes)}
+        {buildRoutes(allowedRoutes, authUser)}
       </Route>
       <Route path="*" element={<Navigate to={hasValidAuth ? defaultPath : "/login"} replace />} />
     </Routes>

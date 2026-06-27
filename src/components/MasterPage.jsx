@@ -48,7 +48,7 @@ function emptyState(config) {
         ? true
         : field.type === "file"
         ? null
-        : field.type === "checklist"
+        : field.type === "checklist" || field.type === "permission-list"
         ? []
         : "";
     return acc;
@@ -178,7 +178,17 @@ function parseChecklistValue(value) {
       .filter(Boolean);
   }
 }
+function getPermissionValues(user, key, fallbackViews = []) {
+  if (!user || !Object.prototype.hasOwnProperty.call(user, key)) {
+    return fallbackViews;
+  }
 
+  if (user[key] === undefined || user[key] === null || user[key] === "") {
+    return fallbackViews;
+  }
+
+  return parseChecklistValue(user[key]);
+}
 function getFieldLabel(config, fieldName) {
   return config.fields.find((field) => field.name === fieldName)?.label || fieldName;
 }
@@ -330,6 +340,7 @@ function getTableCellClass(columnKey, extraClassName = "") {
 
 export default function MasterPage({
   resourceKey,
+  currentUser = null,
   embeddedFormOnly = false,
   autoOpenForm = false,
   onFormSaved,
@@ -381,6 +392,11 @@ export default function MasterPage({
     error: ""
   });
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const currentPath = `/masters/${resourceKey}`;
+  const currentUserViews = parseChecklistValue(currentUser?.views);
+  const canAddRecord = isSettingsView || getPermissionValues(currentUser, "add_permissions", currentUserViews).includes(currentPath);
+  const canEditRecord = isSettingsView || getPermissionValues(currentUser, "edit_permissions", currentUserViews).includes(currentPath);
+  const canDeleteRecord = isSettingsView || getPermissionValues(currentUser, "delete_permissions", currentUserViews).includes(currentPath);
 
   const selectedCompanyType =
     resourceKey === "insurance-products" && formState.company_id
@@ -607,22 +623,34 @@ export default function MasterPage({
   };
 
   const handleChange = (field, value) => {
-    setFormState((current) => ({
-      ...current,
-      ...(field.resetsFields
-        ? Object.fromEntries(field.resetsFields.map((fieldName) => [fieldName, ""]))
-        : {}),
-      [field.name]: field.type === "checkbox" ? Boolean(value) : value
-    }));
-  };
+    setFormState((current) => {
+      const nextState = {
+        ...current,
+        ...(field.resetsFields
+          ? Object.fromEntries(field.resetsFields.map((fieldName) => [fieldName, ""]))
+          : {}),
+        [field.name]: field.type === "checkbox" ? Boolean(value) : value
+      };
 
+      if (field.actionFields?.length) {
+        const allowedValues = new Set(Array.isArray(value) ? value : []);
+        field.actionFields.forEach((actionField) => {
+          nextState[actionField.name] = parseChecklistValue(current[actionField.name]).filter((item) =>
+            allowedValues.has(item)
+          );
+        });
+      }
+
+      return nextState;
+    });
+  };
   const handleEdit = (record) => {
     const nextState = emptyState(config);
     for (const field of config.fields) {
       nextState[field.name] =
         field.type === "checkbox"
           ? Boolean(record[field.name])
-          : field.type === "checklist"
+          : field.type === "checklist" || field.type === "permission-list"
           ? parseChecklistValue(record[field.name])
           : record[field.name] ?? "";
     }
@@ -684,6 +712,11 @@ export default function MasterPage({
             return;
           }
 
+          if (field.type === "checklist" || field.type === "permission-list") {
+            payload.append(field.name, JSON.stringify(value || []));
+            return;
+          }
+
           payload.append(field.name, value ?? "");
         });
 
@@ -695,7 +728,9 @@ export default function MasterPage({
         const serializedState = Object.fromEntries(
           config.fields.map((field) => [
             field.name,
-            field.type === "checklist" ? JSON.stringify(formState[field.name] || []) : formState[field.name]
+            field.type === "checklist" || field.type === "permission-list"
+              ? JSON.stringify(formState[field.name] || [])
+              : formState[field.name]
           ])
         );
 
@@ -1229,24 +1264,28 @@ export default function MasterPage({
           <ViewIcon />
         </button>
       ) : null}
-      <button
-        type="button"
-        className="icon-button icon-button--edit"
-        onClick={() => handleEdit(record)}
-        aria-label="Edit record"
-        title="Edit"
-      >
-        <EditIcon />
-      </button>
-      <button
-        type="button"
-        className="icon-button icon-button--delete"
-        onClick={() => handleDelete(record)}
-        aria-label="Delete record"
-        title="Delete"
-      >
-        <DeleteIcon />
-      </button>
+      {canEditRecord ? (
+        <button
+          type="button"
+          className="icon-button icon-button--edit"
+          onClick={() => handleEdit(record)}
+          aria-label="Edit record"
+          title="Edit"
+        >
+          <EditIcon />
+        </button>
+      ) : null}
+      {canDeleteRecord ? (
+        <button
+          type="button"
+          className="icon-button icon-button--delete"
+          onClick={() => handleDelete(record)}
+          aria-label="Delete record"
+          title="Delete"
+        >
+          <DeleteIcon />
+        </button>
+      ) : null}
         </>
       )}
     </div>
@@ -1333,6 +1372,10 @@ export default function MasterPage({
           <form className="master-form" onSubmit={handleSubmit}>
             <fieldset className="master-form__fieldset">
             {config.fields.map((field) => {
+              if (field.type === "permission-list") {
+                return null;
+              }
+
               if (field.type === "checklist") {
                 const checklistOptions = (field.optionGroups || []).flatMap((group) =>
                   (group.options || []).map((option) => ({
@@ -1345,6 +1388,7 @@ export default function MasterPage({
                 const isAllSelected =
                   checklistOptions.length > 0 && allChecklistValues.every((value) => checklistValues.includes(value));
                 const checklistRows = chunkItems(checklistOptions, 2);
+                const actionFields = field.actionFields || [];
 
                 return (
                   <div key={field.name} className="form-field checklist-field">
@@ -1362,10 +1406,20 @@ export default function MasterPage({
                       <table className="checklist-field__matrix">
                         <thead>
                           <tr>
-                            <th className="checklist-field__matrix-head">Menu</th>
-                            <th className="checklist-field__matrix-head checklist-field__matrix-head--allow">Allow</th>
-                            <th className="checklist-field__matrix-head">Menu</th>
-                            <th className="checklist-field__matrix-head checklist-field__matrix-head--allow">Allow</th>
+                            {[0, 1].map((columnIndex) => (
+                              <Fragment key={`${field.name}-head-group-${columnIndex}`}>
+                                <th className="checklist-field__matrix-head">Menu</th>
+                                <th className="checklist-field__matrix-head checklist-field__matrix-head--allow">Allow</th>
+                                {actionFields.map((actionField) => (
+                                  <th
+                                    key={`${field.name}-head-${columnIndex}-${actionField.name}`}
+                                    className="checklist-field__matrix-head checklist-field__matrix-head--action"
+                                  >
+                                    {actionField.label}
+                                  </th>
+                                ))}
+                              </Fragment>
+                            ))}
                           </tr>
                         </thead>
                         <tbody>
@@ -1375,45 +1429,78 @@ export default function MasterPage({
                                 const option = row[columnIndex];
 
                                 if (!option) {
-                                  return [
-                                    <td key={`${field.name}-empty-menu-${rowIndex}-${columnIndex}`} className="checklist-field__matrix-cell" />,
-                                    <td
-                                      key={`${field.name}-empty-allow-${rowIndex}-${columnIndex}`}
-                                      className="checklist-field__matrix-cell checklist-field__matrix-cell--allow"
-                                    />
-                                  ];
+                                  return (
+                                    <Fragment key={`${field.name}-empty-${rowIndex}-${columnIndex}`}>
+                                      <td className="checklist-field__matrix-cell" />
+                                      <td className="checklist-field__matrix-cell checklist-field__matrix-cell--allow" />
+                                      {actionFields.map((actionField) => (
+                                        <td
+                                          key={`${field.name}-empty-${actionField.name}-${rowIndex}-${columnIndex}`}
+                                          className="checklist-field__matrix-cell checklist-field__matrix-cell--action"
+                                        />
+                                      ))}
+                                    </Fragment>
+                                  );
                                 }
 
                                 const checked = checklistValues.includes(option.value);
+                                const actionCells = actionFields.map((actionField) => {
+                                  const actionValues = parseChecklistValue(formState[actionField.name]);
+                                  const actionChecked = checked && actionValues.includes(option.value);
 
-                                return [
-                                  <td key={`${field.name}-menu-${option.value}`} className="checklist-field__matrix-cell">
-                                    <label className={`checklist-pill checklist-pill--${(rowIndex + columnIndex) % 6}`}>
-                                      <span className="checklist-pill__label">{option.label}</span>
-                                    </label>
-                                  </td>,
-                                  <td
-                                    key={`${field.name}-allow-${option.value}`}
-                                    className="checklist-field__matrix-cell checklist-field__matrix-cell--allow"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={checked}
-                                      onChange={(event) => {
-                                        const nextValues = Array.isArray(formState[field.name])
-                                          ? [...formState[field.name]]
-                                          : [];
+                                  return (
+                                    <td
+                                      key={`${field.name}-${actionField.name}-${option.value}`}
+                                      className="checklist-field__matrix-cell checklist-field__matrix-cell--action"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={actionChecked}
+                                        disabled={!checked}
+                                        aria-label={`${actionField.label} ${option.label}`}
+                                        onChange={(event) => {
+                                          const nextValues = parseChecklistValue(formState[actionField.name]);
 
-                                        handleChange(
-                                          field,
-                                          event.target.checked
-                                            ? [...new Set([...nextValues, option.value])]
-                                            : nextValues.filter((item) => item !== option.value)
-                                        );
-                                      }}
-                                    />
-                                  </td>
-                                ];
+                                          handleChange(
+                                            { name: actionField.name },
+                                            event.target.checked
+                                              ? [...new Set([...nextValues, option.value])]
+                                              : nextValues.filter((item) => item !== option.value)
+                                          );
+                                        }}
+                                      />
+                                    </td>
+                                  );
+                                });
+
+                                return (
+                                  <Fragment key={`${field.name}-option-${option.value}`}>
+                                    <td className="checklist-field__matrix-cell">
+                                      <label className={`checklist-pill checklist-pill--${(rowIndex + columnIndex) % 6}`}>
+                                        <span className="checklist-pill__label">{option.label}</span>
+                                      </label>
+                                    </td>
+                                    <td className="checklist-field__matrix-cell checklist-field__matrix-cell--allow">
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={(event) => {
+                                          const nextValues = Array.isArray(formState[field.name])
+                                            ? [...formState[field.name]]
+                                            : [];
+
+                                          handleChange(
+                                            field,
+                                            event.target.checked
+                                              ? [...new Set([...nextValues, option.value])]
+                                              : nextValues.filter((item) => item !== option.value)
+                                          );
+                                        }}
+                                      />
+                                    </td>
+                                    {actionCells}
+                                  </Fragment>
+                                );
                               })}
                             </tr>
                           ))}
@@ -1423,7 +1510,6 @@ export default function MasterPage({
                   </div>
                 );
               }
-
               if (field.type === "checkbox") {
                 return (
                   <label key={field.name} className="checkbox-field">
@@ -1645,18 +1731,20 @@ export default function MasterPage({
 	                  </button>
                   </>
                 )}
-              <button
-                type="button"
-                className="primary-button primary-button--add"
-                onClick={handleAdd}
-                aria-label="Add record"
-                title="Add"
-              >
-                <span className="primary-button__icon" aria-hidden="true">
-                  +
-                </span>
-                <span className="primary-button__label">Add</span>
-              </button>
+              {canAddRecord ? (
+                <button
+                  type="button"
+                  className="primary-button primary-button--add"
+                  onClick={handleAdd}
+                  aria-label="Add record"
+                  title="Add"
+                >
+                  <span className="primary-button__icon" aria-hidden="true">
+                    +
+                  </span>
+                  <span className="primary-button__label">Add</span>
+                </button>
+              ) : null}
             </div>
           </div>
 

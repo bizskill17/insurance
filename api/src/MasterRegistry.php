@@ -172,10 +172,10 @@ final class MasterRegistry
             ],
             'users' => [
                 'table' => 'users',
-                'select' => 'u.id, u.full_name, u.login_id, u.password, u.views, u.email, u.mobile, u.role_name, u.is_active, u.created_at, u.linked_agent_id, a.full_name as linked_agent_name',
+                'select' => 'u.id, u.full_name, u.login_id, u.password, u.views, u.add_permissions, u.edit_permissions, u.delete_permissions, u.email, u.mobile, u.role_name, u.is_active, u.created_at, u.linked_agent_id, a.full_name as linked_agent_name',
                 'from' => 'users u left join agents a on a.id = u.linked_agent_id',
                 'order_by' => 'u.id desc',
-                'write_columns' => ['full_name', 'login_id', 'password', 'views', 'email', 'mobile', 'role_name', 'linked_agent_id', 'notes', 'is_active'],
+                'write_columns' => ['full_name', 'login_id', 'password', 'views', 'add_permissions', 'edit_permissions', 'delete_permissions', 'email', 'mobile', 'role_name', 'linked_agent_id', 'notes', 'is_active'],
                 'required' => ['full_name', 'login_id', 'password', 'views', 'email', 'role_name'],
                 'nullable' => ['mobile', 'linked_agent_id', 'notes'],
                 'boolean' => ['is_active'],

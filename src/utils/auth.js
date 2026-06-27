@@ -20,16 +20,29 @@ export function parseUserViews(value) {
   }
 }
 
+export function parseUserPermissions(value, fallbackViews = []) {
+  if (value === undefined || value === null || value === "") {
+    return Array.isArray(fallbackViews) ? fallbackViews : [];
+  }
+
+  return parseUserViews(value);
+}
+
 export function normalizeAuthUser(user) {
   if (!user || typeof user !== "object") {
     return null;
   }
 
+  const views = parseUserViews(user.views);
+
   return {
     ...user,
     id: user.id ? Number(user.id) : null,
     organization_id: user.organization_id ? Number(user.organization_id) : null,
-    views: parseUserViews(user.views)
+    views,
+    add_permissions: parseUserPermissions(user.add_permissions, views),
+    edit_permissions: parseUserPermissions(user.edit_permissions, views),
+    delete_permissions: parseUserPermissions(user.delete_permissions, views)
   };
 }
 

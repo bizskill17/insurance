@@ -967,6 +967,7 @@ try {
         exit;
     }
     if ($path === '/api/masters' && $method === 'GET') {
+
         Response::json([
             'status' => 'ok',
             'data' => array_keys(MasterRegistry::all())
@@ -1177,6 +1178,9 @@ try {
                 'full_name' => $adminUser['full_name'] ?? 'Bizskill Admin',
                 'login_id' => $loginId,
                 'views' => buildFullAccessViews($canManageOrganizations),
+                'add_permissions' => buildFullAccessViews($canManageOrganizations),
+                'edit_permissions' => buildFullAccessViews($canManageOrganizations),
+                'delete_permissions' => buildFullAccessViews($canManageOrganizations),
                 'email' => $adminUser['email'] ?? null,
                 'mobile' => $adminUser['mobile'] ?? null,
                 'role_name' => 'Super Admin',
@@ -1186,7 +1190,7 @@ try {
             ];
         } else {
             $statement = $pdo->prepare(
-                'SELECT u.id, u.full_name, u.login_id, u.password, u.views, u.email, u.mobile, u.role_name, u.linked_agent_id, u.is_active, s.logo AS organization_logo
+                'SELECT u.id, u.full_name, u.login_id, u.password, u.views, u.add_permissions, u.edit_permissions, u.delete_permissions, u.email, u.mobile, u.role_name, u.linked_agent_id, u.is_active, s.logo AS organization_logo
                  FROM users u
                  LEFT JOIN settings s ON s.organization_id = u.organization_id AND s.is_active = 1
                  WHERE u.organization_id = :organization_id
@@ -1225,6 +1229,9 @@ try {
             exit;
         }
 
+        $addPermissions = trim((string) ($user['add_permissions'] ?? ''));
+        $editPermissions = trim((string) ($user['edit_permissions'] ?? ''));
+        $deletePermissions = trim((string) ($user['delete_permissions'] ?? ''));
         Response::json([
             'status' => 'ok',
             'data' => [
@@ -1236,6 +1243,9 @@ try {
                 'full_name' => (string) $user['full_name'],
                 'login_id' => (string) $user['login_id'],
                 'views' => $views,
+                'add_permissions' => $addPermissions === '' ? null : filterOrganizationViews($addPermissions, $canManageOrganizations),
+                'edit_permissions' => $editPermissions === '' ? null : filterOrganizationViews($editPermissions, $canManageOrganizations),
+                'delete_permissions' => $deletePermissions === '' ? null : filterOrganizationViews($deletePermissions, $canManageOrganizations),
                 'email' => $user['email'],
                 'mobile' => $user['mobile'],
                 'role_name' => $user['role_name'],
@@ -1764,8 +1774,9 @@ try {
             }
 
             $pdo->commit();
-            Response::json([
-                'status' => 'ok',
+
+        Response::json([
+            'status' => 'ok',
                 'message' => 'Lead deleted successfully.'
             ]);
             exit;
@@ -1802,8 +1813,9 @@ try {
             }
 
             $pdo->commit();
-            Response::json([
-                'status' => 'ok',
+
+        Response::json([
+            'status' => 'ok',
                 'message' => 'Task deleted successfully.'
             ]);
             exit;
@@ -3028,8 +3040,8 @@ try {
 
             $pdo->commit();
 
-            Response::json([
-                'status' => 'ok',
+        Response::json([
+            'status' => 'ok',
                 'message' => 'Client payment updated successfully.',
                 'data' => [
                     'payment_received_amount' => $newReceived,
@@ -3170,8 +3182,9 @@ try {
             $updateTask->execute();
 
             $pdo->commit();
-            Response::json([
-                'status' => 'ok',
+
+        Response::json([
+            'status' => 'ok',
                 'message' => 'Task update saved successfully.'
             ], 201);
             exit;
@@ -3325,8 +3338,8 @@ try {
             $followUpId = (int) $pdo->lastInsertId();
             $pdo->commit();
 
-            Response::json([
-                'status' => 'ok',
+        Response::json([
+            'status' => 'ok',
                 'message' => 'Follow up saved successfully.',
                 'data' => [
                     'id' => $followUpId,
@@ -3723,8 +3736,8 @@ try {
             $policyId = (int) $pdo->lastInsertId();
             $pdo->commit();
 
-            Response::json([
-                'status' => 'ok',
+        Response::json([
+            'status' => 'ok',
                 'message' => 'Policy issued successfully.',
                 'data' => [
                     'policy_id' => $policyId,
@@ -3919,8 +3932,8 @@ try {
             $policyId = (int) $pdo->lastInsertId();
             $pdo->commit();
 
-            Response::json([
-                'status' => 'ok',
+        Response::json([
+            'status' => 'ok',
                 'message' => 'Policy renewed successfully.',
                 'data' => [
                     'policy_id' => $policyId,
@@ -4081,8 +4094,8 @@ try {
 
             $pdo->commit();
 
-            Response::json([
-                'status' => 'ok',
+        Response::json([
+            'status' => 'ok',
                 'message' => 'Policy deleted successfully.'
             ]);
             exit;
@@ -4174,8 +4187,8 @@ try {
                 $rows = [];
             }
 
-            Response::json([
-                'status' => 'ok',
+        Response::json([
+            'status' => 'ok',
                 'data' => $rows,
                 'meta' => ['limit' => $limit]
             ]);
@@ -4276,13 +4289,17 @@ try {
                 $normalized['code'] = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '_', $normalized['name'] ?? 'DOC_' . time()));
             }
 
-            if ($resource === 'users' && array_key_exists('views', $normalized)) {
-                $normalized['views'] = filterOrganizationViews(
-                    (string) $normalized['views'],
-                    isAdminOrganizationId($pdo, $organizationId)
-                );
+            if ($resource === 'users') {
+                $canManageUserOrganizations = isAdminOrganizationId($pdo, $organizationId);
+                foreach (['views', 'add_permissions', 'edit_permissions', 'delete_permissions'] as $permissionColumn) {
+                    if (array_key_exists($permissionColumn, $normalized)) {
+                        $normalized[$permissionColumn] = filterOrganizationViews(
+                            (string) $normalized[$permissionColumn],
+                            $canManageUserOrganizations
+                        );
+                    }
+                }
             }
-
             if ($method === 'POST' && $isOrganizationOwned) {
                 $normalized['organization_id'] = $organizationId;
             }
@@ -4318,8 +4335,8 @@ try {
                         upsertOrganizationSettings($pdo, $savedOrganizationId, $settingsValues);
                         $pdo->commit();
 
-                        Response::json([
-                            'status' => 'ok',
+        Response::json([
+            'status' => 'ok',
                             'message' => 'Record created successfully.',
                             'id' => $savedOrganizationId
                         ], 201);
@@ -4341,8 +4358,8 @@ try {
                     upsertOrganizationSettings($pdo, (int) $id, $settingsValues);
                     $pdo->commit();
 
-                    Response::json([
-                        'status' => 'ok',
+        Response::json([
+            'status' => 'ok',
                         'message' => 'Record updated successfully.'
                     ]);
                     exit;
@@ -4372,8 +4389,8 @@ try {
                 }
                 $statement->execute();
 
-                Response::json([
-                    'status' => 'ok',
+        Response::json([
+            'status' => 'ok',
                     'message' => 'Record created successfully.',
                     'id' => (int) $pdo->lastInsertId()
                 ], 201);
@@ -4410,8 +4427,8 @@ try {
             }
             $statement->execute();
 
-            Response::json([
-                'status' => 'ok',
+        Response::json([
+            'status' => 'ok',
                 'message' => 'Record updated successfully.'
             ]);
             exit;
@@ -4449,8 +4466,8 @@ try {
                 exit;
             }
 
-            Response::json([
-                'status' => 'ok',
+        Response::json([
+            'status' => 'ok',
                 'message' => 'Record deleted successfully.'
             ]);
             exit;

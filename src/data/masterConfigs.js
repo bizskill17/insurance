@@ -248,8 +248,16 @@ export const masterConfigs = {
         label: "View",
         type: "checklist",
         required: true,
+        actionFields: [
+          { name: "add_permissions", label: "Add" },
+          { name: "edit_permissions", label: "Edit" },
+          { name: "delete_permissions", label: "Delete" }
+        ],
         optionGroups: menuViewGroups
       },
+      { name: "add_permissions", label: "Add", type: "permission-list" },
+      { name: "edit_permissions", label: "Edit", type: "permission-list" },
+      { name: "delete_permissions", label: "Delete", type: "permission-list" },
       { name: "linked_agent_id", label: "Linked Agent", type: "select", optionsFrom: "agents" },
       { name: "notes", label: "Notes", type: "textarea" },
       { name: "is_active", label: "Active", type: "checkbox" }

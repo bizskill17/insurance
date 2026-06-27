@@ -1410,7 +1410,7 @@ button {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  min-width: 580px;
+  min-width: 940px;
 }
 
 .checklist-field__matrix-head {
@@ -1425,8 +1425,9 @@ button {
   text-align: center;
 }
 
-.checklist-field__matrix-head--allow {
-  width: 70px;
+.checklist-field__matrix-head--allow,
+.checklist-field__matrix-head--action {
+  width: 62px;
 }
 
 .checklist-field__actions {
@@ -1442,8 +1443,9 @@ button {
   vertical-align: middle;
 }
 
-.checklist-field__matrix-cell--allow {
-  width: 70px;
+.checklist-field__matrix-cell--allow,
+.checklist-field__matrix-cell--action {
+  width: 62px;
   text-align: center;
 }
 
