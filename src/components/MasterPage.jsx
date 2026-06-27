@@ -1422,14 +1422,13 @@ export default function MasterPage({
                           <tr>
                             <th className="checklist-field__matrix-head">Menu</th>
                             <th className="checklist-field__matrix-head checklist-field__matrix-head--allow">
-                              <label className="checklist-field__head-check">
+                              <label className="checklist-field__head-check" title="Allow">
                                 <input
                                   type="checkbox"
                                   checked={isAllSelected}
                                   onChange={toggleAllAllowed}
                                   aria-label="Select all allowed menus"
                                 />
-                                <span>Allow</span>
                               </label>
                             </th>
                             {actionFields.map((actionField) => {
@@ -1442,14 +1441,13 @@ export default function MasterPage({
                                   key={`${field.name}-head-${actionField.name}`}
                                   className="checklist-field__matrix-head checklist-field__matrix-head--action"
                                 >
-                                  <label className="checklist-field__head-check">
+                                  <label className="checklist-field__head-check" title={actionField.label}>
                                     <input
                                       type="checkbox"
                                       checked={isActionAllSelected}
                                       onChange={() => toggleAllAction(actionField)}
                                       aria-label={`Select all ${actionField.label} permissions`}
                                     />
-                                    <span>{actionField.label}</span>
                                   </label>
                                 </th>
                               );

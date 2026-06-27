@@ -1427,15 +1427,13 @@ button {
 
 .checklist-field__matrix-head--allow,
 .checklist-field__matrix-head--action {
-  width: 72px;
+  width: 56px;
 }
 
 .checklist-field__head-check {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  white-space: nowrap;
 }
 
 .checklist-field__head-check input[type="checkbox"] {
@@ -1464,7 +1462,7 @@ button {
 
 .checklist-field__matrix-cell--allow,
 .checklist-field__matrix-cell--action {
-  width: 72px;
+  width: 56px;
   text-align: center;
 }
 
