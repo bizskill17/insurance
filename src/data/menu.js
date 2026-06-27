@@ -31,7 +31,7 @@ export const menuSections = [
     icon: "leads",
     items: [
       { label: "All Leads", path: "/leads/all", countKey: "leads-all" },
-      { label: "Add Lead", path: "/leads/add" },
+      { label: "Add Lead", path: "/leads/add", requiresAddPermission: true },
       { label: "Pending Assigning", path: "/leads/pending-assigning", countKey: "leads-pending-assigning" },
       {
         label: "Pending First Follow Up",
@@ -55,7 +55,7 @@ export const menuSections = [
     icon: "tasks",
     items: [
       { label: "All Tasks", path: "/tasks/all", countKey: "tasks-all" },
-      { label: "Add Task", path: "/tasks/add" },
+      { label: "Add Task", path: "/tasks/add", requiresAddPermission: true },
       { label: "Pending Tasks", path: "/tasks/pending", countKey: "tasks-pending" },
       { label: "Completed", path: "/tasks/completed", countKey: "tasks-completed" },
       { label: "Canceled", path: "/tasks/canceled", countKey: "tasks-canceled" },
@@ -68,7 +68,7 @@ export const menuSections = [
     icon: "policies",
     items: [
       { label: "All Policies", path: "/policies/all", countKey: "all-policies" },
-      { label: "Issue Policy", path: "/policies/issue" },
+      { label: "Issue Policy", path: "/policies/issue", requiresAddPermission: true },
       { label: "Renew Policy", path: "/policies/renew", countKey: "renew-policy" },
       {
         label: "Renew Policy - Upcoming 45 Days",
@@ -146,13 +146,16 @@ export function getMenuRouteEntries(sections = menuSections) {
   );
 }
 
-export function filterMenuSectionsByViews(allowedViews = [], sections = menuSections) {
+export function filterMenuSectionsByViews(allowedViews = [], sections = menuSections, addPermissions = allowedViews) {
   const allowedSet = new Set(allowedViews);
+  const addPermissionSet = new Set(addPermissions);
 
   return sections
     .map((section) => {
       const filteredItems = (section.items || []).filter(
-        (item) => allowedSet.has(item.path) || (item.fallbackView && allowedSet.has(item.fallbackView))
+        (item) =>
+          (allowedSet.has(item.path) || (item.fallbackView && allowedSet.has(item.fallbackView))) &&
+          (!item.requiresAddPermission || addPermissionSet.has(item.path))
       );
 
       if (!filteredItems.length) {
@@ -210,6 +213,4 @@ export function formatMenuViews(value) {
     .map((item) => labelMap.get(item) || item)
     .join(", ");
 }
-
-
 

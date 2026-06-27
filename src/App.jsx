@@ -87,9 +87,18 @@ export default function App() {
 
     return views.filter((view) => view !== "/masters/organizations");
   }, [authUser]);
+  const effectiveAddPermissions = useMemo(() => {
+    const addPermissions = authUser?.add_permissions || [];
+
+    if (authUser?.can_manage_organizations) {
+      return addPermissions;
+    }
+
+    return addPermissions.filter((view) => view !== "/masters/organizations");
+  }, [authUser]);
   const allowedMenuSections = useMemo(
-    () => filterMenuSectionsByViews(effectiveViews),
-    [effectiveViews]
+    () => filterMenuSectionsByViews(effectiveViews, undefined, effectiveAddPermissions),
+    [effectiveViews, effectiveAddPermissions]
   );
   const allowedRoutes = useMemo(() => getMenuRouteEntries(allowedMenuSections), [allowedMenuSections]);
   const defaultPath = allowedRoutes[0]?.path || "/dashboard";
@@ -163,7 +172,4 @@ export default function App() {
     </Routes>
   );
 }
-
-
-
 
