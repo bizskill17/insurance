@@ -193,15 +193,6 @@ function getFieldLabel(config, fieldName) {
   return config.fields.find((field) => field.name === fieldName)?.label || fieldName;
 }
 
-function chunkItems(items, size) {
-  const chunks = [];
-
-  for (let index = 0; index < items.length; index += size) {
-    chunks.push(items.slice(index, index + size));
-  }
-
-  return chunks;
-}
 
 function formatBulkServerError(config, payload, message) {
   const duplicateMatch = String(message || "").match(/Duplicate entry '(.+)' for key '([^']+)'/i);
@@ -1397,18 +1388,31 @@ export default function MasterPage({
                 const allChecklistValues = checklistOptions.map((option) => option.value);
                 const isAllSelected =
                   checklistOptions.length > 0 && allChecklistValues.every((value) => checklistValues.includes(value));
-                const checklistRows = chunkItems(checklistOptions, 2);
                 const actionFields = field.actionFields || [];
+                const toggleAllAllowed = () => {
+                  handleChange(field, isAllSelected ? [] : allChecklistValues);
+                };
+                const toggleAllAction = (actionField) => {
+                  const actionValues = parseChecklistValue(formState[actionField.name]);
+                  const isActionAllSelected =
+                    checklistOptions.length > 0 && allChecklistValues.every((value) => actionValues.includes(value));
+
+                  if (isActionAllSelected) {
+                    handleChange({ name: actionField.name }, actionValues.filter((value) => !allChecklistValues.includes(value)));
+                    return;
+                  }
+
+                  if (!isAllSelected) {
+                    handleChange(field, allChecklistValues);
+                  }
+                  handleChange({ name: actionField.name }, [...new Set([...actionValues, ...allChecklistValues])]);
+                };
 
                 return (
                   <div key={field.name} className="form-field checklist-field">
                     <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
                     <div className="checklist-field__actions">
-                      <button
-                        type="button"
-                        className="text-button"
-                        onClick={() => handleChange(field, isAllSelected ? [] : allChecklistValues)}
-                      >
+                      <button type="button" className="text-button" onClick={toggleAllAllowed}>
                         {isAllSelected ? "Clear All" : "Select All"}
                       </button>
                     </div>
@@ -1416,116 +1420,111 @@ export default function MasterPage({
                       <table className="checklist-field__matrix">
                         <thead>
                           <tr>
-                            {[0, 1].map((columnIndex) => (
-                              <Fragment key={`${field.name}-head-group-${columnIndex}`}>
-                                <th className="checklist-field__matrix-head">Menu</th>
-                                <th className="checklist-field__matrix-head checklist-field__matrix-head--allow">Allow</th>
-                                {actionFields.map((actionField) => (
-                                  <th
-                                    key={`${field.name}-head-${columnIndex}-${actionField.name}`}
-                                    className="checklist-field__matrix-head checklist-field__matrix-head--action"
-                                  >
-                                    {actionField.label}
-                                  </th>
-                                ))}
-                              </Fragment>
-                            ))}
+                            <th className="checklist-field__matrix-head">Menu</th>
+                            <th className="checklist-field__matrix-head checklist-field__matrix-head--allow">
+                              <label className="checklist-field__head-check">
+                                <input
+                                  type="checkbox"
+                                  checked={isAllSelected}
+                                  onChange={toggleAllAllowed}
+                                  aria-label="Select all allowed menus"
+                                />
+                                <span>Allow</span>
+                              </label>
+                            </th>
+                            {actionFields.map((actionField) => {
+                              const actionValues = parseChecklistValue(formState[actionField.name]);
+                              const isActionAllSelected =
+                                checklistOptions.length > 0 && allChecklistValues.every((value) => actionValues.includes(value));
+
+                              return (
+                                <th
+                                  key={`${field.name}-head-${actionField.name}`}
+                                  className="checklist-field__matrix-head checklist-field__matrix-head--action"
+                                >
+                                  <label className="checklist-field__head-check">
+                                    <input
+                                      type="checkbox"
+                                      checked={isActionAllSelected}
+                                      onChange={() => toggleAllAction(actionField)}
+                                      aria-label={`Select all ${actionField.label} permissions`}
+                                    />
+                                    <span>{actionField.label}</span>
+                                  </label>
+                                </th>
+                              );
+                            })}
                           </tr>
                         </thead>
                         <tbody>
-                          {checklistRows.map((row, rowIndex) => (
-                            <tr key={`${field.name}-row-${rowIndex}`}>
-                              {[0, 1].map((columnIndex) => {
-                                const option = row[columnIndex];
+                          {checklistOptions.map((option, rowIndex) => {
+                            const checked = checklistValues.includes(option.value);
+                            const actionCells = actionFields.map((actionField) => {
+                              const actionValues = parseChecklistValue(formState[actionField.name]);
+                              const actionChecked = actionValues.includes(option.value);
 
-                                if (!option) {
-                                  return (
-                                    <Fragment key={`${field.name}-empty-${rowIndex}-${columnIndex}`}>
-                                      <td className="checklist-field__matrix-cell" />
-                                      <td className="checklist-field__matrix-cell checklist-field__matrix-cell--allow" />
-                                      {actionFields.map((actionField) => (
-                                        <td
-                                          key={`${field.name}-empty-${actionField.name}-${rowIndex}-${columnIndex}`}
-                                          className="checklist-field__matrix-cell checklist-field__matrix-cell--action"
-                                        />
-                                      ))}
-                                    </Fragment>
-                                  );
-                                }
+                              return (
+                                <td
+                                  key={`${field.name}-${actionField.name}-${option.value}`}
+                                  className="checklist-field__matrix-cell checklist-field__matrix-cell--action"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={actionChecked}
+                                    aria-label={`${actionField.label} ${option.label}`}
+                                    onChange={(event) => {
+                                      const nextValues = parseChecklistValue(formState[actionField.name]);
 
-                                const checked = checklistValues.includes(option.value);
-                                const actionCells = actionFields.map((actionField) => {
-                                  const actionValues = parseChecklistValue(formState[actionField.name]);
-                                  const actionChecked = actionValues.includes(option.value);
+                                      if (event.target.checked && !checked) {
+                                        handleChange(field, [...new Set([...checklistValues, option.value])]);
+                                      }
 
-                                  return (
-                                    <td
-                                      key={`${field.name}-${actionField.name}-${option.value}`}
-                                      className="checklist-field__matrix-cell checklist-field__matrix-cell--action"
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        checked={actionChecked}
-                                        aria-label={`${actionField.label} ${option.label}`}
-                                        onChange={(event) => {
-                                          const nextValues = parseChecklistValue(formState[actionField.name]);
+                                      handleChange(
+                                        { name: actionField.name },
+                                        event.target.checked
+                                          ? [...new Set([...nextValues, option.value])]
+                                          : nextValues.filter((item) => item !== option.value)
+                                      );
+                                    }}
+                                  />
+                                </td>
+                              );
+                            });
 
-                                          if (event.target.checked && !checked) {
-                                            handleChange(field, [...new Set([...checklistValues, option.value])]);
-                                          }
+                            return (
+                              <tr key={`${field.name}-row-${option.value}`}>
+                                <td className="checklist-field__matrix-cell">
+                                  <label className={`checklist-pill checklist-pill--${rowIndex % 6}`}>
+                                    <span className="checklist-pill__label">{option.label}</span>
+                                  </label>
+                                </td>
+                                <td className="checklist-field__matrix-cell checklist-field__matrix-cell--allow">
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={(event) => {
+                                      const nextValues = Array.isArray(formState[field.name])
+                                        ? [...formState[field.name]]
+                                        : [];
 
-                                          handleChange(
-                                            { name: actionField.name },
-                                            event.target.checked
-                                              ? [...new Set([...nextValues, option.value])]
-                                              : nextValues.filter((item) => item !== option.value)
-                                          );
-                                        }}
-                                      />
-                                    </td>
-                                  );
-                                });
-
-                                return (
-                                  <Fragment key={`${field.name}-option-${option.value}`}>
-                                    <td className="checklist-field__matrix-cell">
-                                      <label className={`checklist-pill checklist-pill--${(rowIndex + columnIndex) % 6}`}>
-                                        <span className="checklist-pill__label">{option.label}</span>
-                                      </label>
-                                    </td>
-                                    <td className="checklist-field__matrix-cell checklist-field__matrix-cell--allow">
-                                      <input
-                                        type="checkbox"
-                                        checked={checked}
-                                        onChange={(event) => {
-                                          const nextValues = Array.isArray(formState[field.name])
-                                            ? [...formState[field.name]]
-                                            : [];
-
-                                          handleChange(
-                                            field,
-                                            event.target.checked
-                                              ? [...new Set([...nextValues, option.value])]
-                                              : nextValues.filter((item) => item !== option.value)
-                                          );
-                                        }}
-                                      />
-                                    </td>
-                                    {actionCells}
-                                  </Fragment>
-                                );
-                              })}
-                            </tr>
-                          ))}
+                                      handleChange(
+                                        field,
+                                        event.target.checked
+                                          ? [...new Set([...nextValues, option.value])]
+                                          : nextValues.filter((item) => item !== option.value)
+                                      );
+                                    }}
+                                  />
+                                </td>
+                                {actionCells}
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
                     <div className="checklist-field__actions checklist-field__actions--bottom">
-                      <button
-                        type="button"
-                        className="text-button"
-                        onClick={() => handleChange(field, isAllSelected ? [] : allChecklistValues)}
-                      >
+                      <button type="button" className="text-button" onClick={toggleAllAllowed}>
                         {isAllSelected ? "Clear All" : "Select All"}
                       </button>
                     </div>

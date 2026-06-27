@@ -1410,7 +1410,7 @@ button {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  min-width: 940px;
+  min-width: 620px;
 }
 
 .checklist-field__matrix-head {
@@ -1427,7 +1427,21 @@ button {
 
 .checklist-field__matrix-head--allow,
 .checklist-field__matrix-head--action {
-  width: 62px;
+  width: 72px;
+}
+
+.checklist-field__head-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.checklist-field__head-check input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  accent-color: #b66400;
 }
 
 .checklist-field__actions {
@@ -1450,7 +1464,7 @@ button {
 
 .checklist-field__matrix-cell--allow,
 .checklist-field__matrix-cell--action {
-  width: 62px;
+  width: 72px;
   text-align: center;
 }
 
