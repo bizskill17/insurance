@@ -804,9 +804,6 @@ export default function MasterPage({
       const savedRecordId = method === "POST" ? Number(json.id || 0) : Number(editingId || 0);
       setMessage(json.message || "Saved successfully.");
       setIsFormLocked(false);
-      if (method === "POST" && savedRecordId > 0) {
-        setEditingId(savedRecordId);
-      }
 
       const refresh = await fetch(`${API_BASE}/masters/${config.resource}?limit=500000`);
       const refreshJson = await readApiJson(refresh);
@@ -820,6 +817,10 @@ export default function MasterPage({
         const savedRecord = nextRecords.find((record) => Number(record.id) === savedRecordId) || null;
         onFormSaved(savedRecord);
       }
+
+      setIsFormOpen(false);
+      setEditingId(null);
+      setFormState(emptyState(config));
     } catch (saveError) {
       setError(saveError.message);
     } finally {
