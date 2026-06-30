@@ -2051,17 +2051,14 @@ try {
              LEFT JOIN insurance_products ip ON ip.id = p.product_id
              LEFT JOIN product_categories pc ON pc.category_name = p.policy_type AND pc.organization_id = p.organization_id
              WHERE p.organization_id = :organization_id
-             ORDER BY p.id DESC
-             LIMIT :limit'
+             ORDER BY p.id DESC'
         );
         bindOrganizationId($statement, $organizationId);
-        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
         $statement->execute();
 
         Response::json([
             'status' => 'ok',
-            'data' => $statement->fetchAll(),
-            'meta' => ['limit' => $limit]
+            'data' => $statement->fetchAll()
         ]);
         exit;
     }
