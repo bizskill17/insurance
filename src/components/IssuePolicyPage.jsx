@@ -444,7 +444,6 @@ export default function IssuePolicyPage() {
                     <option
                       key={product.id}
                       value={product.id}
-                      data-description={companyName}
                       data-search-text={searchText}
                     >
                       {product.product_name}
@@ -604,5 +603,3 @@ export default function IssuePolicyPage() {
     </div>
   );
 }
-
-
