@@ -2013,7 +2013,7 @@ try {
     if ($path === '/api/policies' && $method === 'GET') {
         $pdo = Database::connection();
         $organizationId = requireOrganizationId();
-        $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
+        $limit = isset($_GET['limit']) ? max(1, min(500000, (int) $_GET['limit'])) : 100;
 
         $statement = $pdo->prepare(
             'SELECT
@@ -4485,42 +4485,3 @@ try {
         'message' => $throwable->getMessage()
     ], 500);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

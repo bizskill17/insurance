@@ -123,7 +123,7 @@ export default function AllPoliciesPage() {
     setError("");
 
     try {
-      const response = await fetch(`${API_BASE}/policies?limit=100`);
+      const response = await fetch(`${API_BASE}/policies?limit=500000`);
       const json = await readApiJson(response);
 
       if (!response.ok) {
