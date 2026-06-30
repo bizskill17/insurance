@@ -35,6 +35,7 @@ export const masterConfigs = {
       { key: "mobile", label: "Mobile" },
       { key: "city", label: "City" },
       { key: "state", label: "State" },
+      { key: "drive_link", label: "Drive Link", type: "link" },
       { key: "is_active", label: "Active", type: "boolean" }
     ],
     fields: [
@@ -68,6 +69,7 @@ export const masterConfigs = {
         dependsOn: "state",
         dependsOnKey: "state_name"
       },
+      { name: "drive_link", label: "Drive Link", type: "url" },
       { name: "notes", label: "Notes", type: "textarea" },
       { name: "is_active", label: "Active", type: "checkbox" }
     ]

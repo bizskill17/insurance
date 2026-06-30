@@ -1358,6 +1358,20 @@ export default function MasterPage({
       return record[column.key] ? "Yes" : "No";
     }
 
+    if (column.type === "link") {
+      const linkValue = String(record[column.key] || "").trim();
+
+      if (!linkValue) {
+        return "-";
+      }
+
+      const href = /^https?:\/\//i.test(linkValue) ? linkValue : `https://${linkValue}`;
+      return (
+        <a href={href} target="_blank" rel="noreferrer" className="text-blue" onClick={(event) => event.stopPropagation()}>
+          Link
+        </a>
+      );
+    }
     if (column.type === "image" && record[column.key]) {
       const imageUrl = /^https?:\/\//i.test(record[column.key])
         ? record[column.key]
@@ -1394,6 +1408,20 @@ export default function MasterPage({
       return record[column.key] ? "Yes" : "No";
     }
 
+    if (column.type === "link") {
+      const linkValue = String(record[column.key] || "").trim();
+
+      if (!linkValue) {
+        return "-";
+      }
+
+      const href = /^https?:\/\//i.test(linkValue) ? linkValue : `https://${linkValue}`;
+      return (
+        <a href={href} target="_blank" rel="noreferrer" className="text-blue" onClick={(event) => event.stopPropagation()}>
+          Link
+        </a>
+      );
+    }
     if (column.type === "image" && record[column.key]) {
       return (
         <img
@@ -2454,4 +2482,3 @@ export default function MasterPage({
     </div>
   );
 }
-

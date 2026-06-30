@@ -40,10 +40,10 @@ final class MasterRegistry
             ],
             'customers' => [
                 'table' => 'customers',
-                'select' => 'c.id, c.group_id, c.full_name, c.mobile, c.alternate_mobile, c.email, c.city, c.state, c.gstin, c.notes, c.is_active, c.created_at, cg.group_name',
+                'select' => 'c.id, c.group_id, c.full_name, c.mobile, c.alternate_mobile, c.email, c.city, c.state, c.gstin, c.drive_link, c.notes, c.is_active, c.created_at, cg.group_name',
                 'from' => 'customers c left join customer_groups cg on cg.id = c.group_id',
                 'order_by' => 'c.id desc',
-                'search_columns' => ['c.full_name', 'cg.group_name', 'c.mobile', 'c.email', 'c.city', 'c.state', 'c.gstin'],
+                'search_columns' => ['c.full_name', 'cg.group_name', 'c.mobile', 'c.email', 'c.city', 'c.state', 'c.gstin', 'c.drive_link'],
                 'write_columns' => [
                     'group_id',
                     'full_name',
@@ -62,6 +62,7 @@ final class MasterRegistry
                     'city',
                     'state',
                     'pincode',
+                    'drive_link',
                     'is_active',
                     'notes'
                 ],
@@ -81,6 +82,7 @@ final class MasterRegistry
                     'city',
                     'state',
                     'pincode',
+                    'drive_link',
                     'notes'
                 ],
                 'boolean' => ['is_active'],
@@ -237,4 +239,3 @@ final class MasterRegistry
         return $resources;
     }
 }
-
