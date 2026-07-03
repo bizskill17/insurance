@@ -35,6 +35,8 @@ async function readApiJson(response) {
   }
 }
 
+const MIN_PENDING_DOCUMENT_ISSUE_DATE = "2026-04-01";
+
 const columns = [
   { key: "policy_number", label: "Policy No." },
   { key: "issue_date", label: "Issue Date" },
@@ -66,7 +68,7 @@ export default function AttachDocumentsPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [issueDateFrom, setIssueDateFrom] = useState("");
+  const [issueDateFrom, setIssueDateFrom] = useState(MIN_PENDING_DOCUMENT_ISSUE_DATE);
   const [issueDateTo, setIssueDateTo] = useState("");
   const [expiryDateFrom, setExpiryDateFrom] = useState("");
   const [expiryDateTo, setExpiryDateTo] = useState("");
@@ -77,7 +79,7 @@ export default function AttachDocumentsPage() {
   );
 
   useEffect(() => {
-    setIssueDateFrom("");
+    setIssueDateFrom(MIN_PENDING_DOCUMENT_ISSUE_DATE);
     setIssueDateTo("");
     setExpiryDateFrom("");
     setExpiryDateTo("");
@@ -287,7 +289,7 @@ export default function AttachDocumentsPage() {
             </>
           }
           onClearCustomFilters={() => {
-            setIssueDateFrom("");
+            setIssueDateFrom(MIN_PENDING_DOCUMENT_ISSUE_DATE);
             setIssueDateTo("");
             setExpiryDateFrom("");
             setExpiryDateTo("");

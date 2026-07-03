@@ -843,7 +843,7 @@ try {
         $counts['renew-policy-overdue'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND risk_end_date < curdate() AND coalesce(renewal_status, "") <> "Renewed" AND coalesce(policy_status, "") <> "Inactive" AND coalesce(inactive_reason, "") = ""');
         $counts['renew-policy-today'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date = curdate() AND coalesce(renewal_status, "") <> "Renewed" AND coalesce(policy_status, "") <> "Inactive" AND coalesce(inactive_reason, "") = ""');
         $counts['inactivated-policies'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND coalesce(policy_status, "") = "Inactive" AND coalesce(inactive_reason, "") <> ""');
-        $counts['attach-documents'] = $scopedCount('SELECT count(*) FROM (SELECT p.id FROM policies p LEFT JOIN documents d ON d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 WHERE p.organization_id = :organization_id GROUP BY p.id HAVING count(d.id) = 0) pending_docs');
+        $counts['attach-documents'] = $scopedCount('SELECT count(*) FROM (SELECT p.id FROM policies p LEFT JOIN documents d ON d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 WHERE p.organization_id = :organization_id AND p.issue_date >= "2026-04-01" GROUP BY p.id HAVING count(d.id) = 0) pending_docs');
         $counts['pending-payments'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND paid_by_type = "Agent" AND coalesce(payment_pending_amount, 0) > 0');
         $counts['policies-added'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND date(p.created_at) = curdate()');
         $counts['policies-this-week'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND yearweek(p.created_at, 1) = yearweek(curdate(), 1)');
@@ -2323,6 +2323,7 @@ try {
                  AND d.deleted_at IS NULL
                  AND d.is_active = 1
                 WHERE p.organization_id = :organization_id
+                  AND p.issue_date >= "2026-04-01"
                 GROUP BY p.id
                 HAVING count(d.id) = 0
              ) pending_documents'
@@ -2383,6 +2384,7 @@ try {
               AND d.deleted_at IS NULL
               AND d.is_active = 1
              WHERE p.organization_id = :organization_id
+               AND p.issue_date >= "2026-04-01"
              GROUP BY
                 p.id,
                 p.policy_number,
