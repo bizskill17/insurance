@@ -201,7 +201,7 @@ export default function TasksPage({ viewPath }) {
   const loadTaskOptions = async () => {
     const [usersResponse, customersResponse, categoriesResponse] = await Promise.all([
       fetch(`${API_BASE}/masters/users?limit=250`),
-      fetch(`${API_BASE}/masters/customers?limit=250`),
+      fetch(`${API_BASE}/masters/customers?limit=500000`),
       fetch(`${API_BASE}/masters/product-categories?limit=250`)
     ]);
 
