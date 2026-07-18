@@ -79,6 +79,7 @@ export const masterConfigs = {
     resource: "customer-groups",
     tableColumns: [
       { key: "group_name", label: "Group Name" },
+      { key: "customer_count", label: "Number of Customers" },
       { key: "notes", label: "Notes" }
     ],
     fields: [

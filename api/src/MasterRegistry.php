@@ -26,7 +26,7 @@ final class MasterRegistry
             ],
             'customer-groups' => [
                 'table' => 'customer_groups',
-                'select' => 'cg.id, cg.group_name, cg.notes, cg.created_at',
+                'select' => 'cg.id, cg.group_name, cg.notes, cg.created_at, (select count(*) from customers c where c.group_id = cg.id and c.organization_id = cg.organization_id) as customer_count',
                 'from' => 'customer_groups cg',
                 'order_by' => 'cg.group_name asc',
                 'search_columns' => ['cg.group_name', 'cg.notes'],

@@ -1885,6 +1885,30 @@ button {
 .master-table__row:hover td {
   background: #f5f8ff;
 }
+.customer-group-customers {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 2px solid #dbe4ff;
+}
+
+.customer-group-customers__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.customer-group-customers__header h3 {
+  margin: 0 0 4px;
+  color: #1f2a3d;
+}
+
+.customer-group-customers__header span {
+  color: #5b6b82;
+  font-size: 13px;
+  font-weight: 700;
+}
 
 .table-state {
   color: var(--text-soft);

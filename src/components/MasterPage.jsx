@@ -437,6 +437,10 @@ export default function MasterPage({
     error: ""
   });
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [selectedCustomerGroup, setSelectedCustomerGroup] = useState(null);
+  const [customerGroupCustomers, setCustomerGroupCustomers] = useState([]);
+  const [customerGroupCustomersLoading, setCustomerGroupCustomersLoading] = useState(false);
+  const [customerGroupCustomersError, setCustomerGroupCustomersError] = useState("");
   const [isAddCustomerGroupModalOpen, setIsAddCustomerGroupModalOpen] = useState(false);
   const currentPath = `/masters/${resourceKey}`;
   const organizationViewPath = "/masters/organizations";
@@ -560,6 +564,9 @@ export default function MasterPage({
     setIsFormOpen(false);
     setEditingId(null);
     setSelectedRecord(null);
+    setSelectedCustomerGroup(null);
+    setCustomerGroupCustomers([]);
+    setCustomerGroupCustomersError("");
     setFormState(emptyState(config));
     setIsBulkUploadOpen(false);
     setBulkUploadFile(null);
@@ -720,6 +727,34 @@ export default function MasterPage({
 
       return nextState;
     });
+  };
+  const handleRecordClick = async (record) => {
+    if (resourceKey !== "customer-groups") {
+      setSelectedRecord(record);
+      return;
+    }
+
+    setSelectedCustomerGroup(record);
+    setCustomerGroupCustomers([]);
+    setCustomerGroupCustomersError("");
+    setCustomerGroupCustomersLoading(true);
+
+    try {
+      const search = encodeURIComponent(record.group_name || "");
+      const response = await fetch(`${API_BASE}/masters/customers?limit=500000&search=${search}`);
+      const json = await readApiJson(response);
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to load customers for this group.");
+      }
+
+      setCustomerGroupCustomers(
+        (json.data || []).filter((customer) => Number(customer.group_id) === Number(record.id))
+      );
+    } catch (loadError) {
+      setCustomerGroupCustomersError(loadError.message);
+    } finally {
+      setCustomerGroupCustomersLoading(false);
+    }
   };
   const handleEdit = (record) => {
     const nextState = emptyState(config);
@@ -2007,7 +2042,7 @@ export default function MasterPage({
                                 <tr
                                   key={record.id}
                                   className="master-table__row"
-                                  onClick={() => setSelectedRecord(record)}
+                                  onClick={() => handleRecordClick(record)}
                                 >
                                   <td>{runningIndex}</td>
                                   {config.tableColumns.map((column) => {
@@ -2033,7 +2068,7 @@ export default function MasterPage({
                         <tr
                           key={record.id}
                           className="master-table__row"
-                          onClick={() => setSelectedRecord(record)}
+                          onClick={() => handleRecordClick(record)}
                         >
                           <td>{pageStart + index + 1}</td>
                           {config.tableColumns.map((column) => {
@@ -2062,6 +2097,64 @@ export default function MasterPage({
                     onPageChange={setCurrentPage}
                     onPageSizeChange={setPageSize}
                   />
+                ) : null}
+                {resourceKey === "customer-groups" && selectedCustomerGroup ? (
+                  <section className="customer-group-customers">
+                    <div className="customer-group-customers__header">
+                      <div>
+                        <h3>{selectedCustomerGroup.group_name}</h3>
+                        <span>{selectedCustomerGroup.customer_count ?? customerGroupCustomers.length} customers</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="text-button"
+                        onClick={() => {
+                          setSelectedCustomerGroup(null);
+                          setCustomerGroupCustomers([]);
+                          setCustomerGroupCustomersError("");
+                        }}
+                      >
+                        Close
+                      </button>
+                    </div>
+
+                    {customerGroupCustomersLoading ? (
+                      <div className="table-state"><Spinner label="Loading customers..." /></div>
+                    ) : customerGroupCustomersError ? (
+                      <p className="feedback feedback--error">{customerGroupCustomersError}</p>
+                    ) : (
+                      <div className="table-wrap">
+                        <table className="master-table">
+                          <thead>
+                            <tr>
+                              <th>Sl.No.</th>
+                              <th>Customer Name</th>
+                              <th>Mobile</th>
+                              <th>Email</th>
+                              <th>City</th>
+                              <th>State</th>
+                              <th>Active</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {customerGroupCustomers.length === 0 ? (
+                              <tr><td colSpan="7" className="table-state">No customers in this group.</td></tr>
+                            ) : customerGroupCustomers.map((customer, index) => (
+                              <tr key={customer.id} className="master-table__row">
+                                <td>{index + 1}</td>
+                                <td className="text-blue">{formatCellValue(customer.full_name)}</td>
+                                <td>{formatCellValue(customer.mobile)}</td>
+                                <td>{formatCellValue(customer.email)}</td>
+                                <td>{formatCellValue(customer.city)}</td>
+                                <td>{formatCellValue(customer.state)}</td>
+                                <td>{Number(customer.is_active) ? "Yes" : "No"}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </section>
                 ) : null}
                 <RecordDetailModal
                   isOpen={Boolean(selectedRecord)}
