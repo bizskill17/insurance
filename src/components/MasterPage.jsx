@@ -1810,7 +1810,6 @@ export default function MasterPage({
 
   return (
     <div className="master-page">
-      {customerGroupModal}
       <div className="master-grid master-grid--list-only">
         <section className="master-card master-card--table">
           <div className="master-card__header">
@@ -2080,7 +2079,7 @@ export default function MasterPage({
       </div>
 
       {formModal}
-
+      {customerGroupModal}
       {isBulkUploadOpen ? (
         <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="bulk-upload-title">
           <div className="master-modal__backdrop" onClick={closeBulkUpload} />
