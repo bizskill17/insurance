@@ -202,7 +202,7 @@ export default function TasksPage({ viewPath }) {
     const [usersResponse, customersResponse, categoriesResponse] = await Promise.all([
       fetch(`${API_BASE}/masters/users?limit=250`),
       fetch(`${API_BASE}/masters/customers?limit=500000`),
-      fetch(`${API_BASE}/masters/product-categories?limit=250`)
+      fetch(`${API_BASE}/masters/product-categories?limit=500000`)
     ]);
 
     const [usersJson, customersJson, categoriesJson] = await Promise.all([
@@ -295,17 +295,14 @@ export default function TasksPage({ viewPath }) {
     };
   }, [isCustomerDropdownOpen]);
 
-  const topLevelCategories = useMemo(
-    () => categories.filter((category) => !category.parent_category_id),
+  const taskCategories = useMemo(
+    () => categories.filter((category) => Number(category.is_active ?? 1) === 1),
     [categories]
   );
 
   const subCategories = useMemo(
-    () =>
-      categories.filter(
-        (category) => String(category.parent_category_id || "") === String(taskForm.category_id || "")
-      ),
-    [categories, taskForm.category_id]
+    () => categories.filter((category) => Number(category.is_active ?? 1) === 1),
+    [categories]
   );
 
   const filteredCustomers = useMemo(() => {
@@ -744,7 +741,7 @@ export default function TasksPage({ viewPath }) {
                         onChange={(event) => handleTaskFormChange("category_id", event.target.value)}
                       >
                         <option value="">Select Category</option>
-                        {topLevelCategories.map((category) => (
+                        {taskCategories.map((category) => (
                           <option key={category.id} value={category.id}>
                             {category.category_name}
                           </option>
@@ -758,7 +755,6 @@ export default function TasksPage({ viewPath }) {
                         required
                         value={taskForm.sub_category_id}
                         onChange={(event) => handleTaskFormChange("sub_category_id", event.target.value)}
-                        disabled={!taskForm.category_id}
                       >
                         <option value="">Select Sub - Category</option>
                         {subCategories.map((category) => (
