@@ -2184,8 +2184,8 @@ try {
         ];
 
         $yearly = [
-            'current' => $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND coalesce(fiscal_year_ending, year(curdate())) = year(curdate())'),
-            'future' => $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND coalesce(fiscal_year_ending, year(curdate())) > year(curdate())'),
+            'current' => $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date >= str_to_date(concat(if(month(curdate()) >= 4, year(curdate()), year(curdate()) - 1), "-04-01"), "%Y-%m-%d") AND risk_end_date < date_add(str_to_date(concat(if(month(curdate()) >= 4, year(curdate()), year(curdate()) - 1), "-04-01"), "%Y-%m-%d"), interval 1 year)'),
+            'future' => $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date >= date_add(str_to_date(concat(if(month(curdate()) >= 4, year(curdate()), year(curdate()) - 1), "-04-01"), "%Y-%m-%d"), interval 1 year)'),
         ];
 
         Response::json([
@@ -2242,9 +2242,9 @@ try {
             $whereClause .= ' AND p.risk_end_date >= curdate() AND p.risk_end_date <= date_add(curdate(), interval 7 day)';
         } elseif ($mode === 'year') {
             if ($value === 'current') {
-                $whereClause .= ' AND coalesce(p.fiscal_year_ending, year(curdate())) = year(curdate())';
+                $whereClause .= ' AND p.risk_end_date >= str_to_date(concat(if(month(curdate()) >= 4, year(curdate()), year(curdate()) - 1), "-04-01"), "%Y-%m-%d") AND p.risk_end_date < date_add(str_to_date(concat(if(month(curdate()) >= 4, year(curdate()), year(curdate()) - 1), "-04-01"), "%Y-%m-%d"), interval 1 year)';
             } elseif ($value === 'future') {
-                $whereClause .= ' AND coalesce(p.fiscal_year_ending, year(curdate())) > year(curdate())';
+                $whereClause .= ' AND p.risk_end_date >= date_add(str_to_date(concat(if(month(curdate()) >= 4, year(curdate()), year(curdate()) - 1), "-04-01"), "%Y-%m-%d"), interval 1 year)';
             } else {
                 Response::json([
                     'status' => 'error',
@@ -2267,6 +2267,7 @@ try {
                 p.policy_type,
                 p.business_type,
                 p.net_premium,
+                p.issue_date,
                 p.risk_end_date,
                 (SELECT d.file_url FROM documents d WHERE d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 ORDER BY d.uploaded_at DESC, d.id DESC LIMIT 1) AS document_url,
                 p.policy_status,
