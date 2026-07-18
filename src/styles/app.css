@@ -1910,6 +1910,21 @@ button {
   font-weight: 700;
 }
 
+.table-link-button {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  color: #2d57d7;
+  background: transparent;
+  font: inherit;
+  font-weight: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.table-link-button:hover {
+  text-decoration: underline;
+}
 .table-state {
   color: var(--text-soft);
   font-size: 14px;

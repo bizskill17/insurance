@@ -2029,7 +2029,7 @@ export default function MasterPage({
                                 <tr
                                   key={record.id}
                                   className="master-table__row"
-                                  onClick={() => handleRecordClick(record)}
+                                  onClick={resourceKey === "customers" ? undefined : () => handleRecordClick(record)}
                                 >
                                   <td>{runningIndex}</td>
                                   {config.tableColumns.map((column) => {
@@ -2039,7 +2039,11 @@ export default function MasterPage({
                                         style={getFixedColumnStyle(column.key)}
                                         className={getTableCellClass(column.key)}
                                       >
-                                        {formatColumnValue(record, column)}
+                                        {resourceKey === "customers" && column.key === "full_name" ? (
+                                          <button type="button" className="table-link-button" onClick={() => handleRecordClick(record)}>
+                                            {formatColumnValue(record, column)}
+                                          </button>
+                                        ) : formatColumnValue(record, column)}
                                       </td>
                                     );
                                   })}
@@ -2055,7 +2059,7 @@ export default function MasterPage({
                         <tr
                           key={record.id}
                           className="master-table__row"
-                          onClick={() => handleRecordClick(record)}
+                          onClick={resourceKey === "customers" ? undefined : () => handleRecordClick(record)}
                         >
                           <td>{pageStart + index + 1}</td>
                           {config.tableColumns.map((column) => {
@@ -2065,7 +2069,11 @@ export default function MasterPage({
                                         style={getFixedColumnStyle(column.key)}
                                         className={getTableCellClass(column.key)}
                               >
-                                {formatColumnValue(record, column)}
+                                {resourceKey === "customers" && column.key === "full_name" ? (
+                                          <button type="button" className="table-link-button" onClick={() => handleRecordClick(record)}>
+                                            {formatColumnValue(record, column)}
+                                          </button>
+                                        ) : formatColumnValue(record, column)}
                               </td>
                             );
                           })}
