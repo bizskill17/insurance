@@ -1,3 +1,4 @@
+import { API_BASE } from "../config/api";
 import { useEffect, useMemo, useState } from "react";
 import { ActionIconDisplay } from "./ActionIcon";
 import MultiSelectFilter from "./MultiSelectFilter";
@@ -353,7 +354,19 @@ export default function ResponsiveDataView({
                               .filter(Boolean)
                               .join(" ")}
                           >
-                            {formatCellValue(getRecordValue(record, col.key))}
+                            {col.type === "document-link" && getRecordValue(record, col.key) ? (
+                              <a
+                                href={/^https?:\/\//i.test(String(getRecordValue(record, col.key)))
+                                  ? String(getRecordValue(record, col.key))
+                                  : `${API_BASE}/${String(getRecordValue(record, col.key)).replace(/^\/+/, "")}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-blue"
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                Link
+                              </a>
+                            ) : formatCellValue(getRecordValue(record, col.key))}
                           </td>
                         );
                       })}

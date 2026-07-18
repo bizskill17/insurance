@@ -86,7 +86,9 @@ const columns = [
   { key: "gross_premium", label: "Gross Premium" },
   { key: "net_premium", label: "Net Premium" },
   { key: "risk_start_date", label: "Risk Start" },
+
   { key: "risk_end_date", label: "Risk End" },
+  { key: "document_url", label: "Document", type: "document-link" },
   { key: "paid_by_type", label: "Payment By" },
   { key: "payment_mode", label: "Payment Mode" },
   { key: "policy_status", label: "Status" }

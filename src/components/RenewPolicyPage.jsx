@@ -207,7 +207,9 @@ function filterRenewalView(records, viewMode) {
 }
 
 const columns = [
+
   { key: "risk_end_date", label: "Expiry Date" },
+  { key: "document_url", label: "Document", type: "document-link" },
   { key: "policy_number", label: "Policy No." },
   { key: "issue_date", label: "Issue Date" },
   { key: "customer_name", label: "Customer", highlight: true },

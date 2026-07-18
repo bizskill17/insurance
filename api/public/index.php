@@ -917,6 +917,7 @@ try {
                 p.issue_date,
                 p.risk_start_date,
                 p.risk_end_date,
+                (SELECT d.file_url FROM documents d WHERE d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 ORDER BY d.uploaded_at DESC, d.id DESC LIMIT 1) AS document_url,
                 p.renewal_status,
                 p.policy_status,
                 p.registration_no,
@@ -950,6 +951,7 @@ try {
                AND d.organization_id = :organization_id
                AND d.deleted_at IS NULL
                AND d.is_active = 1
+               AND d.policy_id IS NULL
              ORDER BY d.uploaded_at DESC, d.id DESC'
         );
         $documentStatement->bindValue(':customer_id', $customerId, PDO::PARAM_INT);
@@ -2032,6 +2034,7 @@ try {
                 p.issue_date,
                 p.risk_start_date,
                 p.risk_end_date,
+                (SELECT d.file_url FROM documents d WHERE d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 ORDER BY d.uploaded_at DESC, d.id DESC LIMIT 1) AS document_url,
                 p.vehicle_make,
                 p.vehicle_model,
                 p.year_of_manufacture,
@@ -2265,6 +2268,7 @@ try {
                 p.business_type,
                 p.net_premium,
                 p.risk_end_date,
+                (SELECT d.file_url FROM documents d WHERE d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 ORDER BY d.uploaded_at DESC, d.id DESC LIMIT 1) AS document_url,
                 p.policy_status,
                 c.full_name AS customer_name,
                 cg.group_name AS customer_group_name,
@@ -2370,6 +2374,7 @@ try {
                 p.policy_type,
                 p.issue_date,
                 p.risk_end_date,
+                (SELECT d.file_url FROM documents d WHERE d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 ORDER BY d.uploaded_at DESC, d.id DESC LIMIT 1) AS document_url,
                 c.full_name AS customer_name,
                 cg.group_name AS customer_group_name,
                 ic.company_name,
@@ -2391,6 +2396,7 @@ try {
                 p.policy_type,
                 p.issue_date,
                 p.risk_end_date,
+                (SELECT d.file_url FROM documents d WHERE d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 ORDER BY d.uploaded_at DESC, d.id DESC LIMIT 1) AS document_url,
                 c.full_name,
                 cg.group_name,
                 ic.company_name,
@@ -3385,6 +3391,7 @@ try {
                 p.year_of_manufacture,
                 p.registration_no,
                 p.risk_end_date,
+                (SELECT d.file_url FROM documents d WHERE d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 ORDER BY d.uploaded_at DESC, d.id DESC LIMIT 1) AS document_url,
                 p.renewal_status,
                 p.policy_status,
                 p.inactive_reason,

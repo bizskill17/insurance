@@ -45,7 +45,8 @@ const columns = [
   { key: "company_name", label: "Insurance Company", highlight: true },
   { key: "product_name", label: "Product Name", highlight: true },
   { key: "policy_type", label: "Policy Type" },
-  { key: "risk_end_date", label: "Risk Expiry Date" }
+  { key: "risk_end_date", label: "Risk Expiry Date" },
+  { key: "document_url", label: "Document", type: "document-link" }
 ];
 
 function emptyPolicyDocumentEntry() {

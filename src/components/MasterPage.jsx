@@ -2167,12 +2167,12 @@ export default function MasterPage({
                               <thead>
                                 <tr>
                                   <th>Policy No.</th><th>Issue Date</th><th>Business Type</th><th>Policy Type</th>
-                                  <th>Company</th><th>Product</th><th>Risk Expiry Date</th><th>Renewal Status</th><th>Status</th>
+                                  <th>Company</th><th>Product</th><th>Risk Expiry Date</th><th>Document</th><th>Renewal Status</th><th>Status</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {relatedPoliciesModal.policies.length === 0 ? (
-                                  <tr><td colSpan="9" className="table-state">No related policies found for this customer.</td></tr>
+                                  <tr><td colSpan="10" className="table-state">No related policies found for this customer.</td></tr>
                                 ) : relatedPoliciesModal.policies.map((policy) => (
                                   <tr key={policy.id}>
                                     <td>{formatCellValue(policy.policy_number)}</td>
@@ -2182,6 +2182,11 @@ export default function MasterPage({
                                     <td className="text-blue">{formatCellValue(policy.company_name)}</td>
                                     <td className="text-blue">{formatCellValue(policy.product_name)}</td>
                                     <td>{formatCellValue(policy.risk_end_date)}</td>
+                                    <td>
+                                      {policy.document_url ? (
+                                        <a href={`${API_BASE}/${String(policy.document_url).replace(/^\/+/, "")}`} target="_blank" rel="noreferrer" className="text-blue">Link</a>
+                                      ) : "-"}
+                                    </td>
                                     <td>{formatCellValue(policy.renewal_status)}</td>
                                     <td>{formatCellValue(policy.policy_status)}</td>
                                   </tr>
