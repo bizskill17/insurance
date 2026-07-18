@@ -818,6 +818,7 @@ try {
         }
 
         $counts['leads-all'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id');
+$counts['leads-added-today'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id AND date(created_at) = curdate()');
         $counts['leads-pending-assigning'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id AND lead_status = "Pending Assigning"');
         $counts['leads-pending-first-follow-up'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id AND lead_status = "Pending First Follow Up"');
         $counts['leads-pending-repeat-follow-up'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id AND lead_status = "Pending Repeat Follow Up"');
@@ -830,6 +831,7 @@ try {
         $counts['leads-activity-log'] = $scopedCount('SELECT count(*) FROM lead_updates WHERE organization_id = :organization_id');
 
         $counts['tasks-all'] = $scopedCount('SELECT count(*) FROM tasks WHERE organization_id = :organization_id');
+$counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE organization_id = :organization_id AND date(created_at) = curdate()');
         $counts['tasks-pending'] = $scopedCount('SELECT count(*) FROM tasks WHERE organization_id = :organization_id AND task_status = "Pending"');
         $counts['tasks-completed'] = $scopedCount('SELECT count(*) FROM tasks WHERE organization_id = :organization_id AND task_status = "Completed"');
         $counts['tasks-completed-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE organization_id = :organization_id AND task_status = "Completed" AND latest_update_date = curdate()');

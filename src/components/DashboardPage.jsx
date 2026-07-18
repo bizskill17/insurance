@@ -44,6 +44,24 @@ const dashboardItems = [
 
 const pendingLeadItems = [
   {
+    key: "leads-added-today",
+    label: "Add Leads Today",
+    tone: "success",
+    path: "/leads/all"
+  },
+  {
+    key: "leads-pending-first-follow-up",
+    label: "Pending First Follow Up",
+    tone: "info",
+    path: "/leads/pending-first-follow-up"
+  },
+  {
+    key: "leads-pending-repeat-follow-up",
+    label: "Pending Repeat Follow Up",
+    tone: "warning",
+    path: "/leads/pending-repeat-follow-up"
+  },
+  {
     key: "leads-pending-assigning",
     label: "Pending Assigning",
     tone: "warning",
@@ -70,6 +88,12 @@ const pendingLeadItems = [
 ];
 
 const pendingTaskItems = [
+  {
+    key: "tasks-added-today",
+    label: "Add Tasks Today",
+    tone: "success",
+    path: "/tasks/all"
+  },
   {
     key: "tasks-pending",
     label: "Pending Tasks",
@@ -127,10 +151,14 @@ export default function DashboardPage() {
     pending_client_collections: 0
   });
   const [menuCounts, setMenuCounts] = useState({
+    "leads-added-today": 0,
+    "leads-pending-first-follow-up": 0,
+    "leads-pending-repeat-follow-up": 0,
     "leads-pending-assigning": 0,
     "leads-converted-today": 0,
     "leads-lost-today": 0,
     "leads-canceled-today": 0,
+    "tasks-added-today": 0,
     "tasks-pending": 0,
     "tasks-completed-today": 0,
     "tasks-canceled-today": 0,
@@ -171,10 +199,14 @@ export default function DashboardPage() {
         }
 
         setMenuCounts({
+          "leads-added-today": Number(countsJson.data["leads-added-today"] || 0),
+          "leads-pending-first-follow-up": Number(countsJson.data["leads-pending-first-follow-up"] || 0),
+          "leads-pending-repeat-follow-up": Number(countsJson.data["leads-pending-repeat-follow-up"] || 0),
           "leads-pending-assigning": Number(countsJson.data["leads-pending-assigning"] || 0),
           "leads-converted-today": Number(countsJson.data["leads-converted-today"] || 0),
           "leads-lost-today": Number(countsJson.data["leads-lost-today"] || 0),
           "leads-canceled-today": Number(countsJson.data["leads-canceled-today"] || 0),
+          "tasks-added-today": Number(countsJson.data["tasks-added-today"] || 0),
           "tasks-pending": Number(countsJson.data["tasks-pending"] || 0),
           "tasks-completed-today": Number(countsJson.data["tasks-completed-today"] || 0),
           "tasks-canceled-today": Number(countsJson.data["tasks-canceled-today"] || 0),
