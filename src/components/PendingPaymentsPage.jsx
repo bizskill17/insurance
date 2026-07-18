@@ -68,6 +68,8 @@ const columns = [
   { key: "follow_up_remarks", label: "Follow Up Remarks", className: "table-cell--follow-up" }
 ];
 
+const detailColumns = columns.slice(0, 10);
+
 export default function PendingPaymentsPage() {
   const [records, setRecords] = useState([]);
   const [agentAccounts, setAgentAccounts] = useState([]);
@@ -296,6 +298,40 @@ export default function PendingPaymentsPage() {
     [records]
   );
 
+  const loadFollowUpHistory = async (policy) => {
+    const response = await fetch(`${API_BASE}/policies/${policy.id}/follow-ups`);
+    const json = await readApiJson(response);
+    if (!response.ok) throw new Error(json.message || "Failed to load follow up history.");
+    return { followUps: json.data || [] };
+  };
+
+  const renderFollowUpHistory = (policy, detailData, detailState) => (
+    <div className="record-detail__section">
+      <h4>Follow Up History</h4>
+      {detailState.loading ? <div className="table-state">Loading follow up history...</div> :
+       detailState.error ? <div className="table-state table-state--error">{detailState.error}</div> :
+       detailData?.followUps?.length ? (
+        <div className="master-table-wrap">
+          <table className="master-table">
+            <thead><tr>
+              <th>Follow Up Date</th><th>Follow Up By</th><th>Follow Up Mode</th>
+              <th>Next Follow Up Date</th><th>Status</th><th>Remarks</th>
+            </tr></thead>
+            <tbody>{detailData.followUps.map((followUp) => (
+              <tr key={followUp.id}>
+                <td>{followUp.follow_up_at ? String(followUp.follow_up_at).slice(0, 10) : "-"}</td>
+                <td>{followUp.follow_up_by_name || "-"}</td>
+                <td>{followUp.follow_up_mode || "-"}</td>
+                <td>{followUp.next_follow_up_at ? String(followUp.next_follow_up_at).slice(0, 10) : "-"}</td>
+                <td>{followUp.follow_up_status || "-"}</td>
+                <td>{followUp.follow_up_remarks || "-"}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      ) : <div className="table-state">No follow up history found.</div>}
+    </div>
+  );
   return (
     <div className="page-shell issue-policy-page">
       <section className="master-card issue-policy-card">
@@ -362,6 +398,14 @@ export default function PendingPaymentsPage() {
               />
             </>
           )}
+          detailTitle="Pending Payments from Clients"
+          getDetailRows={(record) =>
+            detailColumns.map((column) => ({
+              key: column.key, label: column.label, value: record[column.key] ?? "-"
+            }))
+          }
+          loadDetailData={loadFollowUpHistory}
+          renderDetailExtra={renderFollowUpHistory}
         />
 
         {message ? <p className="feedback feedback--success">{message}</p> : null}

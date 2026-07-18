@@ -3203,6 +3203,26 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
         }
     }
 
+    if (preg_match('#^/api/policies/(\d+)/follow-ups$#', $path, $matches) === 1 && $method === 'GET') {
+        $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
+        $policyId = (int) $matches[1];
+        $statement = $pdo->prepare(
+            'SELECT fu.id, fu.follow_up_at, fu.follow_up_type, fu.follow_up_mode,
+                    fu.next_follow_up_at, fu.outcome_status AS follow_up_status,
+                    fu.response_summary AS follow_up_remarks, u.full_name AS follow_up_by_name
+             FROM follow_ups fu
+             LEFT JOIN users u ON u.linked_agent_id = fu.done_by_agent_id
+              AND u.organization_id = fu.organization_id
+             WHERE fu.policy_id = :policy_id AND fu.organization_id = :organization_id
+             ORDER BY fu.follow_up_at DESC, fu.id DESC'
+        );
+        $statement->bindValue(':policy_id', $policyId, PDO::PARAM_INT);
+        bindOrganizationId($statement, $organizationId);
+        $statement->execute();
+        Response::json(['status' => 'ok', 'data' => $statement->fetchAll()]);
+        exit;
+    }
     if ($path === '/api/follow-ups' && $method === 'POST') {
         $pdo = Database::connection();
         $organizationId = requireOrganizationId();
