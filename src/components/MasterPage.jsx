@@ -327,14 +327,6 @@ function supportsTableAction(option, actionFieldName) {
 
   return false;
 }
-function ViewIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 5c5.5 0 9.8 4.6 10.9 6-.9 1.4-5.2 6-10.9 6S2.2 12.4 1.1 11C2.2 9.6 6.5 5 12 5Zm0 2C8.5 7 5.4 9.6 3.8 11 5.4 12.4 8.5 15 12 15s6.6-2.6 8.2-4C18.6 9.6 15.5 7 12 7Zm0 1.5A2.5 2.5 0 1 1 9.5 11 2.5 2.5 0 0 1 12 8.5Z" />
-    </svg>
-  );
-}
-
 function UploadIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -729,6 +721,12 @@ export default function MasterPage({
     });
   };
   const handleRecordClick = async (record) => {
+    if (resourceKey === "customers") {
+      setSelectedRecord(record);
+      handleViewRelatedPolicies(record);
+      return;
+    }
+
     if (resourceKey !== "customer-groups") {
       setSelectedRecord(record);
       return;
@@ -1364,17 +1362,6 @@ export default function MasterPage({
           title="Upload customer document"
         >
           <UploadIcon />
-        </button>
-      ) : null}
-      {resourceKey === "customers" ? (
-        <button
-          type="button"
-          className="icon-button icon-button--view"
-          onClick={() => handleViewRelatedPolicies(record)}
-          aria-label="View related policies"
-          title="View related policies"
-        >
-          <ViewIcon />
         </button>
       ) : null}
       {canEditRecord ? (
@@ -2161,8 +2148,86 @@ export default function MasterPage({
                   title={config.title}
                   rows={detailRows}
                   actions={!isSettingsView && selectedRecord ? renderRowActions(selectedRecord) : null}
-                  onClose={() => setSelectedRecord(null)}
-                />
+                  onClose={() => {
+                    setSelectedRecord(null);
+                    resetRelatedPoliciesModal();
+                  }}
+                >
+                  {resourceKey === "customers" ? (
+                    relatedPoliciesModal.loading ? (
+                      <div className="table-state"><Spinner label="Loading policies and documents..." /></div>
+                    ) : relatedPoliciesModal.error ? (
+                      <p className="feedback feedback--error">{relatedPoliciesModal.error}</p>
+                    ) : (
+                      <div className="customer-view-sections">
+                        <section className="customer-view-section">
+                          <h4 className="customer-view-section__title">Policies</h4>
+                          <div className="table-wrap">
+                            <table className="master-table">
+                              <thead>
+                                <tr>
+                                  <th>Policy No.</th><th>Issue Date</th><th>Business Type</th><th>Policy Type</th>
+                                  <th>Company</th><th>Product</th><th>Risk Expiry Date</th><th>Renewal Status</th><th>Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {relatedPoliciesModal.policies.length === 0 ? (
+                                  <tr><td colSpan="9" className="table-state">No related policies found for this customer.</td></tr>
+                                ) : relatedPoliciesModal.policies.map((policy) => (
+                                  <tr key={policy.id}>
+                                    <td>{formatCellValue(policy.policy_number)}</td>
+                                    <td>{formatCellValue(policy.issue_date)}</td>
+                                    <td>{formatCellValue(policy.business_type)}</td>
+                                    <td>{formatCellValue(policy.policy_type)}</td>
+                                    <td className="text-blue">{formatCellValue(policy.company_name)}</td>
+                                    <td className="text-blue">{formatCellValue(policy.product_name)}</td>
+                                    <td>{formatCellValue(policy.risk_end_date)}</td>
+                                    <td>{formatCellValue(policy.renewal_status)}</td>
+                                    <td>{formatCellValue(policy.policy_status)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </section>
+
+                        <section className="customer-view-section">
+                          <h4 className="customer-view-section__title">Documents</h4>
+                          <div className="table-wrap">
+                            <table className="master-table">
+                              <thead>
+                                <tr>
+                                  <th>Document Type</th><th>File Name</th><th>Document No.</th>
+                                  <th>Document Date</th><th>Expiry Date</th><th>Remarks</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {relatedPoliciesModal.documents.length === 0 ? (
+                                  <tr><td colSpan="6" className="table-state">No documents found for this customer.</td></tr>
+                                ) : relatedPoliciesModal.documents.map((document) => (
+                                  <tr key={document.id}>
+                                    <td>{formatCellValue(document.document_type_name)}</td>
+                                    <td>
+                                      {document.file_url ? (
+                                        <a href={`${API_BASE}/${String(document.file_url).replace(/^\/+/, "")}`} target="_blank" rel="noreferrer" className="text-blue">
+                                          {formatCellValue(document.file_name)}
+                                        </a>
+                                      ) : formatCellValue(document.file_name)}
+                                    </td>
+                                    <td>{formatCellValue(document.document_number)}</td>
+                                    <td>{formatCellValue(document.document_date)}</td>
+                                    <td>{formatCellValue(document.expiry_date)}</td>
+                                    <td>{formatCellValue(document.remarks)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </section>
+                      </div>
+                    )
+                  ) : null}
+                </RecordDetailModal>
 	            </>
 	          )}
 
@@ -2246,224 +2311,6 @@ export default function MasterPage({
                   ) : null}
                 </div>
               ) : null}
-            </div>
-          </section>
-        </div>
-      ) : null}
-
-      {resourceKey === "customers" && relatedPoliciesModal.isOpen ? (
-        <div
-          className="master-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="customer-related-policies-title"
-        >
-          <div className="master-modal__backdrop" onClick={resetRelatedPoliciesModal} />
-          <section className="master-card master-modal__panel master-modal__panel--wide">
-	            <div className="master-card__header">
-	              <h3 id="customer-related-policies-title">
-	                Related Policies - Customer Name: {relatedPoliciesModal.customer?.full_name || "Customer"}
-	              </h3>
-              <button type="button" className="text-button" onClick={resetRelatedPoliciesModal}>
-                Cancel
-              </button>
-            </div>
-
-            <div className="master-modal__body">
-              {relatedPoliciesModal.loading ? (
-                <div className="table-state">
-                  <Spinner label="Loading related policies..." />
-                </div>
-	              ) : relatedPoliciesModal.error ? (
-	                <p className="feedback feedback--error">{relatedPoliciesModal.error}</p>
-	              ) : (
-                  <div className="customer-view-sections">
-                    <div className="customer-view-section">
-                      <div className="master-card__header">
-                        <h4 className="customer-view-section__title">Policies</h4>
-                        <div className="master-card__actions">
-                          <ActionIconDisplay
-                            icon="excel"
-                            label="Excel"
-                            variant="toolbar"
-                            onClick={() =>
-                              downloadCsv({
-                                title: `Policies - ${relatedPoliciesModal.customer?.full_name}`,
-                                columns: [
-                                  { key: "policy_number", label: "Policy No." },
-                                  { key: "issue_date", label: "Issue Date" },
-                                  { key: "business_type", label: "Business Type" },
-                                  { key: "policy_type", label: "Policy Type" },
-                                  { key: "company_name", label: "Company" },
-                                  { key: "product_name", label: "Product" },
-                                  { key: "risk_end_date", label: "Risk Expiry Date" },
-                                  { key: "renewal_status", label: "Renewal Status" },
-                                  { key: "policy_status", label: "Status" }
-                                ],
-                                records: relatedPoliciesModal.policies
-                              })
-                            }
-                          />
-                          <ActionIconDisplay
-                            icon="pdf"
-                            label="PDF"
-                            variant="toolbar"
-                            onClick={() =>
-                              downloadPdf({
-                                title: `Policies - ${relatedPoliciesModal.customer?.full_name}`,
-                                columns: [
-                                  { key: "policy_number", label: "Policy No." },
-                                  { key: "issue_date", label: "Issue Date" },
-                                  { key: "business_type", label: "Business Type" },
-                                  { key: "policy_type", label: "Policy Type" },
-                                  { key: "company_name", label: "Company" },
-                                  { key: "product_name", label: "Product" },
-                                  { key: "risk_end_date", label: "Risk Expiry Date" },
-                                  { key: "renewal_status", label: "Renewal Status" },
-                                  { key: "policy_status", label: "Status" }
-                                ],
-                                records: relatedPoliciesModal.policies
-                              })
-                            }
-                          />
-                        </div>
-                      </div>
-                      <div className="table-wrap">
-                        <table className="master-table">
-                          <thead>
-		                        <tr>
-		                          <th>Policy No.</th>
-		                          <th>Issue Date</th>
-		                          <th>Business Type</th>
-		                          <th>Policy Type</th>
-		                          <th>Company</th>
-		                          <th>Product</th>
-		                          <th>Risk Expiry Date</th>
-		                          <th>Renewal Status</th>
-		                          <th>Status</th>
-	                        </tr>
-                          </thead>
-                          <tbody>
-                            {relatedPoliciesModal.policies.length === 0 ? (
-                              <tr>
-                                <td colSpan="9" className="table-state">
-                                  No related policies found for this customer.
-                                </td>
-                              </tr>
-                            ) : (
-                              relatedPoliciesModal.policies.map((policy) => (
-		                            <tr key={policy.id}>
-		                              <td>{formatCellValue(policy.policy_number)}</td>
-		                              <td>{formatCellValue(policy.issue_date)}</td>
-		                              <td>{formatCellValue(policy.business_type)}</td>
-		                              <td>{formatCellValue(policy.policy_type)}</td>
-		                              <td className="text-blue">{formatCellValue(policy.company_name)}</td>
-		                              <td className="text-blue">{formatCellValue(policy.product_name)}</td>
-		                              <td>{formatCellValue(policy.risk_end_date)}</td>
-		                              <td>{formatCellValue(policy.renewal_status)}</td>
-		                              <td>{formatCellValue(policy.policy_status)}</td>
-	                            </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    <div className="customer-view-section">
-                      <div className="master-card__header">
-                        <h4 className="customer-view-section__title">Documents</h4>
-                        <div className="master-card__actions">
-                          <ActionIconDisplay
-                            icon="excel"
-                            label="Excel"
-                            variant="toolbar"
-                            onClick={() =>
-                              downloadCsv({
-                                title: `Documents - ${relatedPoliciesModal.customer?.full_name}`,
-                                columns: [
-                                  { key: "document_type_name", label: "Document Type" },
-                                  { key: "file_name", label: "File Name" },
-                                  { key: "document_number", label: "Document No." },
-                                  { key: "document_date", label: "Document Date" },
-                                  { key: "expiry_date", label: "Expiry Date" },
-                                  { key: "remarks", label: "Remarks" },
-                                ],
-                                records: relatedPoliciesModal.documents
-                              })
-                            }
-                          />
-                          <ActionIconDisplay
-                            icon="pdf"
-                            label="PDF"
-                            variant="toolbar"
-                            onClick={() =>
-                              downloadPdf({
-                                title: `Documents - ${relatedPoliciesModal.customer?.full_name}`,
-                                columns: [
-                                  { key: "document_type_name", label: "Document Type" },
-                                  { key: "file_name", label: "File Name" },
-                                  { key: "document_number", label: "Document No." },
-                                  { key: "document_date", label: "Document Date" },
-                                  { key: "expiry_date", label: "Expiry Date" },
-                                  { key: "remarks", label: "Remarks" },
-                                ],
-                                records: relatedPoliciesModal.documents
-                              })
-                            }
-                          />
-                        </div>
-                      </div>
-                      <div className="table-wrap">
-                        <table className="master-table">
-                          <thead>
-                            <tr>
-                              <th>Document Type</th>
-                              <th>File Name</th>
-                              <th>Document No.</th>
-                              <th>Document Date</th>
-                              <th>Expiry Date</th>
-                              <th>Remarks</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {relatedPoliciesModal.documents.length === 0 ? (
-                              <tr>
-                                <td colSpan="6" className="table-state">
-                                  No documents found for this customer.
-                                </td>
-                              </tr>
-                            ) : (
-	                              relatedPoliciesModal.documents.map((document) => (
-	                                <tr key={document.id}>
-	                                  <td>{formatCellValue(document.document_type_name)}</td>
-	                                  <td>
-                                      {document.file_url ? (
-                                        <a
-                                          href={`${API_BASE}/${String(document.file_url).replace(/^\/+/, "")}`}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          className="text-blue"
-                                        >
-                                          {formatCellValue(document.file_name)}
-                                        </a>
-                                      ) : (
-                                        formatCellValue(document.file_name)
-                                      )}
-                                    </td>
-	                                  <td>{formatCellValue(document.document_number)}</td>
-	                                  <td>{formatCellValue(document.document_date)}</td>
-	                                  <td>{formatCellValue(document.expiry_date)}</td>
-                                  <td>{formatCellValue(document.remarks)}</td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-	              )}
             </div>
           </section>
         </div>
