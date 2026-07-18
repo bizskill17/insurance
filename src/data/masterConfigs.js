@@ -289,7 +289,6 @@ export const masterConfigs = {
     resource: "agent-accounts",
     tableColumns: [
       { key: "agent_name", label: "Agent" },
-      { key: "account_label", label: "Account Label" },
       { key: "account_type", label: "Account Type", formatter: "account_type" },
       { key: "bank_name", label: "Bank" },
       { key: "is_default", label: "Default", type: "boolean" },
@@ -297,7 +296,6 @@ export const masterConfigs = {
     ],
     fields: [
       { name: "agent_id", label: "Agent", type: "select", optionsFrom: "agents", required: true },
-      { name: "account_label", label: "Account Label", type: "text", required: true },
       {
         name: "account_type",
         label: "Account Type",

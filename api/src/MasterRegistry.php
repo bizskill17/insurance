@@ -227,12 +227,10 @@ final class MasterRegistry
                     'is_active',
                     'notes'
                 ],
-                'required' => ['agent_id', 'account_label', 'account_type'],
+                'required' => ['agent_id', 'account_type'],
                 'nullable' => ['bank_name', 'account_holder_name', 'masked_account_number', 'card_last4', 'upi_id', 'branch_name', 'notes'],
                 'boolean' => ['is_default', 'is_active'],
-                'duplicate_keys' => [
-                    ['columns' => ['agent_id', 'account_label'], 'label' => 'Account Label', 'display_column' => 'account_label'],
-                ],
+                'duplicate_keys' => [],
                 'organization_scope_column' => 'a.organization_id',
                 'organization_storage_column' => null,
                 'organization_record_scope' => 'agent_id IN (SELECT id FROM agents WHERE organization_id = :organization_id)',

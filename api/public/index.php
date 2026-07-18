@@ -4351,6 +4351,10 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                 $normalized['customer_code'] = generateCustomerCode($pdo, $organizationId);
             }
 
+            if ($method === 'POST' && $resource === 'agent-accounts' && empty($normalized['account_label'])) {
+                $normalized['account_label'] = trim((string) ($normalized['account_type'] ?? 'Account'));
+            }
+
             if ($resource === 'customers' && $organizationId !== null) {
                 ensureCustomerLocationMasters($pdo, $organizationId, $normalized);
             }
