@@ -605,8 +605,11 @@ function assertNoMasterDuplicate(PDO $pdo, array $config, array $normalized, ?in
             continue;
         }
 
-        if ((bool) ($config['organization_owned'] ?? true) && $organizationId !== null) {
-            $conditions[] = 'organization_id = :dup_organization_id';
+        $organizationStorageColumn = array_key_exists('organization_storage_column', $config)
+            ? $config['organization_storage_column']
+            : 'organization_id';
+        if ((bool) ($config['organization_owned'] ?? true) && $organizationId !== null && $organizationStorageColumn) {
+            $conditions[] = sprintf('%s = :dup_organization_id', $organizationStorageColumn);
             $bindings['dup_organization_id'] = $organizationId;
         }
 
@@ -3531,7 +3534,7 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                 apa.is_default
              FROM agent_payment_accounts apa
              LEFT JOIN agents a ON a.id = apa.agent_id
-             WHERE apa.organization_id = :organization_id
+             WHERE a.organization_id = :organization_id
                AND apa.is_active = 1
              ORDER BY a.full_name ASC, apa.is_default DESC, apa.account_label ASC'
         );
@@ -4337,8 +4340,11 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                     }
                 }
             }
-            if ($method === 'POST' && $isOrganizationOwned) {
-                $normalized['organization_id'] = $organizationId;
+            $organizationStorageColumn = array_key_exists('organization_storage_column', $config)
+                ? $config['organization_storage_column']
+                : 'organization_id';
+            if ($method === 'POST' && $isOrganizationOwned && $organizationStorageColumn) {
+                $normalized[$organizationStorageColumn] = $organizationId;
             }
 
             if ($method === 'POST' && $resource === 'customers' && empty($normalized['customer_code'])) {
@@ -4447,11 +4453,12 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                 $assignments[] = sprintf('%s = :%s', $column, $column);
             }
 
+            $organizationRecordScope = $config['organization_record_scope'] ?? 'organization_id = :organization_id';
             $sql = sprintf(
                 'UPDATE %s SET %s WHERE id = :id%s',
                 $config['table'],
                 implode(', ', $assignments),
-                $isOrganizationOwned ? ' AND organization_id = :organization_id' : ''
+                $isOrganizationOwned ? ' AND ' . $organizationRecordScope : ''
             );
 
             $statement = $pdo->prepare($sql);
@@ -4472,10 +4479,11 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
         }
 
         if ($method === 'DELETE' && $id !== null) {
+            $organizationRecordScope = $config['organization_record_scope'] ?? 'organization_id = :organization_id';
             $statement = $pdo->prepare(sprintf(
                 'DELETE FROM %s WHERE id = :id%s',
                 $config['table'],
-                $isOrganizationOwned ? ' AND organization_id = :organization_id' : ''
+                $isOrganizationOwned ? ' AND ' . $organizationRecordScope : ''
             ));
             $statement->bindValue(':id', $id, PDO::PARAM_INT);
             if ($isOrganizationOwned) {

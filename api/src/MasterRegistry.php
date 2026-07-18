@@ -233,7 +233,9 @@ final class MasterRegistry
                 'duplicate_keys' => [
                     ['columns' => ['agent_id', 'account_label'], 'label' => 'Account Label', 'display_column' => 'account_label'],
                 ],
-                'organization_scope_column' => 'apa.organization_id',
+                'organization_scope_column' => 'a.organization_id',
+                'organization_storage_column' => null,
+                'organization_record_scope' => 'agent_id IN (SELECT id FROM agents WHERE organization_id = :organization_id)',
             ],
 ];
 
