@@ -114,7 +114,6 @@ export default function ExpiryReportsPage() {
             title={activeSection.title}
             items={activeSection.items}
             compact={activeSection.compact}
-            stacked
             onOpen={navigate}
             hideTitle
             counts={activeCounts}
