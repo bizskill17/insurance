@@ -885,6 +885,22 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
         exit;
     }
 
+    if (preg_match('#^/api/customer-groups/(\d+)/customers$#', $path, $matches) === 1 && $method === 'GET') {
+        $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
+        $groupId = (int) $matches[1];
+        $statement = $pdo->prepare(
+            'SELECT id, full_name, mobile, email, city, state, is_active
+             FROM customers
+             WHERE organization_id = :organization_id AND group_id = :group_id
+             ORDER BY full_name ASC, id ASC'
+        );
+        bindOrganizationId($statement, $organizationId);
+        $statement->bindValue(':group_id', $groupId, PDO::PARAM_INT);
+        $statement->execute();
+        Response::json(['status' => 'ok', 'data' => $statement->fetchAll()]);
+        exit;
+    }
     if (preg_match('#^/api/customers/(\d+)/policies$#', $path, $matches) === 1 && $method === 'GET') {
         $pdo = Database::connection();
         $organizationId = requireOrganizationId();

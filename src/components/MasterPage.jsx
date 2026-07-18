@@ -753,16 +753,13 @@ export default function MasterPage({
     setCustomerGroupCustomersLoading(true);
 
     try {
-      const search = encodeURIComponent(record.group_name || "");
-      const response = await fetch(`${API_BASE}/masters/customers?limit=500000&search=${search}`);
+      const response = await fetch(`${API_BASE}/customer-groups/${record.id}/customers`);
       const json = await readApiJson(response);
       if (!response.ok) {
         throw new Error(json.message || "Failed to load customers for this group.");
       }
 
-      setCustomerGroupCustomers(
-        (json.data || []).filter((customer) => Number(customer.group_id) === Number(record.id))
-      );
+      setCustomerGroupCustomers(json.data || []);
     } catch (loadError) {
       setCustomerGroupCustomersError(loadError.message);
     } finally {
@@ -2267,10 +2264,12 @@ export default function MasterPage({
                   />
                 ) : null}
                 {resourceKey === "customer-groups" && selectedCustomerGroup ? (
-                  <section className="customer-group-customers">
+                  <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="customer-group-view-title">
+                    <div className="master-modal__backdrop" onClick={() => setSelectedCustomerGroup(null)} />
+                    <section className="master-card master-modal__panel master-modal__panel--wide customer-group-customers">
                     <div className="customer-group-customers__header">
                       <div>
-                        <h3>{selectedCustomerGroup.group_name}</h3>
+                        <h3 id="customer-group-view-title">{selectedCustomerGroup.group_name}</h3>
                         <span>{selectedCustomerGroup.customer_count ?? customerGroupCustomers.length} customers</span>
                       </div>
                       <button
@@ -2323,6 +2322,7 @@ export default function MasterPage({
                       </div>
                     )}
                   </section>
+                  </div>
                 ) : null}
                 <RecordDetailModal
                   isOpen={Boolean(selectedRecord)}
