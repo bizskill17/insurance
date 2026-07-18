@@ -331,7 +331,12 @@ export default function ResponsiveDataView({
                     <tr
                       key={record[rowKey] ?? index}
                       className="master-table__row"
-                      onClick={() => handleRecordOpen(record)}
+                      onDoubleClick={(event) => {
+                        if (event.target.closest("input, select, textarea, button, a")) {
+                          return;
+                        }
+                        handleRecordOpen(record);
+                      }}
                     >
                       <td style={{ width: "72px", minWidth: "72px", maxWidth: "72px" }}>
                         {pageStart + index + 1}
