@@ -46,6 +46,7 @@ export default function SearchableSelect({
   className = "",
   name,
   id,
+  onSearchChange,
   ...props
 }) {
   const generatedId = useId();
@@ -133,8 +134,9 @@ export default function SearchableSelect({
   useEffect(() => {
     if (isOpen) {
       setQuery("");
+      onSearchChange?.("");
     }
-  }, [isOpen]);
+  }, [isOpen, onSearchChange]);
 
   const emitChange = (nextValue) => {
     onChange?.({
@@ -194,7 +196,10 @@ export default function SearchableSelect({
             className="searchable-select__search"
             value={query}
             placeholder="Search..."
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              onSearchChange?.(event.target.value);
+            }}
           />
           <div id={`${selectId}-listbox`} className="searchable-select__list" role="listbox">
             {filteredOptions.length ? (

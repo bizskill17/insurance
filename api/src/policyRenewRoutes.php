@@ -798,6 +798,17 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
         $pdo->beginTransaction();
 
         try {
+            if (!$customerGroupWasProvided && $customer !== null && empty($customer['group_id']) && $group !== null) {
+                $assignDefaultGroup = $pdo->prepare(
+                    'UPDATE customers SET group_id = :group_id WHERE id = :id AND organization_id = :organization_id AND group_id IS NULL'
+                );
+                $assignDefaultGroup->bindValue(':group_id', (int) $group['id'], \PDO::PARAM_INT);
+                $assignDefaultGroup->bindValue(':id', (int) $customer['id'], \PDO::PARAM_INT);
+                bindOrganizationId($assignDefaultGroup, $organizationId);
+                $assignDefaultGroup->execute();
+                $customer['group_id'] = (int) $group['id'];
+            }
+
             $policyFamilyId = null;
             $previousPolicyId = null;
             $lastStatus = $shouldLinkPrevious ? 'Renewed' : 'Issued';

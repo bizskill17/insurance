@@ -681,13 +681,14 @@ export default function TasksPage({ viewPath }) {
                       <SearchableSelect
                         required
                         value={taskForm.client_name}
+                        onSearchChange={setCustomerQuery}
                         onChange={(event) => {
                           setCustomerQuery("");
                           handleTaskFormChange("client_name", event.target.value);
                         }}
                       >
                         <option value="">Select</option>
-                        {customers.map((customer) => (
+                        {filteredCustomers.map((customer) => (
                           <option key={customer.id} value={customer.full_name}>
                             {customer.full_name}
                           </option>

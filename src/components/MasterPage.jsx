@@ -437,6 +437,7 @@ export default function MasterPage({
     error: ""
   });
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [isAddCustomerGroupModalOpen, setIsAddCustomerGroupModalOpen] = useState(false);
   const currentPath = `/masters/${resourceKey}`;
   const organizationViewPath = "/masters/organizations";
   const canManageOrganizations = Boolean(currentUser?.can_manage_organizations);
@@ -641,6 +642,29 @@ export default function MasterPage({
     setMessage("");
     setError("");
     setIsFormOpen(true);
+  };
+
+  const handleCustomerGroupCreated = async (group) => {
+    setIsAddCustomerGroupModalOpen(false);
+
+    try {
+      const response = await fetch(`${API_BASE}/masters/customer-groups?limit=500000`);
+      const json = await readApiJson(response);
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to refresh customer groups.");
+      }
+
+      const groups = json.data || [];
+      setOptionsMap((current) => ({ ...current, "customer-groups": groups }));
+      const savedGroup =
+        (group && groups.find((item) => Number(item.id) === Number(group.id))) ||
+        (group && groups.find((item) => item.group_name === group.group_name));
+      if (savedGroup) {
+        setFormState((current) => ({ ...current, group_id: String(savedGroup.id) }));
+      }
+    } catch (loadError) {
+      setError(loadError.message);
+    }
   };
 
   const handleDownloadTemplate = () => {
@@ -1693,7 +1717,20 @@ export default function MasterPage({
 
                 return (
                   <label key={field.name} className="form-field">
-                    <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
+                    <div className="form-field__label-row">
+                      <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
+                      {resourceKey === "customers" && field.name === "group_id" ? (
+                        <button
+                          type="button"
+                          className="inline-icon-button"
+                          onClick={() => setIsAddCustomerGroupModalOpen(true)}
+                          aria-label="Add customer group"
+                          title="Add customer group"
+                        >
+                          +
+                        </button>
+                      ) : null}
+                    </div>
                     <SearchableSelect
                       value={formState[field.name]}
                       onChange={(event) => handleChange(field, event.target.value)}
@@ -1757,12 +1794,23 @@ export default function MasterPage({
     </div>
   ) : null;
 
+  const customerGroupModal = isAddCustomerGroupModalOpen ? (
+    <MasterPage
+      resourceKey="customer-groups"
+      embeddedFormOnly
+      autoOpenForm
+      onFormSaved={handleCustomerGroupCreated}
+      onFormCancel={() => setIsAddCustomerGroupModalOpen(false)}
+    />
+  ) : null;
+
   if (embeddedFormOnly) {
-    return formModal;
+    return <>{formModal}{customerGroupModal}</>;
   }
 
   return (
     <div className="master-page">
+      {customerGroupModal}
       <div className="master-grid master-grid--list-only">
         <section className="master-card master-card--table">
           <div className="master-card__header">
