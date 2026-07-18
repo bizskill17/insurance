@@ -2393,7 +2393,7 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                 p.policy_type,
                 p.issue_date,
                 p.risk_end_date,
-                (SELECT d.file_url FROM documents d WHERE d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 ORDER BY d.uploaded_at DESC, d.id DESC LIMIT 1) AS document_url,
+                NULL AS document_url,
                 c.full_name AS customer_name,
                 cg.group_name AS customer_group_name,
                 ic.company_name,
@@ -2403,24 +2403,15 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
              LEFT JOIN customer_groups cg ON cg.id = c.group_id
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
              LEFT JOIN insurance_products ip ON ip.id = p.product_id
-             LEFT JOIN documents d
-               ON d.policy_id = p.id
-              AND d.deleted_at IS NULL
-              AND d.is_active = 1
              WHERE p.organization_id = :organization_id
                AND p.issue_date >= "2026-04-01"
-             GROUP BY
-                p.id,
-                p.policy_number,
-                p.policy_type,
-                p.issue_date,
-                p.risk_end_date,
-                (SELECT d.file_url FROM documents d WHERE d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 ORDER BY d.uploaded_at DESC, d.id DESC LIMIT 1) AS document_url,
-                c.full_name,
-                cg.group_name,
-                ic.company_name,
-                ip.product_name
-             HAVING count(d.id) = 0
+               AND NOT EXISTS (
+                  SELECT 1
+                  FROM documents d
+                  WHERE d.policy_id = p.id
+                    AND d.deleted_at IS NULL
+                    AND d.is_active = 1
+               )
              ORDER BY p.updated_at DESC, p.id DESC
              LIMIT :limit'
         );
