@@ -19,7 +19,7 @@ function optionText(children) {
 function buildOptions(children) {
   return Children.toArray(children)
     .filter((child) => isValidElement(child) && child.type === "option")
-    .map((child) => {
+    .map((child, index) => {
       const label = optionText(child.props.children).trim() || String(child.props.value ?? "");
       const description = String(child.props["data-description"] ?? "").trim();
       const searchText = String(child.props["data-search-text"] ?? `${label} ${description}`)
@@ -27,6 +27,7 @@ function buildOptions(children) {
         .toLowerCase();
 
       return {
+        key: child.key !== null && child.key !== undefined ? String(child.key) : `${String(child.props.value ?? "")}-${index}`,
         value: String(child.props.value ?? ""),
         label,
         description,
@@ -70,7 +71,8 @@ export default function SearchableSelect({
       return visibleOptions;
     }
 
-    return visibleOptions.filter((option) => option.searchText.includes(normalizedQuery));
+    const queryTokens = normalizedQuery.split(/\s+/).filter(Boolean);
+    return visibleOptions.filter((option) => queryTokens.every((token) => option.searchText.includes(token)));
   }, [query, visibleOptions]);
 
   useEffect(() => {
@@ -205,7 +207,7 @@ export default function SearchableSelect({
             {filteredOptions.length ? (
               filteredOptions.map((option) => (
                 <button
-                  key={`${option.value}-${option.label}`}
+                  key={option.key}
                   type="button"
                   className={`searchable-select__option ${option.value === stringValue ? "searchable-select__option--selected" : ""}`.trim()}
                   disabled={option.disabled}

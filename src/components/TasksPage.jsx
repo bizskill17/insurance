@@ -685,7 +685,7 @@ export default function TasksPage({ viewPath }) {
                       >
                         <option value="">Select</option>
                         {customers.map((customer) => (
-                          <option key={customer.id} value={customer.full_name}>
+                          <option key={customer.id} value={customer.full_name} data-description={customer.mobile || ""} data-search-text={`${customer.full_name || ""} ${customer.mobile || ""}`.trim()}>
                             {customer.full_name}
                           </option>
                         ))}
