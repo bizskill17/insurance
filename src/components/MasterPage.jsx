@@ -265,6 +265,13 @@ function EditIcon() {
   );
 }
 
+function SaveIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m9.2 16.6-4.1-4.1 1.4-1.4 2.7 2.7 8.3-8.3 1.4 1.4-9.7 9.7Z" />
+    </svg>
+  );
+}
 function DeleteIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -433,7 +440,8 @@ export default function MasterPage({
   const [customerGroupCustomers, setCustomerGroupCustomers] = useState([]);
   const [customerGroupCustomersLoading, setCustomerGroupCustomersLoading] = useState(false);
   const [customerGroupCustomersError, setCustomerGroupCustomersError] = useState("");
-  const [isAddCustomerGroupModalOpen, setIsAddCustomerGroupModalOpen] = useState(false);
+  const [inlineCustomerEdits, setInlineCustomerEdits] = useState({});
+  const [inlineCustomerSavingId, setInlineCustomerSavingId] = useState(null);  const [isAddCustomerGroupModalOpen, setIsAddCustomerGroupModalOpen] = useState(false);
   const currentPath = `/masters/${resourceKey}`;
   const organizationViewPath = "/masters/organizations";
   const canManageOrganizations = Boolean(currentUser?.can_manage_organizations);
@@ -1349,11 +1357,165 @@ export default function MasterPage({
     }
   };
 
-  const renderRowActions = (record) => (
+  const getInlineCustomerValue = (record, fieldName) => {
+    if (Object.prototype.hasOwnProperty.call(inlineCustomerEdits[record.id] || {}, fieldName)) {
+      return inlineCustomerEdits[record.id][fieldName];
+    }
+
+    return String(record[fieldName] ?? "");
+  };
+
+  const handleInlineCustomerChange = (record, fieldName, value) => {
+    setInlineCustomerEdits((current) => ({
+      ...current,
+      [record.id]: {
+        ...(current[record.id] || {}),
+        [fieldName]: value,
+        ...(fieldName === "state" ? { city: "" } : {})
+      }
+    }));
+  };
+
+  const handleInlineCustomerSave = async (record) => {
+    const groupId = getInlineCustomerValue(record, "group_id");
+    const mobile = getInlineCustomerValue(record, "mobile").trim();
+    const state = getInlineCustomerValue(record, "state");
+    const city = getInlineCustomerValue(record, "city");
+
+    if (!groupId) {
+      setError("Customer Group is required.");
+      return;
+    }
+
+    if (mobile && !/^\d{10}$/.test(mobile)) {
+      setError("Mobile number must be exactly 10 digits.");
+      return;
+    }
+
+    setMessage("");
+    setError("");
+    setInlineCustomerSavingId(record.id);
+
+    try {
+      const response = await fetch(`${API_BASE}/masters/customers/${record.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: record.full_name,
+          group_id: groupId,
+          mobile,
+          state,
+          city
+        })
+      });
+      const json = await readApiJson(response);
+      if (!response.ok) {
+        throw new Error(formatMasterServerError(config, { ...record, group_id: groupId, mobile, state, city }, json.message || "Save failed."));
+      }
+
+      const groupName = (optionsMap["customer-groups"] || []).find(
+        (group) => String(group.id) === String(groupId)
+      )?.group_name || record.group_name;
+
+      setRecords((current) => current.map((customer) =>
+        Number(customer.id) === Number(record.id)
+          ? { ...customer, group_id: groupId, group_name: groupName, mobile, state, city }
+          : customer
+      ));
+      setInlineCustomerEdits((current) => {
+        const next = { ...current };
+        delete next[record.id];
+        return next;
+      });
+      setMessage(json.message || "Customer updated successfully.");
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setInlineCustomerSavingId(null);
+    }
+  };
+
+  const renderInlineCustomerField = (record, column) => {
+    if (column.key === "group_name") {
+      return (
+        <select
+          className="inline-table-input"
+          value={getInlineCustomerValue(record, "group_id")}
+          onChange={(event) => handleInlineCustomerChange(record, "group_id", event.target.value)}
+          aria-label={`Customer group for ${record.full_name}`}
+        >
+          <option value="">Select Group</option>
+          {(optionsMap["customer-groups"] || []).map((group) => (
+            <option key={group.id} value={group.id}>{group.group_name}</option>
+          ))}
+        </select>
+      );
+    }
+
+    if (column.key === "mobile") {
+      return (
+        <input
+          className="inline-table-input"
+          type="text"
+          inputMode="numeric"
+          maxLength="10"
+          value={getInlineCustomerValue(record, "mobile")}
+          onChange={(event) => handleInlineCustomerChange(record, "mobile", event.target.value.replace(/\D/g, ""))}
+          aria-label={`Mobile for ${record.full_name}`}
+        />
+      );
+    }
+
+    if (column.key === "state") {
+      return (
+        <select
+          className="inline-table-input"
+          value={getInlineCustomerValue(record, "state")}
+          onChange={(event) => handleInlineCustomerChange(record, "state", event.target.value)}
+          aria-label={`State for ${record.full_name}`}
+        >
+          <option value="">Select State</option>
+          {(optionsMap.states || []).map((stateOption) => (
+            <option key={stateOption.id} value={stateOption.state_name}>{stateOption.state_name}</option>
+          ))}
+        </select>
+      );
+    }
+
+    const selectedState = getInlineCustomerValue(record, "state");
+    return (
+      <select
+        className="inline-table-input"
+        value={getInlineCustomerValue(record, "city")}
+        onChange={(event) => handleInlineCustomerChange(record, "city", event.target.value)}
+        disabled={!selectedState}
+        aria-label={`City for ${record.full_name}`}
+      >
+        <option value="">Select City</option>
+        {(optionsMap.cities || [])
+          .filter((cityOption) => String(cityOption.state_name || "") === String(selectedState))
+          .map((cityOption) => (
+            <option key={cityOption.id} value={cityOption.city_name}>{cityOption.city_name}</option>
+          ))}
+      </select>
+    );
+  };
+  const renderRowActions = (record, showInlineSave = true) => (
     <div className="table-actions">
       {isSettingsView ? null : (
         <>
-      {resourceKey === "customers" ? (
+      {resourceKey === "customers" && canEditRecord && showInlineSave ? (
+        <button
+          type="button"
+          className="icon-button icon-button--save"
+          onClick={() => handleInlineCustomerSave(record)}
+          disabled={inlineCustomerSavingId === record.id}
+          aria-label="Save inline customer changes"
+          title="Save"
+        >
+          <SaveIcon />
+        </button>
+      ) : null}      {resourceKey === "customers" ? (
         <button
           type="button"
           className="icon-button icon-button--upload"
@@ -2043,6 +2205,8 @@ export default function MasterPage({
                                           <button type="button" className="table-link-button" onClick={() => handleRecordClick(record)}>
                                             {formatColumnValue(record, column)}
                                           </button>
+                                        ) : resourceKey === "customers" && ["group_name", "mobile", "city", "state"].includes(column.key) ? (
+                                          renderInlineCustomerField(record, column)
                                         ) : formatColumnValue(record, column)}
                                       </td>
                                     );
@@ -2073,6 +2237,8 @@ export default function MasterPage({
                                           <button type="button" className="table-link-button" onClick={() => handleRecordClick(record)}>
                                             {formatColumnValue(record, column)}
                                           </button>
+                                        ) : resourceKey === "customers" && ["group_name", "mobile", "city", "state"].includes(column.key) ? (
+                                          renderInlineCustomerField(record, column)
                                         ) : formatColumnValue(record, column)}
                               </td>
                             );
@@ -2155,7 +2321,7 @@ export default function MasterPage({
                   isOpen={Boolean(selectedRecord)}
                   title={config.title}
                   rows={detailRows}
-                  actions={!isSettingsView && selectedRecord ? renderRowActions(selectedRecord) : null}
+                  actions={!isSettingsView && selectedRecord ? renderRowActions(selectedRecord, false) : null}
                   onClose={() => {
                     setSelectedRecord(null);
                     resetRelatedPoliciesModal();
