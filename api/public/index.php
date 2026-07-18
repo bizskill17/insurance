@@ -2072,7 +2072,7 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
              LEFT JOIN insurance_products ip ON ip.id = p.product_id
              LEFT JOIN product_categories pc ON pc.category_name = p.policy_type AND pc.organization_id = p.organization_id
              WHERE p.organization_id = :organization_id
-             ORDER BY p.id DESC'
+             ORDER BY p.issue_date DESC, p.id DESC'
         );
         bindOrganizationId($statement, $organizationId);
         $statement->execute();
