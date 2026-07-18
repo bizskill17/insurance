@@ -20,10 +20,10 @@ const monthlyReports = [
 const dailyReports = [
   { label: "Today", path: "/reports/expiry-reports/day/today", countKey: "today" },
   { label: "Tomorrow", path: "/reports/expiry-reports/day/tomorrow", countKey: "tomorrow" },
-  { label: "Day after Tomorrow", path: "/reports/expiry-reports/day/day-after-tomorrow", countKey: "day-after-tomorrow" }
+  { label: "Day after Tomorrow", path: "/reports/expiry-reports/day/day-after-tomorrow", countKey: "day-after-tomorrow" },
+  { label: "Next 7 Days", path: "/reports/expiry-reports/week/7-days", countKey: "7-days" }
 ];
 
-const weeklyReports = [{ label: "Next 7 Days", path: "/reports/expiry-reports/week/7-days", countKey: "7-days" }];
 const yearlyReports = [
   { label: "Current Financial Years", path: "/reports/expiry-reports/year/current", countKey: "current" },
   { label: "Future Financial Years", path: "/reports/expiry-reports/year/future", countKey: "future" }
@@ -32,7 +32,6 @@ const yearlyReports = [
 const expirySections = {
   monthly: { title: "Monthly Expiry Reports", items: monthlyReports },
   daily: { title: "Daily Expiry Reports", items: dailyReports },
-  weekly: { title: "Weekly Expiry Reports", items: weeklyReports, compact: true },
   yearly: { title: "Yearly Expiry Reports", items: yearlyReports }
 };
 
@@ -100,8 +99,7 @@ export default function ExpiryReportsPage() {
 
   const activeCounts = useMemo(() => {
     if (inferredSectionId === "monthly") return counts.monthly;
-    if (inferredSectionId === "daily") return counts.daily;
-    if (inferredSectionId === "weekly") return counts.weekly;
+    if (inferredSectionId === "daily") return { ...counts.daily, ...counts.weekly };
     if (inferredSectionId === "yearly") return counts.yearly;
     return {};
   }, [counts, inferredSectionId]);
@@ -121,8 +119,7 @@ export default function ExpiryReportsPage() {
         ) : (
           <>
             <ExpirySection title="Monthly Expiry Reports" items={monthlyReports} onOpen={navigate} counts={counts.monthly} />
-            <ExpirySection title="Daily Expiry Reports" items={dailyReports} onOpen={navigate} counts={counts.daily} />
-            <ExpirySection title="Weekly Expiry Reports" items={weeklyReports} compact onOpen={navigate} counts={counts.weekly} />
+            <ExpirySection title="Daily Expiry Reports" items={dailyReports} onOpen={navigate} counts={{ ...counts.daily, ...counts.weekly }} />
             <ExpirySection title="Yearly Expiry Reports" items={yearlyReports} onOpen={navigate} counts={counts.yearly} />
           </>
         )}

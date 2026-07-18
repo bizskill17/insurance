@@ -123,9 +123,8 @@ export const menuSections = [
         matchPrefixes: ["/reports/expiry-reports/day/"]
       },
       {
-        label: "Weekly Expiry Reports",
-        path: "/reports/expiry-reports/section/weekly",
-        matchPrefixes: ["/reports/expiry-reports/week/"]
+        label: "Next 7 Days Expiry Report",
+        path: "/reports/expiry-reports/week/7-days"
       },
       {
         label: "Yearly Expiry Reports",
