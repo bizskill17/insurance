@@ -295,14 +295,27 @@ export default function TasksPage({ viewPath }) {
     };
   }, [isCustomerDropdownOpen]);
 
-  const taskCategories = useMemo(
+  const activeCategories = useMemo(
     () => categories.filter((category) => Number(category.is_active ?? 1) === 1),
     [categories]
   );
 
+  const taskCategories = useMemo(() => {
+    const parentIds = new Set(
+      activeCategories
+        .map((category) => String(category.parent_category_id || ""))
+        .filter(Boolean)
+    );
+
+    return activeCategories.filter((category) => parentIds.has(String(category.id)));
+  }, [activeCategories]);
+
   const subCategories = useMemo(
-    () => categories.filter((category) => Number(category.is_active ?? 1) === 1),
-    [categories]
+    () =>
+      activeCategories.filter(
+        (category) => String(category.parent_category_id || "") === String(taskForm.category_id || "")
+      ),
+    [activeCategories, taskForm.category_id]
   );
 
   const filteredCustomers = useMemo(() => {
@@ -755,6 +768,7 @@ export default function TasksPage({ viewPath }) {
                         required
                         value={taskForm.sub_category_id}
                         onChange={(event) => handleTaskFormChange("sub_category_id", event.target.value)}
+                        disabled={!taskForm.category_id}
                       >
                         <option value="">Select Sub - Category</option>
                         {subCategories.map((category) => (
