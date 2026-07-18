@@ -86,6 +86,13 @@ final class MasterRegistry
                     'notes'
                 ],
                 'boolean' => ['is_active'],
+                'duplicate_keys' => [
+                    [
+                        'columns' => ['full_name', 'mobile'],
+                        'label' => 'Customer Name and Mobile',
+                        'display_column' => 'mobile'
+                    ],
+                ],
                 'organization_scope_column' => 'c.organization_id',
             ],
             'insurance-companies' => [
