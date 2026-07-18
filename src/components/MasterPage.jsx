@@ -728,6 +728,13 @@ export default function MasterPage({
       return nextState;
     });
   };
+  const handleRowDoubleClick = (event, record) => {
+    if (event.target.closest("input, select, textarea, button, a")) {
+      return;
+    }
+
+    handleRecordClick(record);
+  };
   const handleRecordClick = async (record) => {
     if (resourceKey === "customers") {
       setSelectedRecord(record);
@@ -2191,7 +2198,7 @@ export default function MasterPage({
                                 <tr
                                   key={record.id}
                                   className="master-table__row"
-                                  onClick={resourceKey === "customers" ? undefined : () => handleRecordClick(record)}
+                                  onDoubleClick={(event) => handleRowDoubleClick(event, record)}
                                 >
                                   <td>{runningIndex}</td>
                                   {config.tableColumns.map((column) => {
@@ -2202,9 +2209,9 @@ export default function MasterPage({
                                         className={getTableCellClass(column.key)}
                                       >
                                         {resourceKey === "customers" && column.key === "full_name" ? (
-                                          <button type="button" className="table-link-button" onClick={() => handleRecordClick(record)}>
+                                          <span className="table-link-button">
                                             {formatColumnValue(record, column)}
-                                          </button>
+                                          </span>
                                         ) : resourceKey === "customers" && ["group_name", "mobile", "city", "state"].includes(column.key) ? (
                                           renderInlineCustomerField(record, column)
                                         ) : formatColumnValue(record, column)}
@@ -2223,7 +2230,7 @@ export default function MasterPage({
                         <tr
                           key={record.id}
                           className="master-table__row"
-                          onClick={resourceKey === "customers" ? undefined : () => handleRecordClick(record)}
+                          onDoubleClick={(event) => handleRowDoubleClick(event, record)}
                         >
                           <td>{pageStart + index + 1}</td>
                           {config.tableColumns.map((column) => {
@@ -2234,9 +2241,9 @@ export default function MasterPage({
                                         className={getTableCellClass(column.key)}
                               >
                                 {resourceKey === "customers" && column.key === "full_name" ? (
-                                          <button type="button" className="table-link-button" onClick={() => handleRecordClick(record)}>
+                                          <span className="table-link-button">
                                             {formatColumnValue(record, column)}
-                                          </button>
+                                          </span>
                                         ) : resourceKey === "customers" && ["group_name", "mobile", "city", "state"].includes(column.key) ? (
                                           renderInlineCustomerField(record, column)
                                         ) : formatColumnValue(record, column)}
