@@ -120,7 +120,7 @@ export const menuSections = [
       {
         label: "Daily Expiry Reports",
         path: "/reports/expiry-reports/section/daily",
-        matchPrefixes: ["/reports/expiry-reports/day/"]
+        matchPrefixes: ["/reports/expiry-reports/day/", "/reports/expiry-reports/week/"]
       },
       {
         label: "Next 7 Days Expiry Report",
