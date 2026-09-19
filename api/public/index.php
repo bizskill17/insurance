@@ -2223,7 +2223,11 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
     if ($path === '/api/reports/expiring-policies' && $method === 'GET') {
         $pdo = Database::connection();
         $organizationId = requireOrganizationId();
-        $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
+        // Full reports must use the same policy set as the expiry counts.
+        $limit = ($_GET['limit'] ?? '') === 'all'
+            ? null
+            : (isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100);
+        $limitClause = $limit === null ? '' : ' LIMIT :limit';
         $mode = trim((string) ($_GET['mode'] ?? ''));
         $value = trim((string) ($_GET['value'] ?? ''));
 
@@ -2302,15 +2306,17 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
              LEFT JOIN insurance_products ip ON ip.id = p.product_id
              WHERE $whereClause
-             ORDER BY p.risk_end_date ASC, p.policy_number ASC
-             LIMIT :limit"
+             ORDER BY p.risk_end_date ASC, p.policy_number ASC, p.id ASC
+             $limitClause"
         );
 
         bindOrganizationId($statement, $organizationId);
         foreach ($bindings as $bindingName => [$bindingValue, $bindingType]) {
             $statement->bindValue($bindingName, $bindingValue, $bindingType);
         }
-        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        if ($limit !== null) {
+            $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        }
         $statement->execute();
 
         Response::json([

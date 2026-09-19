@@ -40,7 +40,7 @@ function getExpiryConfig(reportType, reportValue) {
   if (reportType === "month") {
     return {
       title: `${monthLabels[Number(reportValue)] || "Monthly"} Expiry Report`,
-      endpoint: `${API_BASE}/reports/expiring-policies?mode=month&value=${encodeURIComponent(reportValue)}&limit=100`
+      endpoint: `${API_BASE}/reports/expiring-policies?mode=month&value=${encodeURIComponent(reportValue)}&limit=all`
     };
   }
 
@@ -53,14 +53,14 @@ function getExpiryConfig(reportType, reportValue) {
 
     return {
       title: labels[reportValue] || "Daily Expiry Report",
-      endpoint: `${API_BASE}/reports/expiring-policies?mode=day&value=${encodeURIComponent(reportValue)}&limit=100`
+      endpoint: `${API_BASE}/reports/expiring-policies?mode=day&value=${encodeURIComponent(reportValue)}&limit=all`
     };
   }
 
   if (reportType === "week") {
     return {
       title: "Next 7 Days Expiry Report",
-      endpoint: `${API_BASE}/reports/expiring-policies?mode=week&value=${encodeURIComponent(reportValue || "7-days")}&limit=100`
+      endpoint: `${API_BASE}/reports/expiring-policies?mode=week&value=${encodeURIComponent(reportValue || "7-days")}&limit=all`
     };
   }
 
@@ -72,7 +72,7 @@ function getExpiryConfig(reportType, reportValue) {
 
     return {
       title: labels[reportValue] || "Yearly Expiry Report",
-      endpoint: `${API_BASE}/reports/expiring-policies?mode=year&value=${encodeURIComponent(reportValue)}&limit=100`
+      endpoint: `${API_BASE}/reports/expiring-policies?mode=year&value=${encodeURIComponent(reportValue)}&limit=all`
     };
   }
 
