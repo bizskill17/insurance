@@ -166,12 +166,10 @@ export default function DashboardPage() {
     "policies-added": 0
   });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      setError("");
 
       try {
         const [summaryResponse, countsResponse] = await Promise.all([
@@ -214,12 +212,9 @@ export default function DashboardPage() {
           "policies-added": Number(countsJson.data["policies-added"] || 0)
         });
       } catch (loadError) {
-        if (String(loadError.message || "").includes("organization_id")) {
-          setError("");
-          return;
-        }
-
-        setError(loadError.message);
+        console.warn("Dashboard counts could not be loaded:", loadError);
+        setSummary((current) => Object.fromEntries(Object.keys(current).map((key) => [key, null])));
+        setMenuCounts((current) => Object.fromEntries(Object.keys(current).map((key) => [key, null])));
       } finally {
         setLoading(false);
       }
@@ -240,8 +235,6 @@ export default function DashboardPage() {
           <div className="table-state">
             <Spinner label="Loading dashboard..." />
           </div>
-        ) : error ? (
-          <p className="feedback feedback--error">{error}</p>
         ) : (
           <>
             <div className="dashboard-list">
@@ -257,7 +250,7 @@ export default function DashboardPage() {
                       <span className="text-blue">{item.label}</span>
                     </span>
                     <span className={`dashboard-table__count dashboard-table__count--${item.tone}`}>
-                      {item.key in menuCounts ? menuCounts[item.key] : summary[item.key]}
+                      {(item.key in menuCounts ? menuCounts[item.key] : summary[item.key]) ?? "\u2014"}
                     </span>
                   </span>
                 </button>
@@ -281,7 +274,7 @@ export default function DashboardPage() {
                         <span className="text-blue">{item.label}</span>
                       </span>
                       <span className={`dashboard-table__count dashboard-table__count--${item.tone}`}>
-                        {menuCounts[item.key]}
+                        {menuCounts[item.key] ?? "\u2014"}
                       </span>
                     </span>
                   </button>
@@ -306,7 +299,7 @@ export default function DashboardPage() {
                         <span className="text-blue">{item.label}</span>
                       </span>
                       <span className={`dashboard-table__count dashboard-table__count--${item.tone}`}>
-                        {menuCounts[item.key]}
+                        {menuCounts[item.key] ?? "\u2014"}
                       </span>
                     </span>
                   </button>
