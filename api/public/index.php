@@ -3633,6 +3633,8 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                 apa.account_label,
                 apa.account_type,
                 apa.bank_name,
+                apa.masked_account_number,
+                apa.card_last4,
                 apa.is_default
              FROM agent_payment_accounts apa
              LEFT JOIN agents a ON a.id = apa.agent_id
