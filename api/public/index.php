@@ -958,6 +958,7 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
         $documentStatement = $pdo->prepare(
             'SELECT
                 d.id,
+                d.document_type_id,
                 dt.name AS document_type_name,
                 d.file_name,
                 d.file_url,
@@ -2890,6 +2891,101 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
         exit;
     }
 
+    if (preg_match('#^/api/customer-documents/(\d+)$#', $path, $matches) === 1) {
+        $documentId = (int) $matches[1];
+        $effectiveMethod = $method === 'POST' ? strtoupper((string) ($_POST['_method'] ?? 'POST')) : $method;
+        $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
+
+        $documentStatement = $pdo->prepare(
+            'SELECT id, stored_file_name FROM documents
+             WHERE id = :id AND organization_id = :organization_id AND customer_id IS NOT NULL
+               AND policy_id IS NULL AND deleted_at IS NULL AND is_active = 1'
+        );
+        $documentStatement->bindValue(':id', $documentId, PDO::PARAM_INT);
+        bindOrganizationId($documentStatement, $organizationId);
+        $documentStatement->execute();
+        $existingDocument = $documentStatement->fetch();
+
+        if (!$existingDocument) {
+            Response::json(['status' => 'error', 'message' => 'Customer document not found.'], 404);
+            exit;
+        }
+
+        if ($effectiveMethod === 'DELETE') {
+            $deleteStatement = $pdo->prepare('UPDATE documents SET is_active = 0, deleted_at = now() WHERE id = :id AND organization_id = :organization_id');
+            $deleteStatement->bindValue(':id', $documentId, PDO::PARAM_INT);
+            bindOrganizationId($deleteStatement, $organizationId);
+            $deleteStatement->execute();
+            Response::json(['status' => 'ok', 'message' => 'Customer document deleted successfully.']);
+            exit;
+        }
+
+        if ($effectiveMethod === 'PUT') {
+            $documentTypeId = (int) ($_POST['document_type_id'] ?? 0);
+            if ($documentTypeId <= 0) {
+                Response::json(['status' => 'error', 'message' => 'Document type is required.'], 422);
+                exit;
+            }
+            $typeStatement = $pdo->prepare('SELECT id FROM document_types WHERE id = :id AND organization_id = :organization_id AND is_active = 1 AND LOWER(entity_level) = \'customer\'');
+            $typeStatement->bindValue(':id', $documentTypeId, PDO::PARAM_INT);
+            bindOrganizationId($typeStatement, $organizationId);
+            $typeStatement->execute();
+            if (!$typeStatement->fetchColumn()) {
+                Response::json(['status' => 'error', 'message' => 'Selected document type is not valid for customer documents.'], 422);
+                exit;
+            }
+
+            $fileFields = [];
+            if (isset($_FILES['file']) && (int) ($_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                if ((int) $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+                    Response::json(['status' => 'error', 'message' => 'Failed to upload replacement file.'], 422);
+                    exit;
+                }
+                $uploadDir = __DIR__ . '/uploads';
+                if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+                    Response::json(['status' => 'error', 'message' => 'Unable to prepare upload directory.'], 500);
+                    exit;
+                }
+                $originalName = (string) $_FILES['file']['name'];
+                $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+                $storedName = uniqid('doc_', true) . ($extension !== '' ? '.' . $extension : '');
+                $targetPath = $uploadDir . '/' . $storedName;
+                if (!move_uploaded_file((string) $_FILES['file']['tmp_name'], $targetPath)) {
+                    Response::json(['status' => 'error', 'message' => 'Failed to save replacement file.'], 422);
+                    exit;
+                }
+                $fileFields = [
+                    ', file_name = :file_name, stored_file_name = :stored_file_name, file_url = :file_url, file_extension = :file_extension, mime_type = :mime_type, file_size_bytes = :file_size_bytes',
+                    $originalName, $storedName, 'uploads/' . $storedName, $extension !== '' ? $extension : null, mime_content_type($targetPath) ?: null, filesize($targetPath) ?: null
+                ];
+            }
+
+            $updateStatement = $pdo->prepare(
+                'UPDATE documents SET document_type_id = :document_type_id, document_number = :document_number, document_date = :document_date, expiry_date = :expiry_date, remarks = :remarks'
+                . ($fileFields[0] ?? '') . ' WHERE id = :id AND organization_id = :organization_id'
+            );
+            $updateStatement->bindValue(':document_type_id', $documentTypeId, PDO::PARAM_INT);
+            $updateStatement->bindValue(':document_number', trim((string) ($_POST['document_number'] ?? '')) ?: null);
+            $updateStatement->bindValue(':document_date', trim((string) ($_POST['document_date'] ?? '')) ?: null);
+            $updateStatement->bindValue(':expiry_date', trim((string) ($_POST['expiry_date'] ?? '')) ?: null);
+            $updateStatement->bindValue(':remarks', trim((string) ($_POST['remarks'] ?? '')) ?: null);
+            if ($fileFields !== []) {
+                [, $fileName, $storedFileName, $fileUrl, $fileExtension, $mimeType, $fileSize] = $fileFields;
+                $updateStatement->bindValue(':file_name', $fileName);
+                $updateStatement->bindValue(':stored_file_name', $storedFileName);
+                $updateStatement->bindValue(':file_url', $fileUrl);
+                $updateStatement->bindValue(':file_extension', $fileExtension);
+                $updateStatement->bindValue(':mime_type', $mimeType);
+                $updateStatement->bindValue(':file_size_bytes', $fileSize, $fileSize !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            }
+            $updateStatement->bindValue(':id', $documentId, PDO::PARAM_INT);
+            bindOrganizationId($updateStatement, $organizationId);
+            $updateStatement->execute();
+            Response::json(['status' => 'ok', 'message' => 'Customer document updated successfully.']);
+            exit;
+        }
+    }
     if ($path === '/api/payments/pending-client' && $method === 'GET') {
         $pdo = Database::connection();
         $organizationId = requireOrganizationId();

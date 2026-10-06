@@ -435,6 +435,13 @@ export default function MasterPage({
     uploading: false,
     error: ""
   });
+  const [customerDocumentEditModal, setCustomerDocumentEditModal] = useState({
+    isOpen: false,
+    document: null,
+    documentTypes: [],
+    saving: false,
+    error: ""
+  });
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedCustomerGroup, setSelectedCustomerGroup] = useState(null);
   const [customerGroupCustomers, setCustomerGroupCustomers] = useState([]);
@@ -1361,6 +1368,64 @@ export default function MasterPage({
     }
   };
 
+  const refreshRelatedCustomerDocuments = async () => {
+    const customer = relatedPoliciesModal.customer;
+    if (!customer) return;
+    const response = await fetch(`${API_BASE}/customers/${customer.id}/policies`);
+    const json = await readApiJson(response);
+    if (!response.ok) throw new Error(json.message || "Failed to refresh customer documents.");
+    setRelatedPoliciesModal((current) => ({ ...current, documents: json.data.documents || [] }));
+  };
+
+  const openCustomerDocumentEditModal = async (document) => {
+    setCustomerDocumentEditModal({ isOpen: true, document: { ...document, replacement_file: null }, documentTypes: [], saving: false, error: "" });
+    try {
+      const response = await fetch(`${API_BASE}/masters/document-types?limit=500000`);
+      const json = await readApiJson(response);
+      if (!response.ok) throw new Error(json.message || "Failed to load document types.");
+      setCustomerDocumentEditModal((current) => ({ ...current, documentTypes: (json.data || []).filter((item) => String(item.entity_level || "").toLowerCase() === "customer") }));
+    } catch (loadError) {
+      setCustomerDocumentEditModal((current) => ({ ...current, error: loadError.message }));
+    }
+  };
+
+  const updateCustomerDocumentEdit = (key, value) => {
+    setCustomerDocumentEditModal((current) => ({ ...current, document: { ...current.document, [key]: value } }));
+  };
+
+  const handleCustomerDocumentEdit = async (event) => {
+    event.preventDefault();
+    const document = customerDocumentEditModal.document;
+    if (!document) return;
+    setCustomerDocumentEditModal((current) => ({ ...current, saving: true, error: "" }));
+    try {
+      const payload = new FormData();
+      payload.append("_method", "PUT");
+      ["document_type_id", "document_number", "document_date", "expiry_date", "remarks"].forEach((key) => payload.append(key, document[key] ?? ""));
+      if (document.replacement_file) payload.append("file", document.replacement_file);
+      const response = await fetch(`${API_BASE}/customer-documents/${document.id}`, { method: "POST", body: payload });
+      const json = await readApiJson(response);
+      if (!response.ok) throw new Error(json.message || "Failed to update document.");
+      await refreshRelatedCustomerDocuments();
+      setCustomerDocumentEditModal({ isOpen: false, document: null, documentTypes: [], saving: false, error: "" });
+      setMessage(json.message || "Customer document updated successfully.");
+    } catch (saveError) {
+      setCustomerDocumentEditModal((current) => ({ ...current, saving: false, error: saveError.message }));
+    }
+  };
+
+  const handleCustomerDocumentDelete = async (document) => {
+    if (!window.confirm(`Delete document "${document.file_name || document.id}"?`)) return;
+    try {
+      const response = await fetch(`${API_BASE}/customer-documents/${document.id}`, { method: "DELETE" });
+      const json = await readApiJson(response);
+      if (!response.ok) throw new Error(json.message || "Failed to delete document.");
+      await refreshRelatedCustomerDocuments();
+      setMessage(json.message || "Customer document deleted successfully.");
+    } catch (deleteError) {
+      setError(deleteError.message);
+    }
+  };
   const getInlineCustomerValue = (record, fieldName) => {
     if (Object.prototype.hasOwnProperty.call(inlineCustomerEdits[record.id] || {}, fieldName)) {
       return inlineCustomerEdits[record.id][fieldName];
@@ -2392,12 +2457,12 @@ export default function MasterPage({
                               <thead>
                                 <tr>
                                   <th>Document Type</th><th>File Name</th><th>Document No.</th>
-                                  <th>Document Date</th><th>Expiry Date</th><th>Remarks</th>
+                                  <th>Document Date</th><th>Expiry Date</th><th>Remarks</th><th>Action</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {relatedPoliciesModal.documents.length === 0 ? (
-                                  <tr><td colSpan="6" className="table-state">No documents found for this customer.</td></tr>
+                                  <tr><td colSpan="7" className="table-state">No documents found for this customer.</td></tr>
                                 ) : relatedPoliciesModal.documents.map((document) => (
                                   <tr key={document.id}>
                                     <td>{formatCellValue(document.document_type_name)}</td>
@@ -2412,6 +2477,12 @@ export default function MasterPage({
                                     <td>{formatCellValue(document.document_date)}</td>
                                     <td>{formatCellValue(document.expiry_date)}</td>
                                     <td>{formatCellValue(document.remarks)}</td>
+                                    <td>
+                                      <div className="table-actions">
+                                        {canEditRecord ? <button type="button" className="icon-button icon-button--edit" onClick={() => openCustomerDocumentEditModal(document)} aria-label="Edit document" title="Edit"><EditIcon /></button> : null}
+                                        {canDeleteRecord ? <button type="button" className="icon-button icon-button--delete" onClick={() => handleCustomerDocumentDelete(document)} aria-label="Delete document" title="Delete"><DeleteIcon /></button> : null}
+                                      </div>
+                                    </td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -2510,6 +2581,26 @@ export default function MasterPage({
         </div>
       ) : null}
 
+      {customerDocumentEditModal.isOpen ? (
+        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="customer-document-edit-title">
+          <div className="master-modal__backdrop" onClick={() => setCustomerDocumentEditModal({ isOpen: false, document: null, documentTypes: [], saving: false, error: "" })} />
+          <section className="master-card master-modal__panel">
+            <div className="master-card__header"><h3 id="customer-document-edit-title">Edit Customer Document</h3><button type="button" className="text-button" onClick={() => setCustomerDocumentEditModal({ isOpen: false, document: null, documentTypes: [], saving: false, error: "" })}>Cancel</button></div>
+            <div className="master-modal__body">
+              <form className="master-form" onSubmit={handleCustomerDocumentEdit}>
+                <label className="form-field"><FormLabel required>Document Type</FormLabel><SearchableSelect value={customerDocumentEditModal.document?.document_type_id || ""} required onChange={(event) => updateCustomerDocumentEdit("document_type_id", event.target.value)}><option value="">Select Document Type</option>{customerDocumentEditModal.documentTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}</SearchableSelect></label>
+                <label className="form-field"><FormLabel>Document Number</FormLabel><input value={customerDocumentEditModal.document?.document_number || ""} onChange={(event) => updateCustomerDocumentEdit("document_number", event.target.value)} /></label>
+                <label className="form-field"><FormLabel>Document Date</FormLabel><input type="date" value={customerDocumentEditModal.document?.document_date || ""} onChange={(event) => updateCustomerDocumentEdit("document_date", event.target.value)} /></label>
+                <label className="form-field"><FormLabel>Expiry Date</FormLabel><input type="date" value={customerDocumentEditModal.document?.expiry_date || ""} onChange={(event) => updateCustomerDocumentEdit("expiry_date", event.target.value)} /></label>
+                <label className="form-field"><FormLabel>Replace File</FormLabel><input type="file" onChange={(event) => updateCustomerDocumentEdit("replacement_file", event.target.files?.[0] || null)} /></label>
+                <label className="form-field"><FormLabel>Remarks</FormLabel><textarea rows="3" value={customerDocumentEditModal.document?.remarks || ""} onChange={(event) => updateCustomerDocumentEdit("remarks", event.target.value)} /></label>
+                {customerDocumentEditModal.error ? <p className="feedback feedback--error">{customerDocumentEditModal.error}</p> : null}
+                <div className="form-actions"><button type="button" className="secondary-button form-actions__cancel" onClick={() => setCustomerDocumentEditModal({ isOpen: false, document: null, documentTypes: [], saving: false, error: "" })}>Cancel</button><button type="submit" className="primary-button" disabled={customerDocumentEditModal.saving}>{customerDocumentEditModal.saving ? <ButtonSpinner label="Saving..." /> : "Save Changes"}</button></div>
+              </form>
+            </div>
+          </section>
+        </div>
+      ) : null}
       {resourceKey === "customers" && customerUploadModal.isOpen ? (
         <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="customer-upload-title">
           <div className="master-modal__backdrop" onClick={resetCustomerUploadModal} />
