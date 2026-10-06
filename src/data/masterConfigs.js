@@ -291,6 +291,12 @@ export const masterConfigs = {
       { key: "agent_name", label: "Agent" },
       { key: "account_type", label: "Account Type", formatter: "account_type" },
       { key: "bank_name", label: "Bank" },
+      { key: "account_holder_name", label: "Account Holder" },
+      { key: "masked_account_number", label: "Masked Account No." },
+      { key: "card_last4", label: "Card Last 4" },
+      { key: "upi_id", label: "UPI ID" },
+      { key: "branch_name", label: "Branch" },
+      { key: "notes", label: "Notes" },
       { key: "is_default", label: "Default", type: "boolean" },
       { key: "is_active", label: "Active", type: "boolean" }
     ],
