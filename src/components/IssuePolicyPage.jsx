@@ -523,7 +523,8 @@ export default function IssuePolicyPage() {
                     <option value="">Select Agent Account</option>
                     {lookupData.agentAccounts.map((account) => (
                       <option key={account.id} value={account.id}>
-                        {[account.agent_name, account.account_label, account.account_type]
+                        {[account.agent_name, account.account_type, account.bank_name, account.masked_account_number, account.card_last4]
+                          .map((value) => String(value || "").trim())
                           .filter(Boolean)
                           .join(" - ")}
                       </option>

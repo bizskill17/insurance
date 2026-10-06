@@ -479,7 +479,7 @@ export default function PendingPaymentsPage() {
                     <option value="">Select Agent Account</option>
                     {agentAccounts.map((acc) => (
                       <option key={acc.id} value={acc.id}>
-                        {acc.agent_name} - {acc.account_label} ({acc.bank_name || "N/A"})
+                        {[acc.agent_name, acc.account_type, acc.bank_name, acc.masked_account_number, acc.card_last4].map((value) => String(value || "").trim()).filter(Boolean).join(" - ")}
                       </option>
                     ))}
                   </SearchableSelect>
