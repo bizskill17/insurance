@@ -77,7 +77,7 @@ function renderDocumentLinks(value) {
     .map((item) => item.trim())
     .filter(Boolean);
 
-  if (!links.length) return "-";
+  if (!links.length) return "";
 
   return (
     <span className="document-links">
