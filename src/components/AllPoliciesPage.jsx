@@ -97,6 +97,7 @@ const columns = [
   { key: "risk_end_date", label: "Risk End" },
   { key: "document_urls", label: "Document", type: "document-links" },
   { key: "paid_by_type", label: "Payment By" },
+  { key: "agent_account", label: "Agent Account" },
   { key: "payment_mode", label: "Payment Mode" },
   { key: "policy_status", label: "Status" }
 ];

@@ -2067,6 +2067,7 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                 p.year_of_manufacture,
                 p.registration_no,
                 p.paid_by_type,
+                concat_ws(' - ', a.full_name, nullif(apa.account_label, ''), nullif(apa.account_type, ''), nullif(apa.bank_name, ''), nullif(apa.masked_account_number, ''), nullif(apa.card_last4, '')) AS agent_account,
                 p.payment_mode,
                 p.agent_payment_account_id,
                 p.policy_status,
@@ -2076,6 +2077,8 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                 ip.product_name
              FROM policies p
              LEFT JOIN customers c ON c.id = p.customer_id
+             LEFT JOIN agent_payment_accounts apa ON apa.id = p.agent_payment_account_id AND apa.is_active = 1
+             LEFT JOIN agents a ON a.id = apa.agent_id AND a.organization_id = p.organization_id
              LEFT JOIN customer_groups cg ON cg.id = c.group_id
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
              LEFT JOIN insurance_products ip ON ip.id = p.product_id
@@ -3004,6 +3007,7 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                 p.policy_type,
                 p.issue_date,
                 p.paid_by_type,
+                concat_ws(' - ', a.full_name, nullif(apa.account_label, ''), nullif(apa.account_type, ''), nullif(apa.bank_name, ''), nullif(apa.masked_account_number, ''), nullif(apa.card_last4, '')) AS agent_account,
                 p.net_premium,
                 p.payment_received_amount,
                 p.payment_pending_amount,
@@ -3029,6 +3033,8 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
              ) fu ON fu.policy_id = p.id
              LEFT JOIN users u ON u.linked_agent_id = fu.done_by_agent_id
              LEFT JOIN customers c ON c.id = p.customer_id
+             LEFT JOIN agent_payment_accounts apa ON apa.id = p.agent_payment_account_id AND apa.is_active = 1
+             LEFT JOIN agents a ON a.id = apa.agent_id AND a.organization_id = p.organization_id
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
              WHERE p.organization_id = :organization_id
                AND p.paid_by_type = "Agent"

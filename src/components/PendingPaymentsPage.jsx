@@ -56,6 +56,7 @@ const columns = [
   { key: "company_name", label: "Company", highlight: true },
   { key: "policy_type", label: "Policy Type" },
   { key: "paid_by_type", label: "Payment By" },
+  { key: "agent_account", label: "Agent Account" },
   { key: "net_premium", label: "Net Premium" },
   { key: "payment_received_amount", label: "Received" },
   { key: "payment_pending_amount", label: "Pending" },
