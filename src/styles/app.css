@@ -1176,6 +1176,10 @@ button {
   background: transparent;
 }
 
+.document-type-modal-layer .master-modal {
+  z-index: 1200;
+}
+
 .master-modal {
   position: fixed;
   inset: 0;
@@ -2661,7 +2665,11 @@ button {
     font-size: 18px;
   }
 
-  .master-modal {
+  .document-type-modal-layer .master-modal {
+  z-index: 1200;
+}
+
+.master-modal {
     align-items: start;
     padding: 40px 8px 8px;
   }
