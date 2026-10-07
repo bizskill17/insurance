@@ -7,6 +7,7 @@ import FormLabel from "./FormLabel";
 import { ButtonSpinner } from "./Spinner";
 import SearchableSelect from "./SearchableSelect";
 import { formatCellValue } from "../utils/formatting";
+import MasterPage from "./MasterPage";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -132,6 +133,7 @@ export default function AllPoliciesPage() {
   const [uploadingDocuments, setUploadingDocuments] = useState(false);
   const [documentUploadError, setDocumentUploadError] = useState("");
   const [documentRefreshKey, setDocumentRefreshKey] = useState(0);
+  const [isDocumentTypeFormOpen, setIsDocumentTypeFormOpen] = useState(false);
 
   const loadRecords = async () => {
     setLoading(true);
@@ -447,6 +449,12 @@ export default function AllPoliciesPage() {
     setDocumentUploadError("");
   };
 
+  const refreshPolicyDocumentTypes = async () => {
+    const response = await fetch(`${API_BASE}/masters/document-types?limit=250`);
+    const json = await readApiJson(response);
+    if (!response.ok) throw new Error(json.message || "Failed to load document types.");
+    setPolicyDocumentTypes((json.data || []).filter((item) => String(item.entity_level || "").toLowerCase() === "policy"));
+  };
   const openPolicyUploadModal = async (policy) => {
     setUploadPolicy(policy);
     setPolicyDocuments([emptyPolicyDocumentEntry()]);
@@ -454,10 +462,7 @@ export default function AllPoliciesPage() {
     setIsPolicyUploadOpen(true);
 
     try {
-      const response = await fetch(`${API_BASE}/masters/document-types?limit=250`);
-      const json = await readApiJson(response);
-      if (!response.ok) throw new Error(json.message || "Failed to load document types.");
-      setPolicyDocumentTypes((json.data || []).filter((item) => String(item.entity_level || "").toLowerCase() === "policy"));
+      await refreshPolicyDocumentTypes();
     } catch (loadError) {
       setDocumentUploadError(loadError.message);
     }
@@ -571,6 +576,22 @@ export default function AllPoliciesPage() {
         />
       </section>
 
+      {isDocumentTypeFormOpen ? (
+        <MasterPage
+          resourceKey="document-types"
+          embeddedFormOnly
+          autoOpenForm
+          onFormSaved={async () => {
+            setIsDocumentTypeFormOpen(false);
+            try {
+              await refreshPolicyDocumentTypes();
+            } catch (loadError) {
+              setDocumentUploadError(loadError.message);
+            }
+          }}
+          onFormCancel={() => setIsDocumentTypeFormOpen(false)}
+        />
+      ) : null}
       {isPolicyUploadOpen ? (
         <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="policy-upload-title">
           <div className="master-modal__backdrop" onClick={closePolicyUploadModal} />
@@ -600,7 +621,10 @@ export default function AllPoliciesPage() {
                       </div>
                       <div className="customer-document-card__grid">
                         <label className="form-field">
-                          <FormLabel required>Document Type</FormLabel>
+                          <div className="form-field__label-row">
+                            <FormLabel required>Document Type</FormLabel>
+                            <button type="button" className="inline-icon-button" onClick={() => setIsDocumentTypeFormOpen(true)} aria-label="Add document type" title="Add document type">+</button>
+                          </div>
                           <SearchableSelect required value={document.document_type_id} onChange={(event) => updatePolicyDocument(index, "document_type_id", event.target.value)}>
                             <option value="">Select Document Type</option>
                             {policyDocumentTypes.map((documentType) => <option key={documentType.id} value={documentType.id}>{documentType.name}</option>)}
