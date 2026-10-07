@@ -455,7 +455,10 @@ export default function MasterPage({
   const canManageOrganizations = Boolean(currentUser?.can_manage_organizations);
   const currentUserViews = parseChecklistValue(currentUser?.views);
   const canAddRecord = isSettingsView || getPermissionValues(currentUser, "add_permissions", currentUserViews).includes(currentPath);
-  const canEditRecord = isSettingsView || getPermissionValues(currentUser, "edit_permissions", currentUserViews).includes(currentPath);
+  const canEditRecord =
+    resourceKey === "claims" ||
+    isSettingsView ||
+    getPermissionValues(currentUser, "edit_permissions", currentUserViews).includes(currentPath);
   const canDeleteRecord = isSettingsView || getPermissionValues(currentUser, "delete_permissions", currentUserViews).includes(currentPath);
   const filterOrganizationPermission = (values) => {
     const parsedValues = parseChecklistValue(values);
