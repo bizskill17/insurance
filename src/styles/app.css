@@ -62,6 +62,72 @@ button {
   border-right-color: transparent;
   opacity: 0;
 }
+/* Desktop navigation stays available as a slim icon rail. */
+.sidebar--compact {
+  width: 78px;
+  flex-basis: 78px;
+}
+
+.sidebar--compact .brand-panel {
+  min-height: 82px;
+  justify-content: center;
+  padding: 16px 10px;
+}
+
+.sidebar--compact .brand-panel__main {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 12px;
+  background: #2d57d7;
+  color: #fff;
+  justify-content: center;
+}
+
+.sidebar--compact .brand-copy {
+  display: none;
+}
+
+.sidebar--compact .brand-panel__main::before {
+  content: "FM";
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.sidebar--compact .menu {
+  padding: 12px 10px 18px;
+  overflow-x: hidden;
+}
+
+.sidebar--compact .menu-card {
+  min-height: 54px;
+  height: 54px;
+  justify-content: center;
+  padding: 0;
+  border-radius: 13px;
+}
+
+.sidebar--compact .menu-card__left {
+  gap: 0;
+}
+
+.sidebar--compact .menu-card__left > span:last-child,
+.sidebar--compact .chevron,
+.sidebar--compact .submenu,
+.sidebar--compact .user-line,
+.sidebar--compact .logout-button > span:last-child {
+  display: none;
+}
+
+.sidebar--compact .sidebar-footer {
+  padding: 12px 10px;
+}
+
+.sidebar--compact .logout-button {
+  min-height: 48px;
+  padding: 0;
+}
 
 .sidebar-backdrop {
   position: fixed;

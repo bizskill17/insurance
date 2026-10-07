@@ -84,7 +84,9 @@ function getCurrentViewName(pathname) {
 export default function AppLayout({ currentUser, allowedMenuSections, allowedRoutes, onLogout }) {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(() => getIsMobileViewport());
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => !getIsMobileViewport());
+  // On desktop the navigation remains available as a slim icon rail. The toggle
+  // expands it when labels or submenu options are needed.
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [appBrand, setAppBrand] = useState({
     name: currentUser?.organization_name || "Policy Management System",
     logo: currentUser?.organization_logo || ""
@@ -106,7 +108,7 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
     const handleResize = () => {
       const nextIsMobile = getIsMobileViewport();
       setIsMobile(nextIsMobile);
-      setIsSidebarOpen(!nextIsMobile);
+      setIsSidebarOpen(false);
     };
 
     window.addEventListener("resize", handleResize);
@@ -148,6 +150,7 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
         isOpen={isSidebarOpen}
         isMobile={isMobile}
         onClose={() => setIsSidebarOpen(false)}
+        onExpand={() => setIsSidebarOpen(true)}
         menuSections={allowedMenuSections}
         currentUser={currentUser}
         onLogout={onLogout}
@@ -158,7 +161,7 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
             className="sidebar-toggle"
             type="button"
             onClick={handleSidebarToggle}
-            aria-label={isSidebarOpen ? "Hide menu" : "Show menu"}
+            aria-label={isSidebarOpen ? "Compact menu" : "Expand menu"}
           >
             <span className="sidebar-toggle__line" aria-hidden="true"></span>
             <span className="sidebar-toggle__line" aria-hidden="true"></span>

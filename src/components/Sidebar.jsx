@@ -44,9 +44,10 @@ function Icon({ name }) {
 }
 
 export default function Sidebar({
-  isOpen,
+  isOpen: isSidebarOpen,
   isMobile = false,
   onClose = () => {},
+  onExpand = () => {},
   menuSections: providedMenuSections,
   currentUser = null,
   onLogout = () => {}
@@ -121,8 +122,10 @@ export default function Sidebar({
 
   return (
     <>
-      {isMobile && isOpen ? <button type="button" className="sidebar-backdrop" onClick={onClose} aria-label="Close menu" /> : null}
-      <aside className={`sidebar ${isOpen ? "" : "sidebar--collapsed"} ${isMobile ? "sidebar--mobile" : ""}`}>
+      {isMobile && isSidebarOpen ? <button type="button" className="sidebar-backdrop" onClick={onClose} aria-label="Close menu" /> : null}
+      <aside
+        className={`sidebar ${isSidebarOpen ? "" : isMobile ? "sidebar--collapsed" : "sidebar--compact"} ${isMobile ? "sidebar--mobile" : ""}`}
+      >
         <div className="brand-panel">
           <div className="brand-panel__main">
             <div className="brand-copy">
@@ -155,6 +158,7 @@ export default function Sidebar({
                     onClose();
                   }
                 }}
+                title={!isSidebarOpen && !isMobile ? section.label : undefined}
               >
                 <span className="menu-card__left">
                   <span className="menu-icon">
@@ -178,8 +182,12 @@ export default function Sidebar({
                 type="button"
                 aria-expanded={isOpen}
                 onClick={() => {
+                  if (!isSidebarOpen && !isMobile) {
+                    onExpand();
+                  }
                   setOpenGroup(isOpen ? null : section.label);
                 }}
+                title={!isSidebarOpen && !isMobile ? section.label : undefined}
               >
                 <span className="menu-card__left">
                   <span className="menu-icon">
