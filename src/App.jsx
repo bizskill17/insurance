@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import AllPoliciesPage from "./components/AllPoliciesPage";
 import AttachDocumentsPage from "./components/AttachDocumentsPage";
 import AppLayout from "./components/AppLayout";
+import ClaimFormPage from "./components/ClaimFormPage";
 import DashboardPage from "./components/DashboardPage";
 import ExpiryReportsPage from "./components/ExpiryReportsPage";
 import ExpiryReportDetailPage from "./components/ExpiryReportDetailPage";
@@ -58,6 +59,10 @@ function buildRoutes(items, currentUser) {
           <RenewPolicyPage viewMode="overdue" />
         ) : item.path === "/policies/inactivated" ? (
           <InactivatedPoliciesPage />
+        ) : item.path === "/claims/form" ? (
+          <ClaimFormPage />
+        ) : item.section === "Claim" ? (
+          <MasterPage resourceKey="claims" currentUser={currentUser} />
         ) : item.section === "Leads" ? (
           <LeadsPage viewPath={item.path} />
         ) : item.section === "Tasks" ? (

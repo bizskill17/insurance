@@ -63,6 +63,17 @@ export const menuSections = [
     ]
   },
   {
+    label: "Claim",
+    path: "/claims",
+    icon: "claims",
+    items: [
+      { label: "View", path: "/claims/view" },
+      { label: "Claim Form", path: "/claims/form", requiresAddPermission: true },
+      { label: "Pending", path: "/claims/pending" },
+      { label: "Claim Master", path: "/claims/master" }
+    ]
+  },
+  {
     label: "Policies",
     path: "/policies",
     icon: "policies",

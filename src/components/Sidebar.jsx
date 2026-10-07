@@ -31,6 +31,9 @@ function Icon({ name }) {
     payments: (
       <path d="M3 6c0-1.1.9-2 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Zm2 0v2h14V6H5Zm0 5v7h14v-7H5Zm9 2h3v2h-3v-2Z" />
     ),
+    claims: (
+      <path d="M6 3h9l5 5v13H6V3Zm2 2v14h10V9h-5V5H8Zm2 7h6v2h-6v-2Zm0 4h4v2h-4v-2Z" />
+    ),
     reports: (
       <path d="M5 3h14v18H5V3Zm2 2v14h10V5H7Zm2 9h2v3H9v-3Zm4-4h2v7h-2v-7Zm-4-3h2v10H9V7Z" />
     )

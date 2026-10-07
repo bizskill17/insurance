@@ -194,6 +194,21 @@ final class MasterRegistry
                 ],
                 'organization_scope_column' => 'u.organization_id',
             ],
+            'claims' => [
+                'table' => 'claims',
+                'select' => 'cl.id, cl.customer_name, cl.policy_number, cl.vehicle_no, cl.claim_no, cl.claim_registration_date, cl.follow_up_date, cl.follow_up_remarks, cl.final_settlement_date, cl.description_of_claim, cl.document, cl.created_at',
+                'from' => 'claims cl',
+                'order_by' => 'cl.claim_registration_date desc, cl.id desc',
+                'search_columns' => ['cl.customer_name', 'cl.policy_number', 'cl.vehicle_no', 'cl.claim_no'],
+                'write_columns' => ['customer_name', 'policy_number', 'vehicle_no', 'claim_no', 'claim_registration_date', 'follow_up_date', 'follow_up_remarks', 'final_settlement_date', 'description_of_claim', 'document'],
+                'required' => ['customer_name', 'policy_number', 'claim_no', 'claim_registration_date'],
+                'nullable' => ['vehicle_no', 'follow_up_date', 'follow_up_remarks', 'final_settlement_date', 'description_of_claim', 'document'],
+                'file_columns' => ['document'],
+                'duplicate_keys' => [
+                    ['columns' => ['claim_no'], 'label' => 'Claim No.', 'display_column' => 'claim_no'],
+                ],
+                'organization_scope_column' => 'cl.organization_id',
+            ],
             'agents' => [
                 'table' => 'agents',
                 'select' => 'a.id, a.employee_code, a.full_name, a.mobile, a.email, a.is_active, a.created_at',
