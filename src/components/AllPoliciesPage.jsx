@@ -577,6 +577,7 @@ export default function AllPoliciesPage() {
       </section>
 
       {isDocumentTypeFormOpen ? (
+        <div className="document-type-modal-layer">
         <MasterPage
           resourceKey="document-types"
           embeddedFormOnly
@@ -591,6 +592,7 @@ export default function AllPoliciesPage() {
           }}
           onFormCancel={() => setIsDocumentTypeFormOpen(false)}
         />
+      </div>
       ) : null}
       {isPolicyUploadOpen ? (
         <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="policy-upload-title">
