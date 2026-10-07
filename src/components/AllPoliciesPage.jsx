@@ -131,6 +131,7 @@ export default function AllPoliciesPage() {
   const [policyDocuments, setPolicyDocuments] = useState([emptyPolicyDocumentEntry()]);
   const [uploadingDocuments, setUploadingDocuments] = useState(false);
   const [documentUploadError, setDocumentUploadError] = useState("");
+  const [documentRefreshKey, setDocumentRefreshKey] = useState(0);
 
   const loadRecords = async () => {
     setLoading(true);
@@ -366,6 +367,21 @@ export default function AllPoliciesPage() {
     return { documents: json.data || [] };
   };
 
+  const handleDeletePolicyDocument = async (document) => {
+    if (!window.confirm(`Delete document "${document.file_name || document.document_type_name || ""}"?`)) return;
+
+    setError("");
+    try {
+      const response = await fetch(`${API_BASE}/policy-documents/${document.id}`, { method: "DELETE" });
+      const json = await readApiJson(response);
+      if (!response.ok) throw new Error(json.message || "Failed to delete policy document.");
+      setMessage(json.message || "Policy document deleted successfully.");
+      setDocumentRefreshKey((current) => current + 1);
+      await loadRecords();
+    } catch (deleteError) {
+      setError(deleteError.message);
+    }
+  };
   const renderPolicyDetailExtra = (policy, detailData, detailState) => {
     if (!policy) {
       return null;
@@ -387,6 +403,7 @@ export default function AllPoliciesPage() {
                 <tr>
                   <th>Document Type</th>
                   <th>File</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -407,6 +424,9 @@ export default function AllPoliciesPage() {
                       ) : (
                         "-"
                       )}
+                    </td>
+                    <td>
+                      <ActionIconButton icon="delete" label="Delete Document" tone="danger" onClick={() => handleDeletePolicyDocument(document)} />
                     </td>
                   </tr>
                 ))}
@@ -500,6 +520,7 @@ export default function AllPoliciesPage() {
       <section className="master-card issue-policy-card">
         {message ? <p className="feedback feedback--success">{message}</p> : null}
         <ResponsiveDataView
+          key={documentRefreshKey}
           title="All Policies"
           records={dateFilteredRecords}
           columns={columns}

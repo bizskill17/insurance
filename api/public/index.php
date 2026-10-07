@@ -4094,13 +4094,36 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
         }
     }
 
+    if (preg_match('#^/api/policy-documents/(\d+)$#', $path, $matches) === 1 && $method === 'DELETE') {
+        $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
+        $documentId = (int) $matches[1];
+        $statement = $pdo->prepare(
+            'UPDATE documents
+             SET is_active = 0, deleted_at = now()
+             WHERE id = :id
+               AND organization_id = :organization_id
+               AND policy_id IS NOT NULL
+               AND deleted_at IS NULL
+               AND is_active = 1'
+        );
+        $statement->bindValue(':id', $documentId, PDO::PARAM_INT);
+        bindOrganizationId($statement, $organizationId);
+        $statement->execute();
+        if ($statement->rowCount() === 0) {
+            Response::json(['status' => 'error', 'message' => 'Policy document not found.'], 404);
+            exit;
+        }
+        Response::json(['status' => 'ok', 'message' => 'Policy document deleted successfully.']);
+        exit;
+    }
     if (preg_match('#^/api/policies/(\d+)/documents$#', $path, $matches) === 1 && $method === 'GET') {
         $pdo = Database::connection();
         $organizationId = requireOrganizationId();
         $policyId = (int) ($matches[1] ?? 0);
 
         $statement = $pdo->prepare(
-            'SELECT dt.name AS document_type_name, d.file_name, d.file_url, d.document_number, d.document_date, d.expiry_date, d.remarks, d.uploaded_at
+            'SELECT d.id, dt.name AS document_type_name, d.file_name, d.file_url, d.document_number, d.document_date, d.expiry_date, d.remarks, d.uploaded_at
              FROM documents d
              LEFT JOIN document_types dt ON dt.id = d.document_type_id
              WHERE d.policy_id = :policy_id
