@@ -526,6 +526,12 @@ button {
   grid-column: 1 / -1;
 }
 
+.document-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+
 .master-page--claims .secondary-button--template,
 .master-page--claims .secondary-button--upload {
   display: none;
@@ -2504,7 +2510,13 @@ button {
   .page-shell,
   .dashboard-page,
   .issue-policy-page,
-  .master-page--claims .secondary-button--template,
+  .document-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+
+.master-page--claims .secondary-button--template,
 .master-page--claims .secondary-button--upload {
   display: none;
 }

@@ -94,7 +94,7 @@ const columns = [
   { key: "risk_start_date", label: "Risk Start" },
 
   { key: "risk_end_date", label: "Risk End" },
-  { key: "document_url", label: "Document", type: "document-link" },
+  { key: "document_urls", label: "Document", type: "document-links" },
   { key: "paid_by_type", label: "Payment By" },
   { key: "payment_mode", label: "Payment Mode" },
   { key: "policy_status", label: "Status" }

@@ -359,7 +359,26 @@ export default function ResponsiveDataView({
                               .filter(Boolean)
                               .join(" ")}
                           >
-                            {col.type === "document-link" && getRecordValue(record, col.key) ? (
+                            {col.type === "document-links" ? (
+                              <span className="document-links">
+                                {String(getRecordValue(record, col.key) || "")
+                                  .split("||")
+                                  .map((value) => value.trim())
+                                  .filter(Boolean)
+                                  .map((link, linkIndex, links) => (
+                                    <a
+                                      key={link}
+                                      href={/^https?:\/\//i.test(link) ? link : `${API_BASE}/${link.replace(/^\/+/, "")}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-blue"
+                                      onClick={(event) => event.stopPropagation()}
+                                    >
+                                      {links.length === 1 ? "Link" : `Link ${linkIndex + 1}`}
+                                    </a>
+                                  ))}
+                              </span>
+                            ) : col.type === "document-link" && getRecordValue(record, col.key) ? (
                               <a
                                 href={/^https?:\/\//i.test(String(getRecordValue(record, col.key)))
                                   ? String(getRecordValue(record, col.key))
