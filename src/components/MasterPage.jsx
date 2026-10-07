@@ -385,6 +385,7 @@ function getTableCellClass(columnKey, extraClassName = "") {
 export default function MasterPage({
   resourceKey,
   permissionPath = "",
+  pendingClaimsOnly = false,
   currentUser = null,
   embeddedFormOnly = false,
   autoOpenForm = false,
@@ -460,6 +461,14 @@ export default function MasterPage({
     isSettingsView ||
     getPermissionValues(currentUser, "edit_permissions", currentUserViews).includes(currentPath);
   const canDeleteRecord = isSettingsView || getPermissionValues(currentUser, "delete_permissions", currentUserViews).includes(currentPath);
+  const filterLoadedRecords = (items) => {
+    const recordsToFilter = Array.isArray(items) ? items : [];
+    if (!pendingClaimsOnly || resourceKey !== "claims") {
+      return recordsToFilter;
+    }
+    return recordsToFilter.filter((record) => !String(record.final_settlement_date || "").trim());
+  };
+
   const filterOrganizationPermission = (values) => {
     const parsedValues = parseChecklistValue(values);
     return canManageOrganizations
@@ -630,7 +639,7 @@ export default function MasterPage({
           })
         );
 
-        setRecords(recordJson.data || []);
+        setRecords(filterLoadedRecords(recordJson.data));
         setOptionsMap(Object.fromEntries(optionEntries));
       } catch (loadError) {
         if (String(loadError.message || "").includes("organization_id")) {
@@ -647,7 +656,7 @@ export default function MasterPage({
     };
 
     load();
-  }, [config.resource, dependencies, deferredSearchTerm]);
+  }, [config.resource, dependencies, deferredSearchTerm, pendingClaimsOnly, resourceKey]);
 
   const resetForm = () => {
     closeForm();
@@ -891,7 +900,7 @@ export default function MasterPage({
         throw new Error(refreshJson.message || "Refresh failed.");
       }
       const nextRecords = refreshJson.data || [];
-      setRecords(nextRecords);
+      setRecords(filterLoadedRecords(nextRecords));
 
       if (onFormSaved) {
         const savedRecord = nextRecords.find((record) => Number(record.id) === savedRecordId) || null;
@@ -1164,7 +1173,7 @@ export default function MasterPage({
         if (!refresh.ok) {
           throw new Error(refreshJson.message || "Refresh failed after bulk upload.");
         }
-        setRecords(refreshJson.data || []);
+        setRecords(filterLoadedRecords(refreshJson.data));
         setMessage(
           uploadErrors.length > 0
             ? `${successCount} rows uploaded. Some rows have validation errors.`

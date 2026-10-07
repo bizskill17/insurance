@@ -1,4 +1,5 @@
 const AUTH_STORAGE_KEY = "insurance_auth_user";
+const APP_BUILD_ID = typeof __APP_BUILD_ID__ === "string" ? __APP_BUILD_ID__ : "development";
 
 export function parseUserViews(value) {
   if (Array.isArray(value)) {
@@ -54,7 +55,12 @@ export function getStoredAuthUser() {
       return null;
     }
 
-    return normalizeAuthUser(JSON.parse(raw));
+    const user = JSON.parse(raw);
+    if (user.app_build_id !== APP_BUILD_ID) {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY);
+      return null;
+    }
+    return normalizeAuthUser(user);
   } catch {
     return null;
   }
@@ -67,7 +73,10 @@ export function setStoredAuthUser(user) {
     return;
   }
 
-  window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(normalized));
+  window.localStorage.setItem(
+    AUTH_STORAGE_KEY,
+    JSON.stringify({ ...normalized, app_build_id: APP_BUILD_ID })
+  );
 }
 
 export function clearStoredAuthUser() {

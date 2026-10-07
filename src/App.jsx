@@ -62,7 +62,12 @@ function buildRoutes(items, currentUser) {
         ) : item.path === "/claims/form" ? (
           <ClaimFormPage />
         ) : item.section === "Claim" ? (
-          <MasterPage resourceKey="claims" permissionPath={item.path} currentUser={currentUser} />
+          <MasterPage
+            resourceKey="claims"
+            permissionPath={item.path}
+            pendingClaimsOnly={item.path === "/claims/pending"}
+            currentUser={currentUser}
+          />
         ) : item.section === "Leads" ? (
           <LeadsPage viewPath={item.path} />
         ) : item.section === "Tasks" ? (
