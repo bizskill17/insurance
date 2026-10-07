@@ -526,6 +526,11 @@ button {
   grid-column: 1 / -1;
 }
 
+.master-page--claims .secondary-button--template,
+.master-page--claims .secondary-button--upload {
+  display: none;
+}
+
 .master-page {
   width: 100%;
   max-width: none;
@@ -2499,7 +2504,12 @@ button {
   .page-shell,
   .dashboard-page,
   .issue-policy-page,
-  .master-page {
+  .master-page--claims .secondary-button--template,
+.master-page--claims .secondary-button--upload {
+  display: none;
+}
+
+.master-page {
     max-width: 100%;
   }
 

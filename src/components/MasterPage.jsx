@@ -2075,7 +2075,7 @@ export default function MasterPage({
   }
 
   return (
-    <div className="master-page">
+    <div className={`master-page master-page--${resourceKey}`}>
       <div className="master-grid master-grid--list-only">
         <section className="master-card master-card--table">
           <div className="master-card__header">
