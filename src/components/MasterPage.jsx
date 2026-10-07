@@ -1684,11 +1684,16 @@ export default function MasterPage({
       return [];
     }
 
-    return config.tableColumns.map((column) => ({
-      key: column.key,
-      label: column.label,
-      value: buildDetailValue(selectedRecord, column)
-    }));
+    return config.tableColumns
+      .filter((column) => {
+        const value = selectedRecord[column.key];
+        return value !== null && value !== undefined && String(value).trim() !== "";
+      })
+      .map((column) => ({
+        key: column.key,
+        label: column.label,
+        value: buildDetailValue(selectedRecord, column)
+      }));
   }, [config.tableColumns, selectedRecord]);
 
   const formatColumnValue = (record, column) => {
