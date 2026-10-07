@@ -71,6 +71,30 @@ function getColumnWidthStyle(column, fallback = "140px") {
   };
 }
 
+function renderDocumentLinks(value) {
+  const links = String(value || "")
+    .split("||")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (!links.length) return "-";
+
+  return (
+    <span className="document-links">
+      {links.map((link, index) => (
+        <a
+          key={link}
+          href={/^https?:\/\//i.test(link) ? link : `${API_BASE}/${link.replace(/^\/+/, "")}`}
+          target="_blank"
+          rel="noreferrer"
+          className="text-blue"
+        >
+          {links.length === 1 ? "Link" : `Link ${index + 1}`}
+        </a>
+      ))}
+    </span>
+  );
+}
 export default function ResponsiveDataView({
   title,
   records,
@@ -164,7 +188,10 @@ export default function ResponsiveDataView({
     return columns.map((column) => ({
       key: column.key,
       label: column.label,
-      value: formatCellValue(getRecordValue(selectedRecord, column.key))
+      value:
+        column.type === "document-links"
+          ? renderDocumentLinks(getRecordValue(selectedRecord, column.key))
+          : formatCellValue(getRecordValue(selectedRecord, column.key))
     }));
   }, [columns, detailData, getDetailRows, selectedRecord]);
 
