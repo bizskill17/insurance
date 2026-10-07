@@ -220,7 +220,6 @@ function buildFullAccessViews(bool $includeOrganizations = true): string
         '/tasks/completed',
         '/tasks/canceled',
         '/tasks/action-log',
-        '/claims/view',
         '/claims/form',
         '/claims/pending',
         '/claims/master',
