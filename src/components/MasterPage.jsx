@@ -919,7 +919,13 @@ export default function MasterPage({
 
   const handleDelete = async (record) => {
     const label = record.name || record.full_name || record.company_name || record.group_name || record.id;
-    const confirmed = window.confirm(`Delete "${label}"?`);
+    const confirmationMessage =
+      resourceKey === "claims"
+        ? `Delete this claim?` +
+          `\n\nCustomer Name: ${record.customer_name || "-"}` +
+          `\nPolicy No.: ${record.policy_number || "-"}`
+        : `Delete "${label}"?`;
+    const confirmed = window.confirm(confirmationMessage);
 
     if (!confirmed) {
       return;
