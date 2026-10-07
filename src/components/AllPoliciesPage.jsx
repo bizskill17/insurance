@@ -48,6 +48,12 @@ function validatePolicyDates(issueDate, riskEndDate) {
   return "";
 }
 
+function emptyPolicyDocumentEntry() {
+  return {
+    document_type_id: "",
+    file: null
+  };
+}
 function createEditFormState(policy) {
   return {
     id: policy?.id ? String(policy.id) : "",
@@ -119,6 +125,12 @@ export default function AllPoliciesPage() {
   const [editFormState, setEditFormState] = useState(createEditFormState(null));
   const [editError, setEditError] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
+  const [isPolicyUploadOpen, setIsPolicyUploadOpen] = useState(false);
+  const [uploadPolicy, setUploadPolicy] = useState(null);
+  const [policyDocumentTypes, setPolicyDocumentTypes] = useState([]);
+  const [policyDocuments, setPolicyDocuments] = useState([emptyPolicyDocumentEntry()]);
+  const [uploadingDocuments, setUploadingDocuments] = useState(false);
+  const [documentUploadError, setDocumentUploadError] = useState("");
 
   const loadRecords = async () => {
     setLoading(true);
@@ -408,8 +420,61 @@ export default function AllPoliciesPage() {
     );
   };
 
+  const closePolicyUploadModal = () => {
+    setIsPolicyUploadOpen(false);
+    setUploadPolicy(null);
+    setPolicyDocuments([emptyPolicyDocumentEntry()]);
+    setDocumentUploadError("");
+  };
+
+  const openPolicyUploadModal = async (policy) => {
+    setUploadPolicy(policy);
+    setPolicyDocuments([emptyPolicyDocumentEntry()]);
+    setDocumentUploadError("");
+    setIsPolicyUploadOpen(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/masters/document-types?limit=250`);
+      const json = await readApiJson(response);
+      if (!response.ok) throw new Error(json.message || "Failed to load document types.");
+      setPolicyDocumentTypes((json.data || []).filter((item) => String(item.entity_level || "").toLowerCase() === "policy"));
+    } catch (loadError) {
+      setDocumentUploadError(loadError.message);
+    }
+  };
+
+  const updatePolicyDocument = (index, key, value) => {
+    setPolicyDocuments((current) => current.map((document, itemIndex) => itemIndex === index ? { ...document, [key]: value } : document));
+  };
+
+  const submitPolicyDocuments = async (event) => {
+    event.preventDefault();
+    if (!uploadPolicy) return;
+
+    setUploadingDocuments(true);
+    setDocumentUploadError("");
+    try {
+      const payload = new FormData();
+      payload.append("policy_id", String(uploadPolicy.id));
+      payload.append("documents", JSON.stringify(policyDocuments.map((document) => ({ document_type_id: document.document_type_id }))));
+      policyDocuments.forEach((document) => payload.append("files[]", document.file));
+
+      const response = await fetch(`${API_BASE}/policies/upload-documents`, { method: "POST", body: payload });
+      const json = await readApiJson(response);
+      if (!response.ok) throw new Error(json.message || "Failed to upload documents.");
+
+      setMessage(json.message || "Documents uploaded successfully.");
+      closePolicyUploadModal();
+      await loadRecords();
+    } catch (uploadError) {
+      setDocumentUploadError(uploadError.message);
+    } finally {
+      setUploadingDocuments(false);
+    }
+  };
   const renderPolicyActions = (policy) => (
     <>
+      <ActionIconButton icon="upload" label="Upload Documents" onClick={() => openPolicyUploadModal(policy)} />
       <ActionIconButton icon="pencil" label="Edit Policy" onClick={() => openEditModal(policy)} />
       {String(policy.policy_status || "") !== "Inactive" ? (
         <ActionIconButton icon="inactive" label="Make Policy Inactive" tone="danger" onClick={() => openInactiveModal(policy)} />
@@ -485,6 +550,64 @@ export default function AllPoliciesPage() {
         />
       </section>
 
+      {isPolicyUploadOpen ? (
+        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="policy-upload-title">
+          <div className="master-modal__backdrop" onClick={closePolicyUploadModal} />
+          <section className="master-card master-modal__panel">
+            <div className="master-card__header">
+              <h3 id="policy-upload-title">Upload Documents</h3>
+              <button type="button" className="text-button" onClick={closePolicyUploadModal}>Cancel</button>
+            </div>
+            <div className="master-modal__body">
+              <form className="master-form" onSubmit={submitPolicyDocuments}>
+                <label className="form-field">
+                  <FormLabel>Policy No.</FormLabel>
+                  <input type="text" readOnly value={uploadPolicy?.policy_number || ""} />
+                </label>
+                <label className="form-field">
+                  <FormLabel>Customer</FormLabel>
+                  <input type="text" readOnly value={uploadPolicy?.customer_name || ""} />
+                </label>
+                <div className="customer-document-list issue-policy-form__wide">
+                  {policyDocuments.map((document, index) => (
+                    <div className="customer-document-card" key={`policy-upload-${index + 1}`}>
+                      <div className="customer-document-card__header">
+                        <h4>Document {index + 1}</h4>
+                        {policyDocuments.length > 1 ? (
+                          <button type="button" className="text-button text-blue" onClick={() => setPolicyDocuments((current) => current.filter((_, itemIndex) => itemIndex !== index))}>Remove</button>
+                        ) : null}
+                      </div>
+                      <div className="customer-document-card__grid">
+                        <label className="form-field">
+                          <FormLabel required>Document Type</FormLabel>
+                          <SearchableSelect required value={document.document_type_id} onChange={(event) => updatePolicyDocument(index, "document_type_id", event.target.value)}>
+                            <option value="">Select Document Type</option>
+                            {policyDocumentTypes.map((documentType) => <option key={documentType.id} value={documentType.id}>{documentType.name}</option>)}
+                          </SearchableSelect>
+                        </label>
+                        <label className="form-field">
+                          <FormLabel required>Choose File</FormLabel>
+                          <input type="file" required onChange={(event) => updatePolicyDocument(index, "file", event.target.files?.[0] || null)} />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="form-actions form-actions--stacked issue-policy-form__wide">
+                  <button type="button" className="secondary-button" onClick={() => setPolicyDocuments((current) => [...current, emptyPolicyDocumentEntry()])}>+ Add Another Document</button>
+                </div>
+                <div className="form-actions issue-policy-form__wide">
+                  <button type="button" className="secondary-button form-actions__cancel" onClick={closePolicyUploadModal}>Cancel</button>
+                  <button type="submit" className="primary-button" disabled={uploadingDocuments}>
+                    {uploadingDocuments ? <ButtonSpinner label="Uploading..." /> : "Upload Documents"}
+                  </button>
+                </div>
+              </form>
+              {documentUploadError ? <p className="feedback feedback--error">{documentUploadError}</p> : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
       {isInactiveOpen ? (
         <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="all-policy-inactive-title">
           <div className="master-modal__backdrop" onClick={closeInactiveModal} />
