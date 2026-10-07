@@ -384,6 +384,7 @@ function getTableCellClass(columnKey, extraClassName = "") {
 
 export default function MasterPage({
   resourceKey,
+  permissionPath = "",
   currentUser = null,
   embeddedFormOnly = false,
   autoOpenForm = false,
@@ -449,7 +450,7 @@ export default function MasterPage({
   const [customerGroupCustomersError, setCustomerGroupCustomersError] = useState("");
   const [inlineCustomerEdits, setInlineCustomerEdits] = useState({});
   const [inlineCustomerSavingId, setInlineCustomerSavingId] = useState(null);  const [isAddCustomerGroupModalOpen, setIsAddCustomerGroupModalOpen] = useState(false);
-  const currentPath = `/masters/${resourceKey}`;
+  const currentPath = permissionPath || `/masters/${resourceKey}`;
   const organizationViewPath = "/masters/organizations";
   const canManageOrganizations = Boolean(currentUser?.can_manage_organizations);
   const currentUserViews = parseChecklistValue(currentUser?.views);
