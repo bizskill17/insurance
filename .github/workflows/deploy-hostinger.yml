@@ -39,6 +39,25 @@ jobs:
       - name: Verify deploy DB config
         run: test -f deploy/api/config/database.php
 
+      - name: Apply Claim database migration
+        env:
+          MYSQL_PWD: ${{ secrets.HOSTINGER_DB_PASSWORD }}
+          DB_HOST: ${{ secrets.HOSTINGER_DB_HOST }}
+          DB_PORT: ${{ secrets.HOSTINGER_DB_PORT || '3306' }}
+          DB_NAME: ${{ secrets.HOSTINGER_DB_NAME || secrets.HOSTINGER_DB_DATABASE }}
+          DB_USER: ${{ secrets.HOSTINGER_DB_USER || secrets.HOSTINGER_DB_USERNAME }}
+        run: |
+          if ! command -v mysql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y default-mysql-client
+          fi
+
+          contact_person_column_count="$(mysql --protocol=TCP --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --database="$DB_NAME" --batch --skip-column-names --execute "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'claims' AND column_name = 'contact_person';")"
+
+          if [ "$contact_person_column_count" = "0" ]; then
+            mysql --protocol=TCP --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --database="$DB_NAME" < database/update_claims_fields.sql
+          fi
+
       - name: Deploy files over FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
