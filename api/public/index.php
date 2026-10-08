@@ -323,6 +323,47 @@ function isMissingOrganizationColumn(PDOException $exception): bool
         && str_contains($exception->getMessage(), 'organization_id');
 }
 
+function ensureClaimSchema(PDO $pdo): void
+{
+    static $checked = false;
+
+    if ($checked) {
+        return;
+    }
+
+    $checked = true;
+    $statement = $pdo->query(
+        "SELECT COLUMN_NAME, IS_NULLABLE
+         FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'claims'
+           AND COLUMN_NAME IN ('policy_number', 'contact_person', 'phone', 'claim_no', 'claim_registration_date')"
+    );
+    $columns = [];
+    foreach ($statement->fetchAll() as $column) {
+        $columns[$column['COLUMN_NAME']] = $column['IS_NULLABLE'];
+    }
+
+    if (!isset($columns['contact_person'])) {
+        $pdo->exec('ALTER TABLE claims ADD COLUMN contact_person varchar(150) NULL AFTER policy_number');
+    }
+
+    if (!isset($columns['phone'])) {
+        $pdo->exec('ALTER TABLE claims ADD COLUMN phone varchar(50) NULL AFTER contact_person');
+    }
+
+    $optionalColumns = [
+        'policy_number' => 'varchar(100)',
+        'claim_no' => 'varchar(100)',
+        'claim_registration_date' => 'date',
+    ];
+    foreach ($optionalColumns as $column => $definition) {
+        if (($columns[$column] ?? 'NO') !== 'YES') {
+            $pdo->exec(sprintf('ALTER TABLE claims MODIFY COLUMN %s %s NULL', $column, $definition));
+        }
+    }
+}
+
 function scopedCountOrZero(PDO $pdo, string $sql, int $organizationId): int
 {
     try {
@@ -4299,6 +4340,10 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
 
         $config = $registry[$resource];
         $pdo = Database::connection();
+        if ($resource === 'claims') {
+            ensureClaimSchema($pdo);
+        }
+
         $requestOrganizationId = requestOrganizationId();
         if ($resource === 'organizations' && !isAdminOrganizationId($pdo, $requestOrganizationId)) {
             Response::json([
