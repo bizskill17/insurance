@@ -40,6 +40,7 @@ jobs:
         run: test -f deploy/api/config/database.php
 
       - name: Apply Claim database migration
+        continue-on-error: true
         env:
           MYSQL_PWD: ${{ secrets.HOSTINGER_DB_PASSWORD }}
           DB_HOST: ${{ secrets.HOSTINGER_DB_HOST }}
