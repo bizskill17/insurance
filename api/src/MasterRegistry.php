@@ -201,8 +201,8 @@ final class MasterRegistry
                 'order_by' => 'cl.claim_registration_date desc, cl.id desc',
                 'search_columns' => ['cl.customer_name', 'cl.policy_number', 'cl.contact_person', 'cl.phone', 'cl.vehicle_no', 'cl.claim_no'],
                 'write_columns' => ['customer_name', 'policy_number', 'contact_person', 'phone', 'vehicle_no', 'description_of_claim', 'document', 'claim_no', 'claim_registration_date', 'follow_up_date', 'follow_up_remarks', 'final_settlement_date'],
-                'required' => ['customer_name', 'phone', 'claim_no', 'claim_registration_date'],
-                'nullable' => ['policy_number', 'contact_person', 'vehicle_no', 'description_of_claim', 'document', 'follow_up_date', 'follow_up_remarks', 'final_settlement_date'],
+                'required' => ['customer_name', 'phone'],
+                'nullable' => ['policy_number', 'contact_person', 'vehicle_no', 'description_of_claim', 'document', 'claim_no', 'claim_registration_date', 'follow_up_date', 'follow_up_remarks', 'final_settlement_date'],
                 'file_columns' => ['document'],
                 'duplicate_keys' => [
                     ['columns' => ['claim_no'], 'label' => 'Claim No.', 'display_column' => 'claim_no'],
