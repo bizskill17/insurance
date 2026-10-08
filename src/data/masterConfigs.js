@@ -272,25 +272,30 @@ export const masterConfigs = {
     tableColumns: [
       { key: "customer_name", label: "Customer Name" },
       { key: "policy_number", label: "Policy Number" },
+      { key: "contact_person", label: "Contact Person" },
+      { key: "phone", label: "Phone" },
       { key: "vehicle_no", label: "Vehicle No." },
+      { key: "description_of_claim", label: "Description of Claim" },
+      { key: "document", label: "Document", type: "link" },
       { key: "claim_no", label: "Claim No." },
       { key: "claim_registration_date", label: "Claim Registration Date" },
       { key: "follow_up_date", label: "Follow Up Date" },
+      { key: "follow_up_remarks", label: "Follow Up Remarks" },
       { key: "final_settlement_date", label: "Final Settlement Date" },
-      { key: "description_of_claim", label: "Description of Claim" },
-      { key: "document", label: "Document", type: "link" }
     ],
     fields: [
       { name: "customer_name", label: "Customer Name", type: "text", required: true },
-      { name: "policy_number", label: "Policy Number", type: "text", required: true },
+      { name: "policy_number", label: "Policy Number", type: "text" },
+      { name: "contact_person", label: "Contact Person", type: "text" },
+      { name: "phone", label: "Phone", type: "tel", required: true },
       { name: "vehicle_no", label: "Vehicle No.", type: "text" },
+      { name: "description_of_claim", label: "Description of Claim", type: "textarea" },
+      { name: "document", label: "Document", type: "file" },
       { name: "claim_no", label: "Claim No.", type: "text", required: true },
       { name: "claim_registration_date", label: "Claim Registration Date", type: "date", required: true },
       { name: "follow_up_date", label: "Follow Up Date", type: "date" },
       { name: "follow_up_remarks", label: "Follow Up Remarks", type: "textarea" },
       { name: "final_settlement_date", label: "Final Settlement Date", type: "date" },
-      { name: "description_of_claim", label: "Description of Claim", type: "textarea" },
-      { name: "document", label: "Document", type: "file" }
     ]
   },
   agents: {

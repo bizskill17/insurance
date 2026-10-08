@@ -9,8 +9,8 @@ export default function ClaimFormPage() {
       resourceKey="claims"
       embeddedFormOnly
       autoOpenForm
-      onFormSaved={() => navigate("/claims/view")}
-      onFormCancel={() => navigate("/claims/view")}
+      onFormSaved={() => navigate("/claims/pending")}
+      onFormCancel={() => navigate("/claims/pending")}
     />
   );
 }
