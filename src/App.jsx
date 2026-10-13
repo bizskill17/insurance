@@ -5,6 +5,7 @@ import AttachDocumentsPage from "./components/AttachDocumentsPage";
 import AppLayout from "./components/AppLayout";
 import ClaimFormPage from "./components/ClaimFormPage";
 import DashboardPage from "./components/DashboardPage";
+import DailyActivityReportPage from "./components/DailyActivityReportPage";
 import ExpiryReportsPage from "./components/ExpiryReportsPage";
 import ExpiryReportDetailPage from "./components/ExpiryReportDetailPage";
 import IssuePolicyPage from "./components/IssuePolicyPage";
@@ -31,6 +32,8 @@ function buildRoutes(items, currentUser) {
           <AllPoliciesPage />
         ) : item.path === "/dashboard" ? (
           <DashboardPage />
+        ) : item.path === "/reports/daily-activity" ? (
+          <DailyActivityReportPage />
         ) : item.path === "/payments/pending" ? (
           <PendingPaymentsPage />
         ) : item.path === "/policies/attach-documents" ? (
@@ -60,11 +63,12 @@ function buildRoutes(items, currentUser) {
         ) : item.path === "/policies/inactivated" ? (
           <InactivatedPoliciesPage />
         ) : item.path === "/claims/form" ? (
-          <ClaimFormPage />
+          <ClaimFormPage currentUser={currentUser} />
         ) : item.section === "Claim" ? (
           <MasterPage
             resourceKey="claims"
             permissionPath={item.path}
+            actionPermissionPath="/claims/form"
             pendingClaimsOnly={item.path === "/claims/pending"}
             currentUser={currentUser}
           />

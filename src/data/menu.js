@@ -110,6 +110,7 @@ export const menuSections = [
     path: "/reports",
     icon: "reports",
     items: [
+      { label: "Daily Activity Report", path: "/reports/daily-activity" },
       { label: "Policies Added Today", path: "/reports/policies-added", countKey: "policies-added" },
       { label: "Policies This Week", path: "/reports/policies-this-week", countKey: "policies-this-week" },
       { label: "Policies This Month", path: "/reports/policies-this-month", countKey: "policies-this-month" },

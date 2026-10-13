@@ -229,6 +229,7 @@ function buildFullAccessViews(bool $includeOrganizations = true): string
         '/payments/pending',
         '/payments/received',
         '/reports/policies-added',
+        '/reports/daily-activity',
         '/reports/policies-this-week',
         '/reports/policies-this-month',
         '/reports/pending-payments',

@@ -328,6 +328,10 @@ function supportsTableAction(option, actionFieldName) {
     return true;
   }
 
+  if (option.value === "/claims/form") {
+    return true;
+  }
+
   if (actionFieldName === "add_permissions") {
     return addOnlyPermissionPaths.has(option.value);
   }
@@ -385,6 +389,7 @@ function getTableCellClass(columnKey, extraClassName = "") {
 export default function MasterPage({
   resourceKey,
   permissionPath = "",
+  actionPermissionPath = "",
   pendingClaimsOnly = false,
   currentUser = null,
   embeddedFormOnly = false,
@@ -452,15 +457,15 @@ export default function MasterPage({
   const [inlineCustomerEdits, setInlineCustomerEdits] = useState({});
   const [inlineCustomerSavingId, setInlineCustomerSavingId] = useState(null);  const [isAddCustomerGroupModalOpen, setIsAddCustomerGroupModalOpen] = useState(false);
   const currentPath = permissionPath || `/masters/${resourceKey}`;
+  const recordActionPath = actionPermissionPath || currentPath;
   const organizationViewPath = "/masters/organizations";
   const canManageOrganizations = Boolean(currentUser?.can_manage_organizations);
   const currentUserViews = parseChecklistValue(currentUser?.views);
-  const canAddRecord = isSettingsView || getPermissionValues(currentUser, "add_permissions", currentUserViews).includes(currentPath);
+  const canAddRecord = isSettingsView || getPermissionValues(currentUser, "add_permissions", currentUserViews).includes(recordActionPath);
   const canEditRecord =
-    resourceKey === "claims" ||
     isSettingsView ||
-    getPermissionValues(currentUser, "edit_permissions", currentUserViews).includes(currentPath);
-  const canDeleteRecord = isSettingsView || getPermissionValues(currentUser, "delete_permissions", currentUserViews).includes(currentPath);
+    getPermissionValues(currentUser, "edit_permissions", currentUserViews).includes(recordActionPath);
+  const canDeleteRecord = isSettingsView || getPermissionValues(currentUser, "delete_permissions", currentUserViews).includes(recordActionPath);
   const filterLoadedRecords = (items) => {
     const recordsToFilter = Array.isArray(items) ? items : [];
     if (!pendingClaimsOnly || resourceKey !== "claims") {
