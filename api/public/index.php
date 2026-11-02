@@ -2340,6 +2340,7 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                 p.policy_number,
                 p.policy_type,
                 p.business_type,
+                p.gross_premium,
                 p.net_premium,
                 p.issue_date,
                 p.risk_end_date,

@@ -1,6 +1,10 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { formatCellValue } from "./formatting";
+import { formatCellValue, formatCurrency } from "./formatting";
+
+function formatExportValue(value, column) {
+  return column.type === "currency" ? formatCurrency(value) : formatCellValue(value);
+}
 
 function escapeCsvValue(value) {
   const normalized = String(value ?? "").replace(/"/g, '""');
@@ -18,7 +22,7 @@ export function downloadCsv({ title, columns, records, mapRecord, fileSuffix = "
   const headerRow = columns.map((column) => escapeCsvValue(column.label)).join(",");
   const dataRows = records.map((record, index) => {
     const mappedRecord = mapRecord ? mapRecord(record, index) : record;
-    return columns.map((column) => escapeCsvValue(formatCellValue(mappedRecord[column.key]))).join(",");
+    return columns.map((column) => escapeCsvValue(formatExportValue(mappedRecord[column.key], column))).join(",");
   });
 
   const csvContent = ["\uFEFF" + headerRow, ...dataRows].join("\n");
@@ -50,7 +54,7 @@ export function downloadPdf({ title, columns, records, mapRecord, fileSuffix = "
   const tableHeaders = columns.map((col) => col.label);
   const tableData = records.map((record, index) => {
     const mappedRecord = mapRecord ? mapRecord(record, index) : record;
-    return columns.map((col) => formatCellValue(mappedRecord[col.key]));
+    return columns.map((col) => formatExportValue(mappedRecord[col.key], col));
   });
 
   autoTable(doc, {

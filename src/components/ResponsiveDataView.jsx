@@ -7,7 +7,7 @@ import { Spinner } from "./Spinner";
 import TablePagination from "./TablePagination";
 import { downloadCsv, downloadPdf } from "../utils/export";
 import { filterRecords, getRecordValue, sortRecords } from "../utils/dataView";
-import { formatCellValue } from "../utils/formatting";
+import { formatCellValue, formatCurrency } from "../utils/formatting";
 
 function getColumnWidthStyle(column, fallback = "140px") {
   if (column.width) {
@@ -191,6 +191,8 @@ export default function ResponsiveDataView({
       value:
         column.type === "document-links"
           ? renderDocumentLinks(getRecordValue(selectedRecord, column.key))
+          : column.type === "currency"
+          ? formatCurrency(getRecordValue(selectedRecord, column.key))
           : formatCellValue(getRecordValue(selectedRecord, column.key))
     }));
   }, [columns, detailData, getDetailRows, selectedRecord]);
@@ -417,6 +419,8 @@ export default function ResponsiveDataView({
                               >
                                 Link
                               </a>
+                            ) : col.type === "currency" ? (
+                              formatCurrency(getRecordValue(record, col.key))
                             ) : formatCellValue(getRecordValue(record, col.key))}
                           </td>
                         );

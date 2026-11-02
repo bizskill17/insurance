@@ -24,6 +24,24 @@ export function formatAccountType(value) {
     .join(" ");
 }
 
+export function formatCurrency(value) {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) {
+    return "—";
+  }
+
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount);
+}
+
 export function formatCellValue(value) {
   if (value === null || value === undefined || value === "") {
     return "";

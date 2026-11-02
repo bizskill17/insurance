@@ -17,6 +17,7 @@ const columns = [
   { key: "product_name", label: "Product Name", highlight: true },
   { key: "policy_type", label: "Policy Type" },
   { key: "business_type", label: "Business Type" },
+  { key: "gross_premium", label: "Gross Premium", type: "currency" },
   { key: "net_premium", label: "Net Premium" },
   { key: "policy_status", label: "Status" }
 ];
