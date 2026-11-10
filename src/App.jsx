@@ -31,7 +31,7 @@ function buildRoutes(items, currentUser) {
         item.path === "/policies/all" ? (
           <AllPoliciesPage />
         ) : item.path === "/dashboard" ? (
-          <DashboardPage />
+          <DashboardPage currentUser={currentUser} />
         ) : item.path === "/reports/daily-activity" ? (
           <DailyActivityReportPage />
         ) : item.path === "/payments/pending" ? (
