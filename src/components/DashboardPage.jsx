@@ -162,7 +162,7 @@ export default function DashboardPage() {
     "tasks-pending": 0,
     "tasks-completed-today": 0,
     "tasks-canceled-today": 0,
-    "renew-policy-today": 0,
+    "policies-renewed-today": 0,
     "policies-added": 0
   });
   const [loading, setLoading] = useState(true);
@@ -208,7 +208,7 @@ export default function DashboardPage() {
           "tasks-pending": Number(countsJson.data["tasks-pending"] || 0),
           "tasks-completed-today": Number(countsJson.data["tasks-completed-today"] || 0),
           "tasks-canceled-today": Number(countsJson.data["tasks-canceled-today"] || 0),
-          "renew-policy-today": Number(countsJson.data["renew-policy-today"] || 0),
+          "policies-renewed-today": Number(countsJson.data["policies-renewed-today"] || 0),
           "policies-added": Number(countsJson.data["policies-added"] || 0)
         });
       } catch (loadError) {
