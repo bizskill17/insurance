@@ -48,6 +48,7 @@ function buildRoutes(items, currentUser) {
           <ExpiryReportsPage />
         ) : [
           "/reports/policies-added",
+          "/reports/policies-renewed-today",
           "/reports/policies-this-week",
           "/reports/policies-this-month"
         ].includes(item.path) ? (

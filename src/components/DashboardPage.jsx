@@ -5,10 +5,10 @@ import { API_BASE } from "../config/api";
 
 const dashboardItems = [
   {
-    key: "renew-policy-today",
+    key: "policies-renewed-today",
     label: "Policies Renewed Today",
     tone: "warning",
-    path: "/policies/renew"
+    path: "/reports/policies-renewed-today"
   },
   {
     key: "policies-added",
@@ -20,7 +20,7 @@ const dashboardItems = [
     key: "renewals_next_7_days",
     label: "Policies Pending for Renewal in next 7 days",
     tone: "warning",
-    path: "/policies/renew"
+    path: "/policies/renew?view=next-7-days"
   },
   {
     key: "pending_document_uploads",
@@ -32,7 +32,7 @@ const dashboardItems = [
     key: "renewals_overdue",
     label: "Renewals Pending beyond due date",
     tone: "danger",
-    path: "/policies/renew"
+    path: "/policies/renew?view=overdue"
   },
   {
     key: "pending_client_collections",

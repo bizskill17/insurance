@@ -20,6 +20,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
+// When an upload is bigger than PHP's post_max_size, PHP silently drops the whole form,
+// which would otherwise surface as a confusing "field is required" error.
+if (
+    $method === 'POST'
+    && $_POST === []
+    && $_FILES === []
+    && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0
+    && str_starts_with(strtolower((string) ($_SERVER['CONTENT_TYPE'] ?? '')), 'multipart/form-data')
+) {
+    Response::json([
+        'status' => 'error',
+        'message' => sprintf(
+            'The upload is too large for the server (limit %s). Please upload fewer or smaller files.',
+            (string) ini_get('post_max_size')
+        )
+    ], 413);
+    exit;
+}
+
 function singularizeMasterLabel(string $resource): string
 {
     $label = str_replace('-', ' ', $resource);
@@ -229,6 +248,7 @@ function buildFullAccessViews(bool $includeOrganizations = true): string
         '/payments/pending',
         '/payments/received',
         '/reports/policies-added',
+        '/reports/policies-renewed-today',
         '/reports/daily-activity',
         '/reports/policies-this-week',
         '/reports/policies-this-month',
@@ -316,6 +336,46 @@ function requireOrganizationId(): int
 function bindOrganizationId($statement, int $organizationId): void
 {
     $statement->bindValue(':organization_id', $organizationId, PDO::PARAM_INT);
+}
+
+const DOCUMENT_UPLOAD_ALLOWED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'doc', 'docx', 'xls', 'xlsx'];
+const DOCUMENT_UPLOAD_MAX_BYTES = 15 * 1024 * 1024;
+
+/**
+ * Checks one uploaded document and returns its lower-case extension.
+ * Only document and image types are accepted, so scripts can never be saved to the uploads folder.
+ */
+function validateUploadedDocument(array $uploadedFile): string
+{
+    $error = (int) ($uploadedFile['error'] ?? UPLOAD_ERR_NO_FILE);
+    $originalName = (string) ($uploadedFile['name'] ?? '');
+
+    if ($error === UPLOAD_ERR_INI_SIZE || $error === UPLOAD_ERR_FORM_SIZE) {
+        throw new RuntimeException(sprintf('"%s" is too large for the server. Please upload a smaller file.', $originalName));
+    }
+    if ($error !== UPLOAD_ERR_OK) {
+        throw new RuntimeException('A file upload is required for each document.');
+    }
+
+    $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+    if (!in_array($extension, DOCUMENT_UPLOAD_ALLOWED_EXTENSIONS, true)) {
+        throw new RuntimeException(sprintf(
+            '"%s" is not an allowed file type. Allowed: %s.',
+            $originalName,
+            implode(', ', DOCUMENT_UPLOAD_ALLOWED_EXTENSIONS)
+        ));
+    }
+
+    $size = @filesize((string) ($uploadedFile['tmp_name'] ?? ''));
+    if ($size !== false && $size > DOCUMENT_UPLOAD_MAX_BYTES) {
+        throw new RuntimeException(sprintf(
+            '"%s" is larger than %d MB.',
+            $originalName,
+            (int) (DOCUMENT_UPLOAD_MAX_BYTES / 1024 / 1024)
+        ));
+    }
+
+    return $extension;
 }
 
 function isMissingOrganizationColumn(PDOException $exception): bool
@@ -891,8 +951,9 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
         $counts['renew-policy-overdue'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND risk_end_date < curdate() AND coalesce(renewal_status, "") <> "Renewed" AND coalesce(policy_status, "") <> "Inactive" AND coalesce(inactive_reason, "") = ""');
         $counts['renew-policy-today'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date = curdate() AND coalesce(renewal_status, "") <> "Renewed" AND coalesce(policy_status, "") <> "Inactive" AND coalesce(inactive_reason, "") = ""');
         $counts['inactivated-policies'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND coalesce(policy_status, "") = "Inactive" AND coalesce(inactive_reason, "") <> ""');
-        $counts['attach-documents'] = $scopedCount('SELECT count(*) FROM (SELECT p.id FROM policies p LEFT JOIN documents d ON d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 WHERE p.organization_id = :organization_id AND p.issue_date >= "2026-04-01" GROUP BY p.id HAVING count(d.id) = 0) pending_docs');
+        $counts['attach-documents'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND p.issue_date >= "2026-04-01" AND NOT EXISTS (SELECT 1 FROM documents d WHERE d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1)');
         $counts['pending-payments'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND paid_by_type = "Agent" AND coalesce(payment_pending_amount, 0) > 0');
+        $counts['policies-renewed-today'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND p.previous_policy_id IS NOT NULL AND date(p.created_at) = curdate()');
         $counts['policies-added'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND date(p.created_at) = curdate()');
         $counts['policies-this-week'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND yearweek(p.created_at, 1) = yearweek(curdate(), 1)');
         $counts['policies-this-month'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND year(p.created_at) = year(curdate()) AND month(p.created_at) = month(curdate())');
@@ -2137,6 +2198,7 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
     }
     if (in_array($path, [
         '/api/reports/policies-added',
+        '/api/reports/policies-renewed-today',
         '/api/reports/policies-this-week',
         '/api/reports/policies-this-month',
     ], true) && $method === 'GET') {
@@ -2146,6 +2208,7 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
 
         $dateCondition = match ($path) {
             '/api/reports/policies-added' => 'date(p.created_at) = curdate()',
+            '/api/reports/policies-renewed-today' => 'date(p.created_at) = curdate() AND p.previous_policy_id IS NOT NULL',
             '/api/reports/policies-this-week' => 'yearweek(p.created_at, 1) = yearweek(curdate(), 1)',
             '/api/reports/policies-this-month' => 'year(p.created_at) = year(curdate()) and month(p.created_at) = month(curdate())',
         };
@@ -2159,11 +2222,14 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                 p.gross_premium,
                 p.net_premium,
                 p.issue_date,
+                p.risk_end_date,
+                pp.policy_number AS previous_policy_number,
                 c.full_name AS customer_name,
                 cg.group_name AS customer_group_name,
                 ic.company_name,
                 ip.product_name
              FROM policies p
+             LEFT JOIN policies pp ON pp.id = p.previous_policy_id
              LEFT JOIN customers c ON c.id = p.customer_id
              LEFT JOIN customer_groups cg ON cg.id = c.group_id
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
@@ -2398,18 +2464,16 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
         );
         $pendingDocumentUploads = $scopedCount(
             'SELECT count(*)
-             FROM (
-                SELECT p.id
-                FROM policies p
-                LEFT JOIN documents d
-                  ON d.policy_id = p.id
-                 AND d.deleted_at IS NULL
-                 AND d.is_active = 1
-                WHERE p.organization_id = :organization_id
-                  AND p.issue_date >= "2026-04-01"
-                GROUP BY p.id
-                HAVING count(d.id) = 0
-             ) pending_documents'
+             FROM policies p
+             WHERE p.organization_id = :organization_id
+               AND p.issue_date >= "2026-04-01"
+               AND NOT EXISTS (
+                  SELECT 1
+                  FROM documents d
+                  WHERE d.policy_id = p.id
+                    AND d.deleted_at IS NULL
+                    AND d.is_active = 1
+               )'
         );
 
         $renewalsOverdue = $scopedCount(
@@ -2444,7 +2508,50 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
     if ($path === '/api/policies/pending-documents' && $method === 'GET') {
         $pdo = Database::connection();
         $organizationId = requireOrganizationId();
-        $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
+        $limit = isset($_GET['limit']) ? max(1, min(2000, (int) $_GET['limit'])) : 1000;
+
+        // Policies issued before this date are not tracked for pending documents.
+        $minimumIssueDate = '2026-04-01';
+        $isDate = static fn ($value): bool => is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1;
+
+        $issueFrom = $isDate($_GET['issue_from'] ?? null) ? (string) $_GET['issue_from'] : $minimumIssueDate;
+        if ($issueFrom < $minimumIssueDate) {
+            $issueFrom = $minimumIssueDate;
+        }
+        $conditions = [
+            'p.organization_id = :organization_id',
+            'p.issue_date >= :issue_from',
+            'NOT EXISTS (
+                SELECT 1
+                FROM documents d
+                WHERE d.policy_id = p.id
+                  AND d.deleted_at IS NULL
+                  AND d.is_active = 1
+             )',
+        ];
+        $params = [':issue_from' => $issueFrom];
+
+        if ($isDate($_GET['issue_to'] ?? null)) {
+            $conditions[] = 'p.issue_date <= :issue_to';
+            $params[':issue_to'] = (string) $_GET['issue_to'];
+        }
+        if ($isDate($_GET['expiry_from'] ?? null)) {
+            $conditions[] = 'p.risk_end_date >= :expiry_from';
+            $params[':expiry_from'] = (string) $_GET['expiry_from'];
+        }
+        if ($isDate($_GET['expiry_to'] ?? null)) {
+            $conditions[] = 'p.risk_end_date <= :expiry_to';
+            $params[':expiry_to'] = (string) $_GET['expiry_to'];
+        }
+        $whereSql = implode("\n               AND ", $conditions);
+
+        $countStatement = $pdo->prepare('SELECT count(*) FROM policies p WHERE ' . $whereSql);
+        bindOrganizationId($countStatement, $organizationId);
+        foreach ($params as $name => $value) {
+            $countStatement->bindValue($name, $value);
+        }
+        $countStatement->execute();
+        $total = (int) $countStatement->fetchColumn();
 
         $statement = $pdo->prepare(
             'SELECT
@@ -2463,26 +2570,21 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
              LEFT JOIN customer_groups cg ON cg.id = c.group_id
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
              LEFT JOIN insurance_products ip ON ip.id = p.product_id
-             WHERE p.organization_id = :organization_id
-               AND p.issue_date >= "2026-04-01"
-               AND NOT EXISTS (
-                  SELECT 1
-                  FROM documents d
-                  WHERE d.policy_id = p.id
-                    AND d.deleted_at IS NULL
-                    AND d.is_active = 1
-               )
+             WHERE ' . $whereSql . '
              ORDER BY p.updated_at DESC, p.id DESC
              LIMIT :limit'
         );
         bindOrganizationId($statement, $organizationId);
+        foreach ($params as $name => $value) {
+            $statement->bindValue($name, $value);
+        }
         $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
         $statement->execute();
 
         Response::json([
             'status' => 'ok',
             'data' => $statement->fetchAll(),
-            'meta' => ['limit' => $limit]
+            'meta' => ['limit' => $limit, 'total' => $total]
         ]);
         exit;
     }
@@ -2647,13 +2749,13 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                 }
 
                 $uploadedFile = $uploadedFiles[$index] ?? null;
-                if (!$uploadedFile || (int) $uploadedFile['error'] !== UPLOAD_ERR_OK) {
+                if (!$uploadedFile) {
                     throw new RuntimeException('A file upload is required for each document.');
                 }
+                $extension = validateUploadedDocument($uploadedFile);
 
                 $originalName = (string) $uploadedFile['name'];
                 $tmpName = (string) $uploadedFile['tmp_name'];
-                $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
                 $storedName = uniqid('doc_', true) . ($extension !== '' ? '.' . $extension : '');
                 $targetPath = $uploadDir . '/' . $storedName;
 
@@ -2875,13 +2977,13 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                 }
 
                 $uploadedFile = $uploadedFiles[$index] ?? null;
-                if (!$uploadedFile || (int) $uploadedFile['error'] !== UPLOAD_ERR_OK) {
+                if (!$uploadedFile) {
                     throw new RuntimeException('A file upload is required for each document.');
                 }
+                $extension = validateUploadedDocument($uploadedFile);
 
                 $originalName = (string) $uploadedFile['name'];
                 $tmpName = (string) $uploadedFile['tmp_name'];
-                $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
                 $storedName = uniqid('doc_', true) . ($extension !== '' ? '.' . $extension : '');
                 $targetPath = $uploadDir . '/' . $storedName;
 
@@ -2988,8 +3090,10 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
 
             $fileFields = [];
             if (isset($_FILES['file']) && (int) ($_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
-                if ((int) $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-                    Response::json(['status' => 'error', 'message' => 'Failed to upload replacement file.'], 422);
+                try {
+                    validateUploadedDocument($_FILES['file']);
+                } catch (RuntimeException $uploadException) {
+                    Response::json(['status' => 'error', 'message' => $uploadException->getMessage()], 422);
                     exit;
                 }
                 $uploadDir = __DIR__ . '/uploads';
@@ -4564,10 +4668,16 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                     continue;
                 }
 
-                if ((int) $_FILES[$fileColumn]['error'] !== UPLOAD_ERR_OK) {
+                if ((int) $_FILES[$fileColumn]['error'] === UPLOAD_ERR_NO_FILE) {
+                    continue;
+                }
+
+                try {
+                    validateUploadedDocument($_FILES[$fileColumn]);
+                } catch (RuntimeException $uploadException) {
                     Response::json([
                         'status' => 'error',
-                        'message' => sprintf('Failed to upload file for "%s".', $fileColumn)
+                        'message' => $uploadException->getMessage()
                     ], 422);
                     exit;
                 }

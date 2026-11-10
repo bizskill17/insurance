@@ -112,6 +112,12 @@ export const menuSections = [
     items: [
       { label: "Daily Activity Report", path: "/reports/daily-activity" },
       { label: "Policies Added Today", path: "/reports/policies-added", countKey: "policies-added" },
+      {
+        label: "Policies Renewed Today",
+        path: "/reports/policies-renewed-today",
+        countKey: "policies-renewed-today",
+        fallbackView: "/policies/renew"
+      },
       { label: "Policies This Week", path: "/reports/policies-this-week", countKey: "policies-this-week" },
       { label: "Policies This Month", path: "/reports/policies-this-month", countKey: "policies-this-month" },
       { label: "Pending Payments from Clients", path: "/reports/pending-payments", countKey: "pending-payments" },

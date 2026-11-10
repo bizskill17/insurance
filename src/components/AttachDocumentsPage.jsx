@@ -6,6 +6,13 @@ import ResponsiveDataView from "./ResponsiveDataView";
 import { ButtonSpinner } from "./Spinner";
 import { buildFilterOptions } from "../utils/dataView";
 import SearchableSelect from "./SearchableSelect";
+import {
+  DOCUMENT_ACCEPT,
+  compressDocumentFile,
+  formatFileSize,
+  postFormWithProgress,
+  validateDocumentFile
+} from "../utils/documentUpload";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -36,6 +43,7 @@ async function readApiJson(response) {
 }
 
 const MIN_PENDING_DOCUMENT_ISSUE_DATE = "2026-04-01";
+const PENDING_LIST_LIMIT = 2000;
 
 const columns = [
   { key: "policy_number", label: "Policy No." },
@@ -56,7 +64,8 @@ function emptyPolicyDocumentEntry() {
     document_date: "",
     expiry_date: "",
     remarks: "",
-    file: null
+    file: null,
+    fileError: ""
   };
 }
 
@@ -74,50 +83,75 @@ export default function AttachDocumentsPage() {
   const [expiryDateFrom, setExpiryDateFrom] = useState("");
   const [expiryDateTo, setExpiryDateTo] = useState("");
   const [documents, setDocuments] = useState([emptyPolicyDocumentEntry()]);
+  const [totalPending, setTotalPending] = useState(0);
+  const [uploadStage, setUploadStage] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const policyDocumentTypes = documentTypes.filter(
     (documentType) => String(documentType.entity_level || "").toLowerCase() === "policy"
   );
 
   useEffect(() => {
-    setIssueDateFrom(MIN_PENDING_DOCUMENT_ISSUE_DATE);
-    setIssueDateTo("");
-    setExpiryDateFrom("");
-    setExpiryDateTo("");
+    let cancelled = false;
 
-    const load = async () => {
+    const loadDocumentTypes = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/masters/document-types?limit=250`);
+        const json = await readApiJson(response);
+        if (!response.ok) {
+          throw new Error(json.message || "Failed to load document types.");
+        }
+        if (!cancelled) setDocumentTypes(json.data || []);
+      } catch (loadError) {
+        if (!cancelled) setError(loadError.message);
+      }
+    };
+
+    loadDocumentTypes();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Date filters are applied on the server so every matching policy can be found,
+  // not only the most recent ones that fit in one response.
+  useEffect(() => {
+    let cancelled = false;
+    const params = new URLSearchParams({ limit: String(PENDING_LIST_LIMIT) });
+    if (issueDateFrom) params.set("issue_from", issueDateFrom);
+    if (issueDateTo) params.set("issue_to", issueDateTo);
+    if (expiryDateFrom) params.set("expiry_from", expiryDateFrom);
+    if (expiryDateTo) params.set("expiry_to", expiryDateTo);
+
+    const timer = window.setTimeout(async () => {
       setLoading(true);
       setError("");
 
       try {
-        const [policiesResponse, documentTypesResponse] = await Promise.all([
-          fetch(`${API_BASE}/policies/pending-documents?limit=100`),
-          fetch(`${API_BASE}/masters/document-types?limit=250`)
-        ]);
-        const [policiesJson, documentTypesJson] = await Promise.all([
-          readApiJson(policiesResponse),
-          readApiJson(documentTypesResponse)
-        ]);
+        const response = await fetch(`${API_BASE}/policies/pending-documents?${params.toString()}`);
+        const json = await readApiJson(response);
 
-        if (!policiesResponse.ok) {
-          throw new Error(policiesJson.message || "Failed to load pending document policies.");
+        if (!response.ok) {
+          throw new Error(json.message || "Failed to load pending document policies.");
         }
 
-        if (!documentTypesResponse.ok) {
-          throw new Error(documentTypesJson.message || "Failed to load document types.");
+        if (!cancelled) {
+          const rows = json.data || [];
+          setRecords(rows);
+          setTotalPending(Number(json.meta?.total ?? rows.length));
         }
-
-        setRecords(policiesJson.data || []);
-        setDocumentTypes(documentTypesJson.data || []);
       } catch (loadError) {
-        setError(loadError.message);
+        if (!cancelled) setError(loadError.message);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-    };
+    }, 350);
 
-    load();
-  }, []);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [issueDateFrom, issueDateTo, expiryDateFrom, expiryDateTo]);
 
   const resetModal = () => {
     setIsModalOpen(false);
@@ -150,6 +184,37 @@ export default function AttachDocumentsPage() {
     setDocuments((current) => [...current, emptyPolicyDocumentEntry()]);
   };
 
+  // Picking several files at once fills this block and adds a block for each extra file,
+  // copying the chosen document type so it does not have to be selected again.
+  const handleFilesSelected = (index, fileList) => {
+    const files = Array.from(fileList || []);
+    if (!files.length) {
+      setDocuments((current) =>
+        current.map((document, documentIndex) =>
+          documentIndex === index ? { ...document, file: null, fileError: "" } : document
+        )
+      );
+      return;
+    }
+
+    setDocuments((current) => {
+      const base = current[index] || emptyPolicyDocumentEntry();
+      const updated = current.map((document, documentIndex) =>
+        documentIndex === index
+          ? { ...document, file: files[0], fileError: validateDocumentFile(files[0]) }
+          : document
+      );
+      const extraBlocks = files.slice(1).map((file) => ({
+        ...emptyPolicyDocumentEntry(),
+        document_type_id: base.document_type_id,
+        file,
+        fileError: validateDocumentFile(file)
+      }));
+
+      return [...updated.slice(0, index + 1), ...extraBlocks, ...updated.slice(index + 1)];
+    });
+  };
+
   const removeDocumentBlock = (index) => {
     setDocuments((current) =>
       current.length <= 1 ? [emptyPolicyDocumentEntry()] : current.filter((_, itemIndex) => itemIndex !== index)
@@ -162,11 +227,20 @@ export default function AttachDocumentsPage() {
       return;
     }
 
+    const invalidDocument = documents.find((document) => document.fileError || validateDocumentFile(document.file));
+    if (invalidDocument) {
+      setError(invalidDocument.fileError || validateDocumentFile(invalidDocument.file));
+      return;
+    }
+
     setUploading(true);
+    setUploadProgress(0);
+    setUploadStage("Preparing files...");
     setMessage("");
     setError("");
 
     try {
+      const preparedFiles = await Promise.all(documents.map((document) => compressDocumentFile(document.file)));
       const payload = new FormData();
       payload.append("policy_id", String(selectedPolicy.id));
       payload.append(
@@ -182,29 +256,32 @@ export default function AttachDocumentsPage() {
         )
       );
 
-      documents.forEach((document) => {
-        if (document.file) {
-          payload.append("files[]", document.file);
-        }
+      preparedFiles.forEach((file) => {
+        payload.append("files[]", file);
       });
 
-      const response = await fetch(`${API_BASE}/policies/upload-documents`, {
-        method: "POST",
-        body: payload
-      });
-      const json = await readApiJson(response);
+      setUploadStage("Uploading...");
+      const { ok, json } = await postFormWithProgress(
+        `${API_BASE}/policies/upload-documents`,
+        payload,
+        setUploadProgress
+      );
 
-      if (!response.ok) {
-        throw new Error(json.message || "Failed to upload document.");
+      if (!ok) {
+        throw new Error(json?.message || "Failed to upload document.");
       }
 
       setMessage(json.message || "Document uploaded successfully.");
       setRecords((current) => current.filter((record) => record.id !== selectedPolicy.id));
+      setTotalPending((current) => Math.max(0, current - 1));
+      window.dispatchEvent(new Event("refresh-counts"));
       resetModal();
     } catch (uploadError) {
       setError(uploadError.message);
     } finally {
       setUploading(false);
+      setUploadStage("");
+      setUploadProgress(0);
     }
   };
 
@@ -304,6 +381,12 @@ export default function AttachDocumentsPage() {
           )}
         />
 
+        {!loading && totalPending > records.length ? (
+          <p className="feedback">
+            Showing the {records.length.toLocaleString()} most recently updated of {totalPending.toLocaleString()} pending
+            policies. Use the date filters to find older ones.
+          </p>
+        ) : null}
         {message ? <p className="feedback feedback--success">{message}</p> : null}
       </section>
 
@@ -365,11 +448,33 @@ export default function AttachDocumentsPage() {
 
                           <label className="form-field">
                             <FormLabel required>Choose File</FormLabel>
-                            <input
-                              type="file"
-                              required
-                              onChange={(event) => handleDocumentChange(index, "file", event.target.files?.[0] || null)}
-                            />
+                            {document.file ? (
+                              <div className={`upload-file-chip ${document.fileError ? "upload-file-chip--error" : ""}`}>
+                                <span className="upload-file-chip__name">
+                                  {document.fileError || `${document.file.name} (${formatFileSize(document.file.size)})`}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="text-button text-blue"
+                                  onClick={() => handleFilesSelected(index, [])}
+                                >
+                                  Change file
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <input
+                                  type="file"
+                                  required
+                                  multiple
+                                  accept={DOCUMENT_ACCEPT}
+                                  onChange={(event) => handleFilesSelected(index, event.target.files)}
+                                />
+                                <small className="upload-file-note">
+                                  PDF, image, Word or Excel, up to 15 MB. You can select several files at once.
+                                </small>
+                              </>
+                            )}
                           </label>
                         </div>
                       </div>
@@ -387,9 +492,20 @@ export default function AttachDocumentsPage() {
                       Cancel
                     </button>
 	                  <button type="submit" className="primary-button" disabled={uploading}>
-	                    {uploading ? <ButtonSpinner label="Uploading..." /> : "Upload Documents"}
+	                    {uploading ? (
+	                      <ButtonSpinner
+	                        label={uploadStage === "Uploading..." ? `Uploading ${uploadProgress}%` : uploadStage || "Uploading..."}
+	                      />
+	                    ) : (
+	                      "Upload Documents"
+	                    )}
 	                  </button>
 	                </div>
+	                {uploading && uploadStage === "Uploading..." ? (
+	                  <div className="upload-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}>
+	                    <div className="upload-progress__bar" style={{ width: `${uploadProgress}%` }} />
+	                  </div>
+	                ) : null}
 	              </form>
 
               {error ? <p className="feedback feedback--error">{error}</p> : null}

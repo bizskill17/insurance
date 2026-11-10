@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { API_BASE } from "../config/api";
 import { ActionIconButton, ActionIconDisplay } from "./ActionIcon";
 import FollowUpModal from "./FollowUpModal";
@@ -156,6 +157,10 @@ const renewalViewConfig = {
   overdue: {
     title: "Renew Policy - Overdue",
     emptyMessage: "No overdue renewal policies found."
+  },
+  "next-7-days": {
+    title: "Renew Policy - Next 7 Days",
+    emptyMessage: "No policies are due for renewal in the next 7 days."
   }
 };
 
@@ -201,6 +206,10 @@ function filterRenewalView(records, viewMode) {
 
     if (viewMode === "overdue") {
       return riskEndDate < today;
+    }
+
+    if (viewMode === "next-7-days") {
+      return riskEndDate >= today && riskEndDate <= addDaysKey(today, 7);
     }
 
     return true;
@@ -258,7 +267,10 @@ export default function RenewPolicyPage({ viewMode = "all" }) {
   const [expiryDateFrom, setExpiryDateFrom] = useState("");
   const [expiryDateTo, setExpiryDateTo] = useState("");
 
-  const normalizedViewMode = renewalViewConfig[viewMode] ? viewMode : "all";
+  // Dashboard cards open a specific view with ?view=..., e.g. /policies/renew?view=next-7-days
+  const [searchParams] = useSearchParams();
+  const requestedViewMode = viewMode !== "all" ? viewMode : searchParams.get("view") || "all";
+  const normalizedViewMode = renewalViewConfig[requestedViewMode] ? requestedViewMode : "all";
   const viewConfig = renewalViewConfig[normalizedViewMode];
 
   const loadData = async () => {

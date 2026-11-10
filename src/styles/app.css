@@ -50,6 +50,12 @@ button {
   display: flex;
   flex-direction: column;
   flex: 0 0 320px;
+  /* Stay at screen height while the page scrolls, so the menu scrolls inside it. */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  align-self: flex-start;
   overflow: hidden;
   transition: width 0.25s ease, flex-basis 0.25s ease, opacity 0.2s ease,
     border-color 0.2s ease;
@@ -172,7 +178,27 @@ button {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 12px 10px 18px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(22, 33, 45, 0.35) transparent;
+}
+
+.menu::-webkit-scrollbar {
+  width: 8px;
+}
+
+.menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.menu::-webkit-scrollbar-thumb {
+  background: rgba(22, 33, 45, 0.3);
+  border-radius: 8px;
+}
+
+.menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(22, 33, 45, 0.5);
 }
 
 .menu-group + .menu-group,
@@ -2906,4 +2932,60 @@ button {
     padding: 12px 14px;
   }
 
+}
+
+/* Attach Documents upload */
+.upload-file-note {
+  display: block;
+  margin-top: 6px;
+  color: #5b6878;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.upload-file-note--error {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.upload-progress {
+  height: 8px;
+  margin-top: 12px;
+  border-radius: 8px;
+  background: rgba(45, 87, 215, 0.12);
+  overflow: hidden;
+}
+
+.upload-progress__bar {
+  height: 100%;
+  background: #2d57d7;
+  transition: width 0.2s ease;
+}
+
+.upload-file-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 46px;
+  padding: 8px 14px;
+  border: 1px solid rgba(45, 87, 215, 0.35);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.upload-file-chip__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.upload-file-chip--error {
+  border-color: rgba(192, 57, 43, 0.6);
+}
+
+.upload-file-chip--error .upload-file-chip__name {
+  color: #c0392b;
+  font-weight: 600;
 }

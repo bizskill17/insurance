@@ -1,4 +1,39 @@
 export const reportConfigs = {
+  "policies-renewed-today": {
+    title: "Policies Renewed Today",
+    endpoint: "/reports/policies-renewed-today",
+    emptyMessage: "No policies renewed today.",
+    loadingMessage: "Loading policies renewed today...",
+    searchKeys: [
+      "policy_number",
+      "previous_policy_number",
+      "customer_name",
+      "customer_group_name",
+      "company_name",
+      "product_name",
+      "policy_type"
+    ],
+    filters: [
+      { key: "customer_name", label: "Customer" },
+      { key: "customer_group_name", label: "Group" },
+      { key: "company_name", label: "Company" },
+      { key: "policy_type", label: "Policy Type" },
+      { key: "business_type", label: "Business Type" }
+    ],
+    columns: [
+      { key: "policy_number", label: "New Policy No." },
+      { key: "previous_policy_number", label: "Old Policy No." },
+      { key: "customer_name", label: "Customer", highlight: true },
+      { key: "customer_group_name", label: "Customer Group", highlight: true },
+      { key: "company_name", label: "Insurance Company", highlight: true },
+      { key: "product_name", label: "Product Name", highlight: true },
+      { key: "policy_type", label: "Policy Type" },
+      { key: "business_type", label: "Business Type" },
+      { key: "risk_end_date", label: "New Expiry Date" },
+      { key: "gross_premium", label: "Gross Premium" },
+      { key: "net_premium", label: "Net Premium" }
+    ]
+  },
   "policies-added": {
     title: "Policies Added Today",
     endpoint: "/reports/policies-added",

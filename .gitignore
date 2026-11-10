@@ -6,6 +6,7 @@ deploy/
 api/config/database.php
 api/public/uploads/*
 !api/public/uploads/.gitkeep
+!api/public/uploads/.htaccess
 *.xlsx
 *.xls
 *.csv

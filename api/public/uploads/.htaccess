@@ -1,0 +1,9 @@
+# Uploaded files are documents only. Refuse to serve anything that a browser
+# or the server could run as code, even if such a file ever lands here.
+<FilesMatch "(?i)\.(php\d?|phtml|phar|pht|phps|cgi|pl|py|sh|shtml|html?|js|svg|htaccess)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+</IfModule>
