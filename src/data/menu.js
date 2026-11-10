@@ -7,25 +7,6 @@ export const menuSections = [
     items: [{ label: "Dashboard", path: "/dashboard" }]
   },
   {
-    label: "Masters",
-    path: "/masters",
-    icon: "masters",
-    items: [
-      { label: "Organizations", path: "/masters/organizations", countKey: "organizations" },
-      { label: "Customers", path: "/masters/customers", countKey: "customers" },
-      { label: "Customer Groups", path: "/masters/customer-groups", countKey: "customer-groups" },
-      { label: "Insurance Companies", path: "/masters/insurance-companies", countKey: "insurance-companies" },
-      { label: "States", path: "/masters/states", countKey: "states" },
-      { label: "Cities", path: "/masters/cities", countKey: "cities" },
-      { label: "Product Categories", path: "/masters/product-categories", countKey: "product-categories" },
-      { label: "Products", path: "/masters/insurance-products", countKey: "insurance-products" },
-      { label: "Document Types", path: "/masters/document-types", countKey: "document-types" },
-      { label: "Users", path: "/masters/users", countKey: "users" },
-      { label: "Agents", path: "/masters/agents", countKey: "agents" },
-      { label: "Agent Accounts", path: "/masters/agent-accounts", countKey: "agent-accounts" }
-    ]
-  },
-  {
     label: "Leads",
     path: "/leads",
     icon: "leads",
@@ -148,6 +129,25 @@ export const menuSections = [
         path: "/reports/expiry-reports/section/yearly",
         matchPrefixes: ["/reports/expiry-reports/year/"]
       }
+    ]
+  },
+  {
+    label: "Masters",
+    path: "/masters",
+    icon: "masters",
+    items: [
+      { label: "Organizations", path: "/masters/organizations", countKey: "organizations" },
+      { label: "Customers", path: "/masters/customers", countKey: "customers" },
+      { label: "Customer Groups", path: "/masters/customer-groups", countKey: "customer-groups" },
+      { label: "Insurance Companies", path: "/masters/insurance-companies", countKey: "insurance-companies" },
+      { label: "States", path: "/masters/states", countKey: "states" },
+      { label: "Cities", path: "/masters/cities", countKey: "cities" },
+      { label: "Product Categories", path: "/masters/product-categories", countKey: "product-categories" },
+      { label: "Products", path: "/masters/insurance-products", countKey: "insurance-products" },
+      { label: "Document Types", path: "/masters/document-types", countKey: "document-types" },
+      { label: "Users", path: "/masters/users", countKey: "users" },
+      { label: "Agents", path: "/masters/agents", countKey: "agents" },
+      { label: "Agent Accounts", path: "/masters/agent-accounts", countKey: "agent-accounts" }
     ]
   }
 ];

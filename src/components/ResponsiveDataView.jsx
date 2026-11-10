@@ -1,5 +1,5 @@
 import { API_BASE } from "../config/api";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ActionIconDisplay } from "./ActionIcon";
 import MultiSelectFilter from "./MultiSelectFilter";
 import RecordDetailModal from "./RecordDetailModal";
@@ -8,6 +8,10 @@ import TablePagination from "./TablePagination";
 import { downloadCsv, downloadPdf } from "../utils/export";
 import { filterRecords, getRecordValue, sortRecords } from "../utils/dataView";
 import { formatCellValue, formatCurrency } from "../utils/formatting";
+
+const MIN_ACTION_COLUMN_WIDTH = 150;
+// Left + right padding of a table cell, so the buttons do not touch the borders.
+const ACTION_CELL_PADDING = 28;
 
 function getColumnWidthStyle(column, fallback = "140px") {
   if (column.width) {
@@ -148,6 +152,33 @@ export default function ResponsiveDataView({
     () => sortedRecords.slice(pageStart, pageStart + pageSize),
     [pageSize, pageStart, sortedRecords]
   );
+
+  // The table uses fixed column widths, so the Action column cannot grow by itself.
+  // Measure the widest set of action buttons on this page and size the column to fit
+  // (e.g. a task with an extra "assign" button needs four buttons, not three).
+  const tableRef = useRef(null);
+  const [actionColumnWidth, setActionColumnWidth] = useState(MIN_ACTION_COLUMN_WIDTH);
+
+  useLayoutEffect(() => {
+    if (!renderActions || !tableRef.current) {
+      return;
+    }
+
+    const cells = tableRef.current.querySelectorAll("td.master-table__actions-cell > .table-actions");
+    let widest = 0;
+    cells.forEach((cell) => {
+      widest = Math.max(widest, cell.scrollWidth);
+    });
+
+    const nextWidth = Math.max(MIN_ACTION_COLUMN_WIDTH, Math.ceil(widest) + ACTION_CELL_PADDING);
+    setActionColumnWidth((current) => (current === nextWidth ? current : nextWidth));
+  }, [paginatedRecords, renderActions]);
+
+  const actionColumnStyle = {
+    width: `${actionColumnWidth}px`,
+    minWidth: `${actionColumnWidth}px`,
+    maxWidth: `${actionColumnWidth}px`
+  };
 
   useEffect(() => {
     setCurrentPage(1);
@@ -318,14 +349,14 @@ export default function ResponsiveDataView({
       ) : (
         <>
           <div className="table-wrap">
-            <table className="master-table">
+            <table className="master-table" ref={tableRef}>
               <colgroup>
                 <col style={{ width: "72px", minWidth: "72px", maxWidth: "72px" }} />
                 {columns.map((col) => (
                   <col key={col.key} style={getColumnWidthStyle(col)} />
                 ))}
                 {renderActions ? (
-                  <col style={{ width: "150px", minWidth: "150px", maxWidth: "150px" }} />
+                  <col style={actionColumnStyle} />
                 ) : null}
               </colgroup>
               <thead>
@@ -344,7 +375,7 @@ export default function ResponsiveDataView({
                     </th>
                   ))}
                   {renderActions ? (
-                    <th style={{ width: "150px", minWidth: "150px", maxWidth: "150px" }}>Action</th>
+                    <th style={actionColumnStyle}>Action</th>
                   ) : null}
                 </tr>
               </thead>
@@ -427,7 +458,8 @@ export default function ResponsiveDataView({
                       })}
                       {renderActions ? (
                         <td
-                          style={{ width: "150px", minWidth: "150px", maxWidth: "150px" }}
+                          className="master-table__actions-cell"
+                          style={actionColumnStyle}
                           onClick={(event) => event.stopPropagation()}
                         >
                           <div className="table-actions">{renderActions(record)}</div>
