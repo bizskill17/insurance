@@ -8,6 +8,7 @@ import { ButtonSpinner } from "./Spinner";
 import SearchableSelect from "./SearchableSelect";
 import { formatCellValue } from "../utils/formatting";
 import MasterPage from "./MasterPage";
+import { allBusinessTypeOptions } from "../data/policyOptions";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -710,7 +711,7 @@ export default function AllPoliciesPage() {
                   <label className="form-field"><FormLabel required>Policy Issued Date</FormLabel><input type="date" required value={editFormState.issue_date} onChange={(event) => handleEditChange("issue_date", event.target.value)} /></label>
                   <label className="form-field"><FormLabel required>Risk Inception Date</FormLabel><input type="date" required value={editFormState.risk_start_date} onChange={(event) => handleEditChange("risk_start_date", event.target.value)} /></label>
                   <label className="form-field"><FormLabel required>Risk Expiry Date</FormLabel><input type="date" required min={editFormState.issue_date || undefined} value={editFormState.risk_end_date} onChange={(event) => handleEditChange("risk_end_date", event.target.value)} /></label>
-                  <label className="form-field"><FormLabel required>Business Type</FormLabel><SearchableSelect required value={editFormState.business_type} onChange={(event) => handleEditChange("business_type", event.target.value)}><option value="">Select Business Type</option><option value="New">New</option><option value="Existing">Existing</option><option value="Renewal">Renewal</option></SearchableSelect></label>
+                  <label className="form-field"><FormLabel required>Business Type</FormLabel><SearchableSelect required value={editFormState.business_type} onChange={(event) => handleEditChange("business_type", event.target.value)}><option value="">Select Business Type</option>{allBusinessTypeOptions.map((option) => <option key={option} value={option}>{option}</option>)}</SearchableSelect></label>
                   <label className="form-field"><FormLabel required>Sum Insured</FormLabel><input type="number" min="0" step="0.01" required value={editFormState.sum_insured} onChange={(event) => handleEditChange("sum_insured", event.target.value)} /></label>
                   <label className="form-field"><FormLabel required>Policy Type</FormLabel><SearchableSelect required value={editFormState.policy_type} onChange={(event) => handleEditChange("policy_type", event.target.value)}><option value="">Select Policy Type</option>{lookupData.policyTypes.map((type) => (<option key={type.id} value={type.id}>{type.category_name}</option>))}</SearchableSelect></label>
                   <label className="form-field"><FormLabel required>Insurance Company</FormLabel><SearchableSelect required value={editFormState.company_id} onChange={(event) => handleEditChange("company_id", event.target.value)}><option value="">Select Insurance Company</option>{lookupData.insuranceCompanies.map((company) => (<option key={company.id} value={company.id}>{company.company_name}</option>))}</SearchableSelect></label>

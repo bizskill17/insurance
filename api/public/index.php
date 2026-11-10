@@ -3619,10 +3619,32 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
         $statement->execute();
         $policies = $statement->fetchAll();
 
+        $companiesStatement = $pdo->prepare(
+            'SELECT id, company_name
+             FROM insurance_companies
+             WHERE organization_id = :organization_id
+               AND is_active = 1
+             ORDER BY company_name ASC'
+        );
+        bindOrganizationId($companiesStatement, $organizationId);
+        $companiesStatement->execute();
+
+        $productsStatement = $pdo->prepare(
+            'SELECT id, company_id, product_name
+             FROM insurance_products
+             WHERE organization_id = :organization_id
+               AND is_active = 1
+             ORDER BY product_name ASC'
+        );
+        bindOrganizationId($productsStatement, $organizationId);
+        $productsStatement->execute();
+
         Response::json([
             'status' => 'ok',
             'data' => [
                 'policies' => $policies,
+                'insuranceCompanies' => $companiesStatement->fetchAll(),
+                'products' => $productsStatement->fetchAll(),
             ],
         ]);
         exit;
@@ -4004,6 +4026,69 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
             exit;
         }
 
+        $allowedRenewBusinessTypes = ['Renewal', 'Roll Over', 'Port', 'Endorsement'];
+        $renewBusinessType = trim((string) ($payload['business_type'] ?? ''));
+        if ($renewBusinessType === '') {
+            $renewBusinessType = 'Renewal';
+        }
+        if (!in_array($renewBusinessType, $allowedRenewBusinessTypes, true)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Business Type must be one of: ' . implode(', ', $allowedRenewBusinessTypes) . '.'
+            ], 422);
+            exit;
+        }
+
+        $renewCompanyId = (int) ($payload['company_id'] ?? 0);
+        if ($renewCompanyId <= 0) {
+            $renewCompanyId = (int) $previousPolicy['company_id'];
+        }
+        $companyCheck = $pdo->prepare(
+            'SELECT id FROM insurance_companies WHERE id = :id AND organization_id = :organization_id'
+        );
+        $companyCheck->bindValue(':id', $renewCompanyId, PDO::PARAM_INT);
+        bindOrganizationId($companyCheck, $organizationId);
+        $companyCheck->execute();
+        if (!$companyCheck->fetchColumn()) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Selected company was not found.'
+            ], 422);
+            exit;
+        }
+
+        $productInPayload = array_key_exists('product_id', $payload);
+        $renewProductId = $productInPayload
+            ? ((int) $payload['product_id'] > 0 ? (int) $payload['product_id'] : null)
+            : ($previousPolicy['product_id'] !== null ? (int) $previousPolicy['product_id'] : null);
+        if ($renewProductId !== null) {
+            $productCheck = $pdo->prepare(
+                'SELECT company_id FROM insurance_products WHERE id = :id AND organization_id = :organization_id'
+            );
+            $productCheck->bindValue(':id', $renewProductId, PDO::PARAM_INT);
+            bindOrganizationId($productCheck, $organizationId);
+            $productCheck->execute();
+            $productCompanyId = $productCheck->fetchColumn();
+            if ($productCompanyId === false) {
+                Response::json([
+                    'status' => 'error',
+                    'message' => 'Selected product was not found.'
+                ], 422);
+                exit;
+            }
+            if ((int) $productCompanyId !== $renewCompanyId) {
+                Response::json([
+                    'status' => 'error',
+                    'message' => 'Selected product does not belong to the selected company.'
+                ], 422);
+                exit;
+            }
+        }
+
+        $renewPreviousInsurerId = $renewCompanyId !== (int) $previousPolicy['company_id']
+            ? (int) $previousPolicy['company_id']
+            : null;
+
         $pdo->beginTransaction();
 
         try {
@@ -4020,6 +4105,7 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                     customer_id,
                     company_id,
                     product_id,
+                    previous_insurer_id,
                     policy_number,
                     business_type,
                     policy_type,
@@ -4053,6 +4139,7 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                     :customer_id,
                     :company_id,
                     :product_id,
+                    :previous_insurer_id,
                     :policy_number,
                     :business_type,
                     :policy_type,
@@ -4086,10 +4173,11 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
             $statement->bindValue(':policy_family_id', (int) $previousPolicy['policy_family_id'], PDO::PARAM_INT);
             $statement->bindValue(':previous_policy_id', $previousPolicyId, PDO::PARAM_INT);
             $statement->bindValue(':customer_id', (int) $previousPolicy['customer_id'], PDO::PARAM_INT);
-            $statement->bindValue(':company_id', (int) $previousPolicy['company_id'], PDO::PARAM_INT);
-            $statement->bindValue(':product_id', $previousPolicy['product_id'] !== null ? (int) $previousPolicy['product_id'] : null, $previousPolicy['product_id'] !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $statement->bindValue(':company_id', $renewCompanyId, PDO::PARAM_INT);
+            $statement->bindValue(':product_id', $renewProductId, $renewProductId !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $statement->bindValue(':previous_insurer_id', $renewPreviousInsurerId, $renewPreviousInsurerId !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
             $statement->bindValue(':policy_number', $payload['new_policy_number']);
-            $statement->bindValue(':business_type', 'Renewal');
+            $statement->bindValue(':business_type', $renewBusinessType);
             $statement->bindValue(':policy_type', $payload['policy_type'] !== '' ? $payload['policy_type'] : $previousPolicy['policy_type']);
             $statement->bindValue(':sum_insured', $payload['sum_insured'] !== '' ? $payload['sum_insured'] : null);
             $statement->bindValue(':gross_premium', $grossPremium);

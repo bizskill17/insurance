@@ -8,6 +8,7 @@ import ResponsiveDataView from "./ResponsiveDataView";
 import { ButtonSpinner } from "./Spinner";
 import { buildFilterOptions } from "../utils/dataView";
 import SearchableSelect from "./SearchableSelect";
+import { renewBusinessTypeOptions } from "../data/policyOptions";
 
 const initialFormState = {
   customer_group_id: "",
@@ -231,6 +232,8 @@ export default function RenewPolicyPage({ viewMode = "all" }) {
   const [formState, setFormState] = useState(initialFormState);
   const [records, setRecords] = useState([]);
   const [users, setUsers] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [products, setProducts] = useState([]);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [inactiveReason, setInactiveReason] = useState("");
   const [bulkUploadFile, setBulkUploadFile] = useState(null);
@@ -278,6 +281,8 @@ export default function RenewPolicyPage({ viewMode = "all" }) {
       }
 
       setRecords(json.data?.policies || []);
+      setCompanies(json.data?.insuranceCompanies || []);
+      setProducts(json.data?.products || []);
       setUsers(usersJson.data || []);
     } catch (loadError) {
       setError(loadError.message);
@@ -293,9 +298,37 @@ export default function RenewPolicyPage({ viewMode = "all" }) {
   const handleChange = (name, value) => {
     setFormState((current) => ({
       ...current,
-      [name]: value
+      [name]: value,
+      // A product belongs to one company, so changing the company clears the product.
+      ...(name === "company_id" && value !== current.company_id ? { product_id: "" } : {})
     }));
   };
+
+  const companyOptions = useMemo(() => {
+    // Keep the old policy's company selectable even if it has since been marked inactive.
+    if (
+      selectedPolicy?.company_id &&
+      !companies.some((company) => String(company.id) === String(selectedPolicy.company_id))
+    ) {
+      return [{ id: selectedPolicy.company_id, company_name: selectedPolicy.company_name || "Current company" }, ...companies];
+    }
+    return companies;
+  }, [companies, selectedPolicy]);
+
+  const productOptions = useMemo(() => {
+    const matching = products.filter(
+      (product) => formState.company_id && String(product.company_id || "") === formState.company_id
+    );
+    // Keep the old policy's product selectable even if it has since been marked inactive.
+    if (
+      selectedPolicy?.product_id &&
+      String(selectedPolicy.company_id) === formState.company_id &&
+      !matching.some((product) => String(product.id) === String(selectedPolicy.product_id))
+    ) {
+      return [{ id: selectedPolicy.product_id, product_name: selectedPolicy.product_name || "Current product" }, ...matching];
+    }
+    return matching;
+  }, [products, formState.company_id, selectedPolicy]);
 
   const openRenewForm = (policy) => {
     setSelectedPolicy(policy);
@@ -715,8 +748,12 @@ export default function RenewPolicyPage({ viewMode = "all" }) {
                   <input type="date" value={formState.risk_end_date} min={formState.issue_date || undefined} onChange={(event) => handleChange("risk_end_date", event.target.value)} />
                 </label>
                 <label className="form-field">
-                  <FormLabel>Business Type</FormLabel>
-                  <input type="text" readOnly value={formState.business_type} />
+                  <FormLabel required>Business Type</FormLabel>
+                  <SearchableSelect required value={formState.business_type} onChange={(event) => handleChange("business_type", event.target.value)}>
+                    {renewBusinessTypeOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </SearchableSelect>
                 </label>
                 <label className="form-field">
                   <FormLabel>Sum Insured</FormLabel>
@@ -727,12 +764,22 @@ export default function RenewPolicyPage({ viewMode = "all" }) {
                   <input type="text" readOnly value={formState.policy_type} />
                 </label>
                 <label className="form-field">
-                  <FormLabel>Company Name</FormLabel>
-                  <input type="text" readOnly value={selectedPolicy?.company_name || ""} />
+                  <FormLabel required>Company Name</FormLabel>
+                  <SearchableSelect required value={formState.company_id} onChange={(event) => handleChange("company_id", event.target.value)}>
+                    <option value="">Select Company</option>
+                    {companyOptions.map((company) => (
+                      <option key={company.id} value={String(company.id)}>{company.company_name}</option>
+                    ))}
+                  </SearchableSelect>
                 </label>
                 <label className="form-field">
                   <FormLabel>Product Name</FormLabel>
-                  <input type="text" readOnly value={selectedPolicy?.product_name || ""} />
+                  <SearchableSelect value={formState.product_id} disabled={!formState.company_id} onChange={(event) => handleChange("product_id", event.target.value)}>
+                    <option value="">{formState.company_id ? "Select Product" : "Select Company first"}</option>
+                    {productOptions.map((product) => (
+                      <option key={product.id} value={String(product.id)}>{product.product_name}</option>
+                    ))}
+                  </SearchableSelect>
                 </label>
                 <label className="form-field">
                   <FormLabel>Vehicle Make</FormLabel>
