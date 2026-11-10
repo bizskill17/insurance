@@ -146,11 +146,15 @@ export default function Sidebar({
 
         <nav className="menu" aria-label="Primary">
         {visibleMenuSections.map((section) => {
+          // Each section has its own colour, set in app.css by [data-section="..."].
+          const sectionKey = section.label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
           if (section.standalone) {
             return (
               <NavLink
                 key={section.label}
                 to={section.path}
+                data-section={sectionKey}
                 className={({ isActive }) =>
                   `menu-card menu-card--link ${isActive ? "is-active" : ""}`
                 }
@@ -177,6 +181,7 @@ export default function Sidebar({
             <section
               className={`menu-group ${isOpen ? "is-open" : ""}`}
               key={section.label}
+              data-section={sectionKey}
             >
               <button
                 className="menu-card menu-card--collapsible"

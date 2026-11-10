@@ -2989,3 +2989,86 @@ button {
   color: #c0392b;
   font-weight: 600;
 }
+
+/* ------------------------------------------------------------------
+   Section colours: one colour per menu section, reused on the dashboard.
+   --section-dark: menu header / dashboard band (white text on it)
+   --section-tint: open sub-menu / dashboard section background
+   --section-line: borders, --section-current: current sub-menu item
+   --section-ink:  dark text on the tint
+   ------------------------------------------------------------------ */
+[data-section="dashboard"] { --section-dark: #334155; --section-tint: #f1f5f9; --section-line: #cbd5e1; --section-current: #e2e8f0; --section-ink: #1e293b; }
+[data-section="masters"] { --section-dark: #1d4ed8; --section-tint: #dbeafe; --section-line: #93c5fd; --section-current: #bfdbfe; --section-ink: #1e3a8a; }
+[data-section="leads"] { --section-dark: #047857; --section-tint: #d1fae5; --section-line: #6ee7b7; --section-current: #a7f3d0; --section-ink: #064e3b; }
+[data-section="tasks"] { --section-dark: #6d28d9; --section-tint: #ede9fe; --section-line: #c4b5fd; --section-current: #ddd6fe; --section-ink: #3b0764; }
+[data-section="claim"] { --section-dark: #b91c1c; --section-tint: #fee2e2; --section-line: #fca5a5; --section-current: #fecaca; --section-ink: #7f1d1d; }
+[data-section="policies"] { --section-dark: #c2410c; --section-tint: #ffedd5; --section-line: #fdba74; --section-current: #fed7aa; --section-ink: #7c2d12; }
+[data-section="payments"] { --section-dark: #0f766e; --section-tint: #ccfbf1; --section-line: #5eead4; --section-current: #99f6e4; --section-ink: #134e4a; }
+[data-section="reports"] { --section-dark: #a21caf; --section-tint: #fae8ff; --section-line: #f0abfc; --section-current: #f5d0fe; --section-ink: #701a75; }
+[data-section="expiry-reports"] { --section-dark: #92400e; --section-tint: #fef3c7; --section-line: #fcd34d; --section-current: #fde68a; --section-ink: #78350f; }
+
+/* Left menu */
+.menu-card[data-section],
+[data-section] > .menu-card {
+  background: var(--section-dark);
+  color: #fff;
+}
+
+[data-section] > .submenu {
+  background: var(--section-tint);
+  border-color: var(--section-line);
+}
+
+[data-section] .submenu-item {
+  color: var(--section-ink);
+}
+
+[data-section] .submenu-item:hover {
+  background: var(--section-current);
+}
+
+[data-section] .submenu-item.is-current {
+  background: var(--section-current);
+  font-weight: 700;
+}
+
+[data-section] .menu-item-count {
+  background: var(--section-dark);
+}
+
+/* Dashboard sections */
+.dashboard-section[data-section] {
+  gap: 0;
+  border: 1px solid var(--section-line);
+  border-radius: 20px;
+  background: var(--section-tint);
+  overflow: hidden;
+}
+
+.dashboard-section[data-section]:first-child {
+  margin-top: 0;
+}
+
+.dashboard-section[data-section] > .master-card__header {
+  margin: 0;
+  padding: 14px 20px;
+  background: var(--section-dark);
+}
+
+.dashboard-section[data-section] > .master-card__header .responsive-data-view__title {
+  margin: 0;
+  color: #fff;
+  font-size: 19px;
+}
+
+.dashboard-section[data-section] > .dashboard-list {
+  padding: 16px;
+}
+
+.dashboard-section[data-section] .dashboard-tile {
+  border-color: var(--section-line);
+}
+
+.dashboard-section[data-section] .dashboard-tile .text-blue {
+  color: var(--section-ink);
+}

@@ -226,17 +226,16 @@ export default function DashboardPage() {
   return (
     <div className="dashboard-page">
       <section className="master-card dashboard-card">
-        <div className="master-card__header">
-          <h3 className="responsive-data-view__title">Insurance</h3>
-          <div className="master-card__actions master-card__actions--header"></div>
-        </div>
-
         {loading ? (
           <div className="table-state">
             <Spinner label="Loading dashboard..." />
           </div>
         ) : (
           <>
+            <div className="dashboard-section" data-section="policies">
+            <div className="master-card__header">
+              <h3 className="responsive-data-view__title">Insurance</h3>
+            </div>
             <div className="dashboard-list">
               {dashboardItems.map((item) => (
                 <button
@@ -256,8 +255,9 @@ export default function DashboardPage() {
                 </button>
               ))}
             </div>
+            </div>
 
-            <div className="dashboard-section">
+            <div className="dashboard-section" data-section="leads">
               <div className="master-card__header">
                 <h3 className="responsive-data-view__title">Leads</h3>
               </div>
@@ -282,7 +282,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="dashboard-section">
+            <div className="dashboard-section" data-section="tasks">
               <div className="master-card__header">
                 <h3 className="responsive-data-view__title">Tasks</h3>
               </div>
