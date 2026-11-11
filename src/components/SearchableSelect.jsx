@@ -48,6 +48,7 @@ export default function SearchableSelect({
   name,
   id,
   onSearchChange,
+  emptyMessage = "No matching options.",
   ...props
 }) {
   const generatedId = useId();
@@ -224,7 +225,9 @@ export default function SearchableSelect({
                 </button>
               ))
             ) : (
-              <div className="searchable-select__empty">No matching options.</div>
+              <div className="searchable-select__empty">
+                {query.trim() ? "No matching options." : emptyMessage}
+              </div>
             )}
           </div>
         </div>

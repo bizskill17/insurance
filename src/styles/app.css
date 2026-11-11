@@ -3407,3 +3407,51 @@ button {
     padding: 0 10px;
   }
 }
+
+/* Product Name: no product for the chosen company + policy type */
+.missing-product-hint {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  background: #fffbeb;
+  color: #78350f;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.missing-product-hint__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.missing-product-hint__actions a,
+.missing-product-hint__actions button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #f59e0b;
+  border-radius: 9px;
+  background: #fff;
+  color: #78350f;
+  font: inherit;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.missing-product-hint__actions a:hover,
+.missing-product-hint__actions button:hover {
+  background: #fef3c7;
+}
+
+/* Keep fields their natural height when a neighbour in the row grows (e.g. a hint below it). */
+.issue-policy-form > .form-field {
+  align-content: start;
+}

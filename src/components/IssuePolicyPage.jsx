@@ -3,6 +3,7 @@ import { API_BASE } from "../config/api";
 import FormLabel from "./FormLabel";
 import { ButtonSpinner, Spinner } from "./Spinner";
 import SearchableSelect from "./SearchableSelect";
+import MissingProductHint, { missingProductMessage } from "./MissingProductHint";
 
 function getTodayDateValue() {
   return new Date().toISOString().slice(0, 10);
@@ -137,15 +138,33 @@ export default function IssuePolicyPage() {
   const filteredProducts = useMemo(
     () =>
       lookupData.products.filter((product) => {
-        const matchesCompany =
-          !formState.company_id || String(product.company_id || "") === formState.company_id;
-        const matchesPolicyType =
-          !formState.policy_type || String(product.category_id || "") === formState.policy_type;
-
-        return matchesCompany && matchesPolicyType;
+        // Products are filtered by the selected company only. Product categories in the
+        // master (e.g. "Imported Policy Types") often do not match the policy type.
+        return !formState.company_id || String(product.company_id || "") === formState.company_id;
       }),
-    [formState.company_id, formState.policy_type, lookupData.products]
+    [formState.company_id, lookupData.products]
   );
+
+  const selectedCompanyName =
+    lookupData.insuranceCompanies.find((company) => String(company.id) === formState.company_id)?.company_name || "";
+  const hasNoProducts = Boolean(formState.company_id) && filteredProducts.length === 0;
+
+  // Reload only the product list (e.g. after adding one in Products master), keeping the form as it is.
+  const reloadProducts = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/policies/issue-form`);
+      const json = await readApiJson(response);
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to reload products.");
+      }
+      setLookupData((current) => ({
+        ...current,
+        products: sortByLabel(json.data.products || [], "product_name")
+      }));
+    } catch (reloadError) {
+      setError(reloadError.message);
+    }
+  };
   const showAgentChequeFields =
     formState.paid_by_type === "Agent" && formState.payment_mode === "Cheque";
 
@@ -161,13 +180,12 @@ export default function IssuePolicyPage() {
         next.product_id = "";
       }
 
-      if (name === "policy_type" && current.policy_type !== value) {
-        next.product_id = "";
-      }
-
       if (name === "product_id") {
         const product = lookupData.products.find((item) => String(item.id) === value);
-        next.policy_type = product?.category_id ? String(product.category_id) : next.policy_type;
+        // Fill Policy Type from the product only when it is still empty; never overwrite a chosen type.
+        if (!next.policy_type && product?.category_id) {
+          next.policy_type = String(product.category_id);
+        }
       }
 
       if (
@@ -433,6 +451,7 @@ export default function IssuePolicyPage() {
                 value={formState.product_id}
                 placeholder="Search product name"
                 disabled={isLocked}
+                emptyMessage={hasNoProducts ? missingProductMessage(selectedCompanyName) : undefined}
                 onChange={(event) => handleChange("product_id", event.target.value)}
               >
                 <option value="">Search product name</option>
@@ -451,6 +470,12 @@ export default function IssuePolicyPage() {
                   );
                 })}
               </SearchableSelect>
+              {hasNoProducts && !isLocked ? (
+                <MissingProductHint
+                  companyName={selectedCompanyName}
+                  onReload={reloadProducts}
+                />
+              ) : null}
             </label>
 
             <label className="form-field">

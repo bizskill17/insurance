@@ -9,6 +9,7 @@ import SearchableSelect from "./SearchableSelect";
 import { formatCellValue } from "../utils/formatting";
 import MasterPage from "./MasterPage";
 import { allBusinessTypeOptions } from "../data/policyOptions";
+import MissingProductHint, { missingProductMessage } from "./MissingProductHint";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -191,15 +192,34 @@ export default function AllPoliciesPage() {
   const filteredProducts = useMemo(
     () =>
       lookupData.products.filter((product) => {
-        const matchesCompany =
-          !editFormState.company_id || String(product.company_id || "") === editFormState.company_id;
-        const matchesPolicyType =
-          !editFormState.policy_type || String(product.category_id || "") === editFormState.policy_type;
-
-        return matchesCompany && matchesPolicyType;
+        // Products are filtered by the selected company only. Product categories in the
+        // master (e.g. "Imported Policy Types") often do not match the policy type.
+        return !editFormState.company_id || String(product.company_id || "") === editFormState.company_id;
       }),
-    [editFormState.company_id, editFormState.policy_type, lookupData.products]
+    [editFormState.company_id, lookupData.products]
   );
+
+  const editCompanyName =
+    lookupData.insuranceCompanies.find((company) => String(company.id) === editFormState.company_id)?.company_name || "";
+  const editHasNoProducts =
+    Boolean(editFormState.company_id) && filteredProducts.length === 0;
+
+  // Reload only the product list (e.g. after adding one in Products master), keeping the form as it is.
+  const reloadEditProducts = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/policies/issue-form`);
+      const json = await readApiJson(response);
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to reload products.");
+      }
+      setLookupData((current) => ({
+        ...current,
+        products: sortByLabel(json.data?.products || [], "product_name")
+      }));
+    } catch (reloadError) {
+      setEditError(reloadError.message);
+    }
+  };
 
   const dateFilteredRecords = useMemo(() => {
     return records.filter((record) => {
@@ -286,13 +306,12 @@ export default function AllPoliciesPage() {
         next.product_id = "";
       }
 
-      if (name === "policy_type" && current.policy_type !== value) {
-        next.product_id = "";
-      }
-
       if (name === "product_id") {
         const product = lookupData.products.find((item) => String(item.id) === value);
-        next.policy_type = product?.category_id ? String(product.category_id) : next.policy_type;
+        // Fill Policy Type from the product only when it is still empty; never overwrite a chosen type.
+        if (!next.policy_type && product?.category_id) {
+          next.policy_type = String(product.category_id);
+        }
       }
 
       if (name === "paid_by_type" && value !== "Agent") {
@@ -715,7 +734,7 @@ export default function AllPoliciesPage() {
                   <label className="form-field"><FormLabel required>Sum Insured</FormLabel><input type="number" min="0" step="0.01" required value={editFormState.sum_insured} onChange={(event) => handleEditChange("sum_insured", event.target.value)} /></label>
                   <label className="form-field"><FormLabel required>Policy Type</FormLabel><SearchableSelect required value={editFormState.policy_type} onChange={(event) => handleEditChange("policy_type", event.target.value)}><option value="">Select Policy Type</option>{lookupData.policyTypes.map((type) => (<option key={type.id} value={type.id}>{type.category_name}</option>))}</SearchableSelect></label>
                   <label className="form-field"><FormLabel required>Insurance Company</FormLabel><SearchableSelect required value={editFormState.company_id} onChange={(event) => handleEditChange("company_id", event.target.value)}><option value="">Select Insurance Company</option>{lookupData.insuranceCompanies.map((company) => (<option key={company.id} value={company.id}>{company.company_name}</option>))}</SearchableSelect></label>
-                  <label className="form-field"><FormLabel required>Product Name</FormLabel><SearchableSelect required value={editFormState.product_id} placeholder="Search product name" onChange={(event) => handleEditChange("product_id", event.target.value)}><option value="">Search product name</option>{filteredProducts.map((product) => { const companyName = String(product.company_name || "").trim(); const searchText = [product.product_name, companyName].filter(Boolean).join(" "); return (<option key={product.id} value={product.id} data-search-text={searchText}>{product.product_name}</option>); })}</SearchableSelect></label>
+                  <label className="form-field"><FormLabel required>Product Name</FormLabel><SearchableSelect required value={editFormState.product_id} placeholder="Search product name" emptyMessage={editHasNoProducts ? missingProductMessage(editCompanyName) : undefined} onChange={(event) => handleEditChange("product_id", event.target.value)}><option value="">Search product name</option>{filteredProducts.map((product) => { const companyName = String(product.company_name || "").trim(); const searchText = [product.product_name, companyName].filter(Boolean).join(" "); return (<option key={product.id} value={product.id} data-search-text={searchText}>{product.product_name}</option>); })}</SearchableSelect>{editHasNoProducts ? <MissingProductHint companyName={editCompanyName} onReload={reloadEditProducts} /> : null}</label>
                   <label className="form-field"><FormLabel>Vehicle Make</FormLabel><input type="text" value={editFormState.vehicle_make} onChange={(event) => handleEditChange("vehicle_make", event.target.value)} /></label>
                   <label className="form-field"><FormLabel>Vehicle Model</FormLabel><input type="text" value={editFormState.vehicle_model} onChange={(event) => handleEditChange("vehicle_model", event.target.value)} /></label>
                   <label className="form-field"><FormLabel>Manufacture Year</FormLabel><input type="number" min="1900" max="9999" step="1" value={editFormState.year_of_manufacture} onChange={(event) => handleEditChange("year_of_manufacture", event.target.value)} /></label>
