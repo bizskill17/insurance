@@ -3895,17 +3895,19 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
             : null;
         $policyTypeName = null;
 
-        if ($productId !== null && $policyTypeId !== null) {
-            $categoryCheck = $pdo->prepare('SELECT category_id FROM insurance_products WHERE id = :id AND organization_id = :organization_id');
-            $categoryCheck->bindValue(':id', $productId, PDO::PARAM_INT);
-            bindOrganizationId($categoryCheck, $organizationId);
-            $categoryCheck->execute();
-            $productCategoryId = $categoryCheck->fetchColumn();
+        // The product only has to belong to the selected company; its category may differ
+        // from the Policy Type (product categories in the master often do not match it).
+        if ($productId !== null) {
+            $productCompanyCheck = $pdo->prepare('SELECT company_id FROM insurance_products WHERE id = :id AND organization_id = :organization_id');
+            $productCompanyCheck->bindValue(':id', $productId, PDO::PARAM_INT);
+            bindOrganizationId($productCompanyCheck, $organizationId);
+            $productCompanyCheck->execute();
+            $productCompanyId = $productCompanyCheck->fetchColumn();
 
-            if ($productCategoryId !== false && (int) $productCategoryId !== $policyTypeId) {
+            if ($productCompanyId === false || (int) $productCompanyId !== $companyId) {
                 Response::json([
                     'status' => 'error',
-                    'message' => 'Selected Product Name does not belong to the chosen Policy Type.'
+                    'message' => 'Selected Product Name does not belong to the chosen Insurance Company.'
                 ], 422);
                 exit;
             }
@@ -4397,6 +4399,12 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
         $typeStatement->execute();
         $policyTypeName = $typeStatement->fetchColumn();
         if ($policyTypeName === false) { Response::json(['status' => 'error', 'message' => 'Selected Policy Type was not found.'], 422); exit; }
+        $editProductCheck = $pdo->prepare('SELECT company_id FROM insurance_products WHERE id = :id AND organization_id = :organization_id');
+        $editProductCheck->bindValue(':id', (int) ($payload['product_id'] ?? 0), PDO::PARAM_INT);
+        bindOrganizationId($editProductCheck, $organizationId);
+        $editProductCheck->execute();
+        $editProductCompanyId = $editProductCheck->fetchColumn();
+        if ($editProductCompanyId === false || (int) $editProductCompanyId !== (int) ($payload['company_id'] ?? 0)) { Response::json(['status' => 'error', 'message' => 'Selected Product Name does not belong to the chosen Insurance Company.'], 422); exit; }
         $statement = $pdo->prepare('UPDATE policies SET company_id = :company_id, product_id = :product_id, policy_number = :policy_number, business_type = :business_type, policy_type = :policy_type, sum_insured = :sum_insured, gross_premium = :gross_premium, net_premium = :net_premium, issue_date = :issue_date, risk_start_date = :risk_start_date, risk_end_date = :risk_end_date, vehicle_make = :vehicle_make, vehicle_model = :vehicle_model, year_of_manufacture = :year_of_manufacture, registration_no = :registration_no, paid_by_type = :paid_by_type, payment_mode = :payment_mode, agent_payment_account_id = :agent_payment_account_id WHERE id = :id AND organization_id = :organization_id');
         bindOrganizationId($statement, $organizationId);
         $statement->bindValue(':company_id', (int) ($payload['company_id'] ?? 0), PDO::PARAM_INT);
