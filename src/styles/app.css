@@ -1262,6 +1262,7 @@ button {
 .form-field {
   display: grid;
   gap: 7px;
+  min-width: 0;
 }
 
 .form-field__label-row {
@@ -1318,6 +1319,7 @@ button {
 .searchable-select {
   position: relative;
   width: 100%;
+  min-width: 0;
 }
 
 .searchable-select__native {
@@ -1367,11 +1369,13 @@ button {
   color: #1f2937;
 }
 
+/* Long selected values (e.g. company names) wrap onto a second line instead of spilling out. */
 .searchable-select__value {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  padding: 8px 0;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .searchable-select__chevron {

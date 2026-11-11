@@ -2028,6 +2028,11 @@ export default function MasterPage({
                             <option
                               key={`${field.name}-${field.optionValueKey || "id"}-${getOptionValue(field, option)}`}
                               value={getOptionValue(field, option)}
+                              data-description={
+                                field.optionsFrom === "product-categories" && option.parent_category_name && !field.dependsOn
+                                  ? `Under ${option.parent_category_name}`
+                                  : undefined
+                              }
                             >
                               {field.optionLabelKey
                                 ? option[field.optionLabelKey]

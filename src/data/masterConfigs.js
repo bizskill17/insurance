@@ -172,7 +172,7 @@ export const masterConfigs = {
         type: "select",
         optionsFrom: "product-categories",
         optionLabelKey: "category_name",
-        optionFilter: (option) => !option.parent_category_id,
+        // All categories are listed; a sub-category shows its parent underneath.
         resetsFields: ["sub_category_name"],
         required: true
       },
