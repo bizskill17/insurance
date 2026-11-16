@@ -3005,6 +3005,7 @@ button {
 [data-section="masters"] { --section-dark: #1d4ed8; --section-tint: #dbeafe; --section-line: #93c5fd; --section-current: #bfdbfe; --section-ink: #1e3a8a; }
 [data-section="leads"] { --section-dark: #047857; --section-tint: #d1fae5; --section-line: #6ee7b7; --section-current: #a7f3d0; --section-ink: #064e3b; }
 [data-section="tasks"] { --section-dark: #6d28d9; --section-tint: #ede9fe; --section-line: #c4b5fd; --section-current: #ddd6fe; --section-ink: #3b0764; }
+[data-section="calling"] { --section-dark: #0369a1; --section-tint: #e0f2fe; --section-line: #7dd3fc; --section-current: #bae6fd; --section-ink: #075985; }
 [data-section="claim"] { --section-dark: #b91c1c; --section-tint: #fee2e2; --section-line: #fca5a5; --section-current: #fecaca; --section-ink: #7f1d1d; }
 [data-section="policies"] { --section-dark: #c2410c; --section-tint: #ffedd5; --section-line: #fdba74; --section-current: #fed7aa; --section-ink: #7c2d12; }
 [data-section="payments"] { --section-dark: #0f766e; --section-tint: #ccfbf1; --section-line: #5eead4; --section-current: #99f6e4; --section-ink: #134e4a; }
