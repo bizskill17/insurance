@@ -3512,3 +3512,45 @@ button {
 .cell-text__toggle:hover {
   text-decoration: underline;
 }
+
+/* Sideways scrollbar pinned to the bottom of the window for wide tables
+   (see StickyTableScrollbar.jsx). Same look as the table's own scrollbar. */
+.sticky-table-scrollbar {
+  position: fixed;
+  bottom: 0;
+  z-index: 35;
+  height: 18px;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid #cdd6e3;
+  box-shadow: 0 -4px 12px rgba(24, 33, 47, 0.1);
+  display: none;
+}
+
+.sticky-table-scrollbar.is-visible {
+  display: block;
+}
+
+.sticky-table-scrollbar {
+  scrollbar-width: auto;
+  scrollbar-color: #8a96a8 #eef2f7;
+}
+
+.sticky-table-scrollbar::-webkit-scrollbar {
+  height: 14px;
+}
+
+.sticky-table-scrollbar::-webkit-scrollbar-track {
+  background: #eef2f7;
+}
+
+.sticky-table-scrollbar::-webkit-scrollbar-thumb {
+  border: 3px solid #eef2f7;
+  border-radius: 999px;
+  background: #8a96a8;
+}
+
+.sticky-table-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #66748a;
+}
