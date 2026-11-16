@@ -75,7 +75,7 @@ export default function CallingPage({ mode, currentUser }) {
           <div className="form-field"><label>Daily Call Target Per User</label><input type="number" min="1" value={target} onChange={e=>setSettings(s=>({...s,daily_target:Number(e.target.value)}))}/></div>
           <div className="master-form">
             {Object.entries(ruleLabels).map(([key,label])=><div className="form-field" key={key}>
-              <label><input type="checkbox" checked={Boolean(ruleValues[key]?.enabled)} onChange={e=>setRuleValues(v=>({...v,[key]:{...v[key],enabled:e.target.checked}}))}/> {label}</label>
+              <label style={{display:"flex",alignItems:"center",justifyContent:"flex-start",gap:8,width:"100%",marginBottom:6}}><input type="checkbox" style={{width:16,height:16,flex:"0 0 16px",margin:0}} checked={Boolean(ruleValues[key]?.enabled)} onChange={e=>setRuleValues(v=>({...v,[key]:{...v[key],enabled:e.target.checked}}))}/><span>{label}</span></label>
               <input type="number" min="0" step="0.01" placeholder="Rate not set" value={ruleValues[key]?.rate??""} onChange={e=>setRuleValues(v=>({...v,[key]:{...v[key],rate:e.target.value}}))}/>
             </div>)}
           </div>
