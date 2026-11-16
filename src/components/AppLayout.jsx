@@ -134,6 +134,65 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
+  // Shared mouse horizontal scrolling for every tabular view.
+  useEffect(() => {
+    let drag = null;
+    let suppressClick = false;
+    const findTable = (target) => target instanceof Element
+      ? target.closest(".table-wrap") : null;
+    const onMouseDown = (event) => {
+      if (event.button !== 0 || event.altKey || event.detail > 1 ||
+          event.target.closest("a, button, input, textarea, select, [role='button'], [contenteditable='true']")) return;
+      const table = findTable(event.target);
+      if (!table || !table.querySelector("table") || table.scrollWidth <= table.clientWidth) return;
+      drag = { table, startX: event.clientX, startScroll: table.scrollLeft, moved: false };
+      suppressClick = false;
+      event.preventDefault();
+    };
+    const onMouseMove = (event) => {
+      if (!drag) return;
+      if (!(event.buttons & 1)) { drag = null; return; }
+      const delta = event.clientX - drag.startX;
+      if (!drag.moved && Math.abs(delta) < 6) return;
+      drag.moved = true;
+      drag.table.scrollLeft = drag.startScroll - delta;
+      event.preventDefault();
+    };
+    const onMouseUp = () => {
+      if (drag?.moved) suppressClick = true;
+      drag = null;
+    };
+    const onClick = (event) => {
+      if (!suppressClick) return;
+      suppressClick = false;
+      event.preventDefault();
+      event.stopPropagation();
+    };
+    const onWheel = (event) => {
+      if (!event.shiftKey) return;
+      const table = findTable(event.target);
+      if (!table || !table.querySelector("table")) return;
+      const delta = event.deltaY || event.deltaX;
+      const next = Math.max(0, Math.min(table.scrollWidth - table.clientWidth, table.scrollLeft + delta));
+      if (next !== table.scrollLeft) {
+        table.scrollLeft = next;
+        event.preventDefault();
+      }
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("click", onClick, true);
+    document.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+      document.removeEventListener("click", onClick, true);
+      document.removeEventListener("wheel", onWheel);
+    };
+  }, []);
+
   const handleSidebarToggle = () => {
     setIsSidebarOpen((current) => !current);
   };
