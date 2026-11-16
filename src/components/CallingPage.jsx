@@ -8,7 +8,7 @@ const ruleLabels = {
   converted: "Policy Converted (₹ per call)", premium_percent: "Premium (%)",
   target_bonus: "Daily Target Bonus (₹)", monthly_bonus: "Monthly Bonus (₹)"
 };
-const today = () => new Date().toLocaleDateString("en-CA");
+const today = () => { const d=new Date(); return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-"); };
 const dateText = value => value ? value.slice(0,10).split("-").reverse().join("/") : "—";
 async function api(path, options) {
   const response = await fetch(`${API_BASE}${path}`, options);
@@ -42,8 +42,7 @@ export default function CallingPage({ mode, currentUser }) {
   };
   useEffect(()=>{let live=true;Promise.all([load(),api("/masters/customers?limit=500000")]).then(([,c])=>{if(live)setCustomers(c);}).catch(e=>{if(live)setError(e.message)}).finally(()=>{if(live)setLoading(false)});return ()=>{live=false};},[]);
   const submit = async fn => {setSaving(true);setError("");setNotice("");try{await fn();await load();setNotice("Saved successfully.");}catch(e){setError(e.message)}finally{setSaving(false)}};
-  const completed = entries.filter(e=>e.status!=="Pending");
-  const todayEntries = entries.filter(e=>e.scheduled_date===today());
+  const todayEntries = entries.filter(e=>e.scheduled_date===today() && String(e.assigned_user_id)===String(employee||currentUser?.id));
   const todayDone = todayEntries.filter(e=>e.status!=="Pending").length;
   const target = Number(settings.daily_target)||30;
   const selectedRows = useMemo(()=>entries.filter(e=>(!employee||String(e.assigned_user_id)===employee)&&
@@ -83,7 +82,7 @@ export default function CallingPage({ mode, currentUser }) {
           </div>
           <button type="button" disabled={saving} onClick={saveSettings}>Save Settings</button>
         </>:<>
-          <p>Daily target: <strong>{target}</strong> calls per user (new + follow-up). Today's recorded calls: <strong>{todayDone}</strong>. Remaining: <strong>{Math.max(0,target-todayDone)}</strong>.</p>
+          <p>Daily target: <strong>{target}</strong> calls per user (new + follow-up). Today's completed calls for selected user: <strong>{todayDone}</strong>. Remaining: <strong>{Math.max(0,target-todayDone)}</strong>.</p>
           {mode==="list"&&<form className="master-form" onSubmit={e=>{e.preventDefault();submit(async()=>{await api("/calling/entries",post(form));setForm(f=>({...f,customer_id:"",customer_name:"",mobile:""}))})}}>
             <div className="form-field"><label>Assigned User *</label><SearchableSelect value={form.assigned_user_id} onChange={e=>setForm(f=>({...f,assigned_user_id:e.target.value}))}><option value="">Select User</option>{users.map(u=><option key={u.id} value={u.id}>{u.full_name}</option>)}</SearchableSelect></div>
             <div className="form-field"><label>Customer Name *</label><SearchableSelect value={form.customer_id} onChange={e=>{const c=customers.find(x=>String(x.id)===e.target.value);setForm(f=>({...f,customer_id:e.target.value,customer_name:c?.full_name||"",mobile:c?.mobile||""}))}}><option value="">Select Customer</option>{[...customers].sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(c=><option key={c.id} value={c.id}>{c.full_name}</option>)}</SearchableSelect></div>
