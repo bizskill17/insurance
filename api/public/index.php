@@ -888,7 +888,10 @@ function deriveTaskStatusFromUpdate(string $updateStatus, ?string $nextFollowUpD
     };
 }
 
+require dirname(__DIR__) . '/src/callingRoutes.php';
+
 try {
+    if (handleCallingRoutes($path, $method)) exit;
     if ($path === '/api/health' && $method === 'GET') {
         $pdo = Database::connection();
         $dbName = (string) $pdo->query('select database()')->fetchColumn();
