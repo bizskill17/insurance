@@ -457,6 +457,7 @@ export default function MasterPage({
   const [customerGroupCustomersError, setCustomerGroupCustomersError] = useState("");
   const [inlineCustomerEdits, setInlineCustomerEdits] = useState({});
   const [inlineCustomerSavingId, setInlineCustomerSavingId] = useState(null);  const [isAddCustomerGroupModalOpen, setIsAddCustomerGroupModalOpen] = useState(false);
+  const [isAddClaimCustomerModalOpen, setIsAddClaimCustomerModalOpen] = useState(false);
   const currentPath = permissionPath || `/masters/${resourceKey}`;
   const recordActionPath = actionPermissionPath || currentPath;
   const organizationViewPath = "/masters/organizations";
@@ -675,6 +676,22 @@ export default function MasterPage({
     setMessage("");
     setError("");
     setIsFormOpen(true);
+  };
+
+  const handleClaimCustomerCreated = async (customer) => {
+    setIsAddClaimCustomerModalOpen(false);
+    try {
+      const response = await fetch(`${API_BASE}/masters/customers?limit=500000`);
+      const json = await readApiJson(response);
+      if (!response.ok) throw new Error(json.message || "Failed to refresh customers.");
+      const customers = json.data || [];
+      setOptionsMap((current) => ({ ...current, customers }));
+      const saved = customers.find((item) => Number(item.id) === Number(customer?.id)) ||
+        customers.find((item) => item.full_name === customer?.full_name);
+      if (saved) setFormState((current) => ({ ...current, customer_name: saved.full_name }));
+    } catch (loadError) {
+      setError(loadError.message);
+    }
   };
 
   const handleCustomerGroupCreated = async (group) => {
@@ -1997,7 +2014,7 @@ export default function MasterPage({
                       return String(option[field.dependsOnKey] ?? "") === String(parentValue);
                     })
                   : field.staticOptions || [];
-                const hasAddButton = resourceKey === "customers" && field.name === "group_id";
+                const hasAddButton = (resourceKey === "customers" && field.name === "group_id") || (resourceKey === "claims" && field.name === "customer_name");
 
                 return (
                   <div key={field.name} className="form-field">
@@ -2029,9 +2046,9 @@ export default function MasterPage({
                         <button
                           type="button"
                           className="inline-icon-button"
-                          onClick={() => setIsAddCustomerGroupModalOpen(true)}
-                          aria-label="Add customer group"
-                          title="Add customer group"
+                          onClick={() => resourceKey === "claims" ? setIsAddClaimCustomerModalOpen(true) : setIsAddCustomerGroupModalOpen(true)}
+                          aria-label={resourceKey === "claims" ? "Add customer" : "Add customer group"}
+                          title={resourceKey === "claims" ? "Add customer" : "Add customer group"}
                         >
                           +
                         </button>
@@ -2088,8 +2105,18 @@ export default function MasterPage({
     />
   ) : null;
 
+  const claimCustomerModal = isAddClaimCustomerModalOpen ? (
+    <MasterPage
+      resourceKey="customers"
+      embeddedFormOnly
+      autoOpenForm
+      onFormSaved={handleClaimCustomerCreated}
+      onFormCancel={() => setIsAddClaimCustomerModalOpen(false)}
+    />
+  ) : null;
+
   if (embeddedFormOnly) {
-    return <>{formModal}{customerGroupModal}</>;
+    return <>{formModal}{customerGroupModal}{claimCustomerModal}</>;
   }
 
   return (
