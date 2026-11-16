@@ -1751,7 +1751,7 @@ export default function MasterPage({
       <div className="master-modal__backdrop" onClick={resetForm} />
       <section className="master-card master-modal__panel">
         <div className="master-card__header">
-          <h3 id="master-form-title">{editingId ? `Edit ${config.title}` : `Add ${config.title}`}</h3>
+          <h3 id="master-form-title">{editingId ? `Edit ${resourceKey === "claims" ? "Claim" : config.title}` : `Add ${resourceKey === "claims" ? "Claim" : config.title}`}</h3>
           <button type="button" className="text-button" onClick={resetForm}>
             Cancel
           </button>
