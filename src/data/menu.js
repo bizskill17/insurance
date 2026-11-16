@@ -44,16 +44,6 @@ export const menuSections = [
     ]
   },
   {
-    label: "Calling",
-    path: "/calling",
-    icon: "calling",
-    items: [
-      { label: "Call List", path: "/calling/list" },
-      { label: "Call Tracker & Incentive", path: "/calling/tracker" },
-      { label: "Incentive Settings", path: "/calling/settings" }
-    ]
-  },
-  {
     label: "Claim",
     path: "/claims",
     icon: "claims",
@@ -158,6 +148,16 @@ export const menuSections = [
       { label: "Users", path: "/masters/users", countKey: "users" },
       { label: "Agents", path: "/masters/agents", countKey: "agents" },
       { label: "Agent Accounts", path: "/masters/agent-accounts", countKey: "agent-accounts" }
+    ]
+  }
+  {
+    label: "Calling",
+    path: "/calling",
+    icon: "calling",
+    items: [
+      { label: "Call List", path: "/calling/list" },
+      { label: "Call Tracker & Incentive", path: "/calling/tracker" },
+      { label: "Incentive Settings", path: "/calling/settings" }
     ]
   }
 ];
