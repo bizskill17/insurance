@@ -4,6 +4,7 @@ import AllPoliciesPage from "./components/AllPoliciesPage";
 import AttachDocumentsPage from "./components/AttachDocumentsPage";
 import AppLayout from "./components/AppLayout";
 import ClaimFormPage from "./components/ClaimFormPage";
+import CallingPage from "./components/CallingPage";
 import DashboardPage from "./components/DashboardPage";
 import DailyActivityReportPage from "./components/DailyActivityReportPage";
 import ExpiryReportsPage from "./components/ExpiryReportsPage";
@@ -65,6 +66,8 @@ function buildRoutes(items, currentUser) {
           <InactivatedPoliciesPage />
         ) : item.path === "/claims/form" ? (
           <ClaimFormPage currentUser={currentUser} />
+        ) : item.section === "Calling" ? (
+          <CallingPage mode={item.path.split("/").pop()} currentUser={currentUser} />
         ) : item.section === "Claim" ? (
           <MasterPage
             resourceKey="claims"
