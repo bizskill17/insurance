@@ -23,7 +23,7 @@ export default function CallingPage({ mode, currentUser }) {
   const [users,setUsers] = useState([]);
   const [customers,setCustomers] = useState([]);
   const [settings,setSettings] = useState({ daily_target:30,rules:[] });
-  const [form,setForm] = useState({ assigned_user_id:String(currentUser?.id||""),customer_id:"",customer_name:"",mobile:"",call_type:"New",scheduled_date:today() });
+  const [form,setForm] = useState({ assigned_user_id:"",customer_id:"",customer_name:"",mobile:"",call_type:"New",scheduled_date:today() });
   const [editing,setEditing] = useState(null);
   const [result,setResult] = useState({status:"Connected",outcome:"",remarks:"",next_followup_date:""});
   const [search,setSearch] = useState("");
