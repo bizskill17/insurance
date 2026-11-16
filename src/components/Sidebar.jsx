@@ -230,9 +230,7 @@ export default function Sidebar({
         </nav>
 
         <div className="sidebar-footer">
-          <p className="user-line">
-            Logged in as: <strong>{currentUser?.full_name || currentUser?.login_id || "User"}</strong>
-          </p>
+          <div className="user-line user-line--compact"><span className="user-line__avatar" aria-hidden="true">●</span><strong>{currentUser?.full_name || currentUser?.login_id || "User"}</strong></div>
           <button className="logout-button" type="button" onClick={onLogout}>
             <span className="menu-icon">
               <svg viewBox="0 0 24 24" aria-hidden="true">
