@@ -70,13 +70,13 @@ export default function SearchableSelect({
   const selectedLabel = stringValue ? selectedOption?.label || stringValue : resolvedPlaceholder;
 
   const filteredOptions = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const normalizedQuery = query.normalize("NFKC").trim().toLocaleLowerCase();
     if (!normalizedQuery) {
       return visibleOptions;
     }
 
     const queryTokens = normalizedQuery.split(/\s+/).filter(Boolean);
-    return visibleOptions.filter((option) => queryTokens.every((token) => option.searchText.includes(token)));
+    return visibleOptions.filter((option) => queryTokens.every((token) => option.label.normalize("NFKC").toLocaleLowerCase().includes(token)));
   }, [query, visibleOptions]);
 
   useEffect(() => {
@@ -206,9 +206,15 @@ export default function SearchableSelect({
             className="searchable-select__search"
             value={query}
             placeholder="Search..."
+            onInput={(event) => {
+              const nextQuery = event.currentTarget.value;
+              setQuery(nextQuery);
+              onSearchChange?.(nextQuery);
+            }}
             onChange={(event) => {
-              setQuery(event.target.value);
-              onSearchChange?.(event.target.value);
+              const nextQuery = event.currentTarget.value;
+              setQuery(nextQuery);
+              onSearchChange?.(nextQuery);
             }}
           />
           <div id={`${selectId}-listbox`} className="searchable-select__list" role="listbox">
