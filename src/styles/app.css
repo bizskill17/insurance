@@ -3772,3 +3772,15 @@ button {
   .dashboard-page .dash__actions {gap:8px;align-items:center;}
   .dashboard-page .dash__action {height:38px;min-height:38px;padding:0 12px;white-space:nowrap;line-height:1;}
 }
+
+/* Final dashboard readability and sidebar brand spacing refinements. */
+@media (min-width:901px) {
+  .sidebar:not(.sidebar--compact) .brand-panel {
+    min-height:58px;
+    padding:8px 14px;
+  }
+  .dashboard-page .dash-stat__hint {
+    font-size:12.5px;
+    line-height:1.4;
+  }
+}
