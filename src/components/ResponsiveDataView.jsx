@@ -8,6 +8,7 @@ import TablePagination from "./TablePagination";
 import { downloadCsv, downloadPdf } from "../utils/export";
 import { filterRecords, getRecordValue, sortRecords } from "../utils/dataView";
 import { formatCellValue, formatCurrency } from "../utils/formatting";
+import { renderCellText } from "./CellText";
 
 const MIN_ACTION_COLUMN_WIDTH = 150;
 // Left + right padding of a table cell, so the buttons do not touch the borders.
@@ -64,8 +65,8 @@ function getColumnWidthStyle(column, fallback = "140px") {
     token.includes("business type")
   ) {
     width = "110px";
-  } else if (token.includes("remarks")) {
-    width = "220px";
+  } else if (token.includes("remarks") || token.includes("description") || token.includes("notes")) {
+    width = "260px";
   }
 
   return {
@@ -452,7 +453,7 @@ export default function ResponsiveDataView({
                               </a>
                             ) : col.type === "currency" ? (
                               formatCurrency(getRecordValue(record, col.key))
-                            ) : formatCellValue(getRecordValue(record, col.key))}
+                            ) : renderCellText(getRecordValue(record, col.key))}
                           </td>
                         );
                       })}

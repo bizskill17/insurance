@@ -7,6 +7,7 @@ import { buildFilterOptions, filterRecords, sortRecords } from "../utils/dataVie
 import { downloadCsv, downloadPdf } from "../utils/export";
 import { formatAccountType, formatCellValue } from "../utils/formatting";
 import FormLabel from "./FormLabel";
+import { renderCellText } from "./CellText";
 import MultiSelectFilter from "./MultiSelectFilter";
 import RecordDetailModal from "./RecordDetailModal";
 import TablePagination from "./TablePagination";
@@ -1742,7 +1743,7 @@ export default function MasterPage({
       );
     }
 
-    return formatCellValue(record[column.key]);
+    return renderCellText(record[column.key]);
   };
 
   const formModal = isFormOpen ? (

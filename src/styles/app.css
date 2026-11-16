@@ -3478,3 +3478,37 @@ button {
   height: 44px;
   font-size: 22px;
 }
+
+/* Long text in table cells: 3 lines, full text on hover, "more" to expand */
+.cell-text {
+  display: block;
+}
+
+.cell-text__body {
+  display: block;
+  white-space: pre-line;
+}
+
+.cell-text__body--clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.cell-text__toggle {
+  margin-top: 4px;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: #2d57d7;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cell-text__toggle:hover {
+  text-decoration: underline;
+}
