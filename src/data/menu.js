@@ -149,7 +149,7 @@ export const menuSections = [
       { label: "Agents", path: "/masters/agents", countKey: "agents" },
       { label: "Agent Accounts", path: "/masters/agent-accounts", countKey: "agent-accounts" }
     ]
-  }
+  },
   {
     label: "Calling",
     path: "/calling",
