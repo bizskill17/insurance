@@ -73,14 +73,13 @@ export default function CallingPage({ mode, currentUser }) {
       {loading?<p>Loading...</p>:<>
         {mode==="settings"?<>
           <div className="form-field"><label>Daily Call Target Per User</label><input type="number" min="1" value={target} onChange={e=>setSettings(s=>({...s,daily_target:Number(e.target.value)}))}/></div>
-          <p>All rates start disabled. Enable and enter rates whenever you decide them. The highest applicable per-call rate is used to avoid double counting.</p>
           <div className="master-form">
             {Object.entries(ruleLabels).map(([key,label])=><div className="form-field" key={key}>
               <label><input type="checkbox" checked={Boolean(ruleValues[key]?.enabled)} onChange={e=>setRuleValues(v=>({...v,[key]:{...v[key],enabled:e.target.checked}}))}/> {label}</label>
               <input type="number" min="0" step="0.01" placeholder="Rate not set" value={ruleValues[key]?.rate??""} onChange={e=>setRuleValues(v=>({...v,[key]:{...v[key],rate:e.target.value}}))}/>
             </div>)}
           </div>
-          <button type="button" disabled={saving} onClick={saveSettings}>Save Settings</button>
+          <div style={{ display:"flex", justifyContent:"flex-start", marginTop:24, paddingTop:8, clear:"both" }}><button type="button" className="btn btn--primary" disabled={saving} onClick={saveSettings}>Save Settings</button></div>
         </>:<>
           <p>Daily target: <strong>{target}</strong> calls per user (new + follow-up). Today's completed calls for selected user: <strong>{todayDone}</strong>. Remaining: <strong>{Math.max(0,target-todayDone)}</strong>.</p>
           {mode==="list"&&<form className="master-form" onSubmit={e=>{e.preventDefault();submit(async()=>{await api("/calling/entries",post(form));setForm(f=>({...f,customer_id:"",customer_name:"",mobile:""}))})}}>
