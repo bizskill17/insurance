@@ -1,4 +1,4 @@
-import { Fragment, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { ActionIconDisplay } from "./ActionIcon";
 import { API_BASE } from "../config/api";
 import { masterConfigs } from "../data/masterConfigs";
@@ -400,37 +400,6 @@ export default function MasterPage({
 }) {
   const config = masterConfigs[resourceKey];
   const isSettingsView = resourceKey === "settings";
-  const claimScrollRef = useRef(null);
-  const claimDragRef = useRef(null);
-  const handleClaimMouseDown = (event) => {
-    if (!pendingClaimsOnly || event.button !== 0 || event.altKey || event.detail > 1 || event.target.closest("a, button, input, select, textarea, [role=button]")) return;
-    const element = claimScrollRef.current;
-    if (!element || element.scrollWidth <= element.clientWidth) return;
-    claimDragRef.current = { x: event.clientX, left: element.scrollLeft, moved: false };
-    // Default to dragging the table, not selecting text. Alt+drag or double-click
-    // still allows intentional text selection.
-    event.preventDefault();
-  };
-  const handleClaimMouseMove = (event) => {
-    const drag = claimDragRef.current;
-    if (!drag || !claimScrollRef.current || !(event.buttons & 1)) return;
-    const delta = event.clientX - drag.x;
-    if (!drag.moved && Math.abs(delta) < 6) return;
-    drag.moved = true;
-    claimScrollRef.current.scrollLeft = drag.left - delta;
-    event.preventDefault();
-  };
-  const endClaimDrag = () => { claimDragRef.current = null; };
-  const handleClaimWheel = (event) => {
-    if (!pendingClaimsOnly || !event.shiftKey || !claimScrollRef.current) return;
-    const element = claimScrollRef.current;
-    const delta = event.deltaY || event.deltaX;
-    if ((delta > 0 && element.scrollLeft < element.scrollWidth - element.clientWidth) || (delta < 0 && element.scrollLeft > 0)) {
-      element.scrollLeft += delta;
-      event.preventDefault();
-    }
-  };
-
   const [records, setRecords] = useState([]);
   const [optionsMap, setOptionsMap] = useState({});
   const [formState, setFormState] = useState(() => emptyState(config));
@@ -2276,9 +2245,7 @@ export default function MasterPage({
                 </div>
               ) : null}
 
-              <div className="table-wrap" ref={pendingClaimsOnly ? claimScrollRef : undefined}
-                onMouseDown={handleClaimMouseDown} onMouseMove={handleClaimMouseMove}
-                onMouseUp={endClaimDrag} onMouseLeave={endClaimDrag} onWheel={handleClaimWheel}>
+              <div className="table-wrap">
                 <table className="master-table">
                   <thead>
                     <tr>
