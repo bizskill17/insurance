@@ -3579,3 +3579,46 @@ button {
     border-radius: 10px;
   }
 }
+
+/* Denser navigation and separated account actions on desktop. */
+@media (min-width: 901px) {
+  .sidebar:not(.sidebar--compact) .menu {
+    padding-top: 7px;
+  }
+  .sidebar:not(.sidebar--compact) .menu-card {
+    min-height: 40px;
+    border-radius: 9px;
+    padding: 0 11px;
+  }
+  .sidebar:not(.sidebar--compact) .menu-group + .menu-group,
+  .sidebar:not(.sidebar--compact) .menu > .menu-card + .menu-group,
+  .sidebar:not(.sidebar--compact) .menu > .menu-group + .menu-card,
+  .sidebar:not(.sidebar--compact) .menu > .menu-card + .menu-card {
+    margin-top: 5px;
+  }
+  .sidebar:not(.sidebar--compact) .submenu-item {
+    min-height: 32px;
+    padding: 6px 8px;
+  }
+  .sidebar:not(.sidebar--compact) .user-line--compact {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 36px;
+    margin: 0 0 14px;
+    padding: 7px 10px;
+    border-radius: 10px;
+    background: #edf1f5;
+    color: #18212f;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .sidebar:not(.sidebar--compact) .user-line__avatar {
+    font-size: 12px;
+    color: #334155;
+  }
+  .sidebar:not(.sidebar--compact) .sidebar-footer {
+    padding: 10px 12px 12px;
+  }
+}
