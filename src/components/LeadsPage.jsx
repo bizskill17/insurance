@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ActionIconButton } from "./ActionIcon";
 import FormLabel from "./FormLabel";
+import MasterPage from "./MasterPage";
 import ResponsiveDataView from "./ResponsiveDataView";
 import { API_BASE } from "../config/api";
 import { ButtonSpinner, Spinner } from "./Spinner";
@@ -134,6 +135,19 @@ function emptyUpdateForm() {
   };
 }
 
+async function loadCustomers() {
+  const response = await fetch(`${API_BASE}/masters/customers?limit=500000`);
+  const json = await readApiJson(response);
+
+  if (!response.ok) {
+    throw new Error(json.message || "Failed to load customers.");
+  }
+
+  return (json.data || [])
+    .filter((customer) => customer.full_name)
+    .sort((left, right) => String(left.full_name).localeCompare(String(right.full_name)));
+}
+
 async function readApiJson(response) {
   const rawText = await response.text();
   const contentType = response.headers.get("content-type") || "";
@@ -186,6 +200,8 @@ export default function LeadsPage({ viewPath }) {
   const [message, setMessage] = useState("");
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
   const [leadForm, setLeadForm] = useState(() => emptyLeadForm());
   const [updateForm, setUpdateForm] = useState(() => emptyUpdateForm());
   const [editingLeadId, setEditingLeadId] = useState(null);
@@ -233,9 +249,10 @@ export default function LeadsPage({ viewPath }) {
 
     const loadOptions = async () => {
       try {
-        const [usersResponse, categoriesResponse] = await Promise.all([
+        const [usersResponse, categoriesResponse, customersResult] = await Promise.all([
           fetch(`${API_BASE}/masters/users?limit=250`),
-          fetch(`${API_BASE}/masters/product-categories?limit=250`)
+          fetch(`${API_BASE}/masters/product-categories?limit=250`),
+          loadCustomers().catch((customersError) => ({ error: customersError }))
         ]);
 
         const [usersJson, categoriesJson] = await Promise.all([
@@ -257,6 +274,11 @@ export default function LeadsPage({ viewPath }) {
 
         setUsers(usersJson.data || []);
         setCategories(categoriesJson.data || []);
+        if (customersResult.error) {
+          setError(customersResult.error.message);
+        } else {
+          setCustomers(customersResult);
+        }
       } catch (loadOptionsError) {
         if (isActive) {
           setError(loadOptionsError.message);
@@ -280,6 +302,36 @@ export default function LeadsPage({ viewPath }) {
       setIsLeadModalOpen(false);
     }
   }, [viewConfig.autoOpenAdd, viewPath]);
+
+  // Client Name options: every customer from Masters > Customers.
+  // An older lead whose client is not a customer keeps its name as an extra option.
+  const clientOptions = useMemo(() => {
+    const currentName = String(leadForm.client_name || "").trim();
+    if (currentName && !customers.some((customer) => customer.full_name === currentName)) {
+      return [{ id: "current-client", full_name: currentName, mobile: "" }, ...customers];
+    }
+    return customers;
+  }, [customers, leadForm.client_name]);
+
+  const handleCustomerCreated = async (customer) => {
+    setIsAddCustomerModalOpen(false);
+
+    try {
+      const freshCustomers = await loadCustomers();
+      setCustomers(freshCustomers);
+
+      const matchedCustomer =
+        (customer && freshCustomers.find((item) => Number(item.id) === Number(customer.id))) ||
+        (customer && freshCustomers.find((item) => item.full_name === customer.full_name)) ||
+        null;
+
+      if (matchedCustomer) {
+        handleLeadFormChange("client_name", matchedCustomer.full_name || "");
+      }
+    } catch (loadCustomersError) {
+      setError(loadCustomersError.message);
+    }
+  };
 
   const topLevelCategories = useMemo(
     () => categories.filter((category) => !category.parent_category_id),
@@ -614,13 +666,35 @@ export default function LeadsPage({ viewPath }) {
                     </label>
 
                     <label className="form-field">
-                      <FormLabel required>Client Name</FormLabel>
-                      <input
-                        type="text"
+                      <div className="form-field__label-row">
+                        <FormLabel required>Client Name</FormLabel>
+                        <button
+                          type="button"
+                          className="inline-icon-button"
+                          onClick={() => setIsAddCustomerModalOpen(true)}
+                          aria-label="Add new client"
+                          title="Add new client"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <SearchableSelect
                         required
                         value={leadForm.client_name}
                         onChange={(event) => handleLeadFormChange("client_name", event.target.value)}
-                      />
+                      >
+                        <option value="">Select Client</option>
+                        {clientOptions.map((customer) => (
+                          <option
+                            key={customer.id}
+                            value={customer.full_name}
+                            data-description={customer.mobile || ""}
+                            data-search-text={`${customer.full_name || ""} ${customer.mobile || ""}`.trim()}
+                          >
+                            {customer.full_name}
+                          </option>
+                        ))}
+                      </SearchableSelect>
                     </label>
 
                     <label className="form-field">
@@ -864,6 +938,15 @@ export default function LeadsPage({ viewPath }) {
             </div>
           </section>
         </div>
+      ) : null}
+      {isAddCustomerModalOpen ? (
+        <MasterPage
+          resourceKey="customers"
+          embeddedFormOnly
+          autoOpenForm
+          onFormSaved={handleCustomerCreated}
+          onFormCancel={() => setIsAddCustomerModalOpen(false)}
+        />
       ) : null}
     </div>
   );

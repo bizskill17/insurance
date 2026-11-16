@@ -16,6 +16,9 @@ function optionText(children) {
   return String(children);
 }
 
+// Long lists (e.g. thousands of clients) only draw this many matches; typing narrows the list.
+const MAX_RENDERED_OPTIONS = 200;
+
 function buildOptions(children) {
   return Children.toArray(children)
     .filter((child) => isValidElement(child) && child.type === "option")
@@ -176,7 +179,12 @@ export default function SearchableSelect({
           window.setTimeout(() => searchRef.current?.focus(), 0);
         }}
       >
-        {children}
+        {/* Only the empty and the selected option are needed here: the hidden native select
+            exists for form validation, and drawing thousands of options would slow the page. */}
+        <option value="">{resolvedPlaceholder}</option>
+        {selectedOption && selectedOption.value !== "" ? (
+          <option value={selectedOption.value}>{selectedOption.label}</option>
+        ) : null}
       </select>
       <button
         type="button"
@@ -206,7 +214,7 @@ export default function SearchableSelect({
           />
           <div id={`${selectId}-listbox`} className="searchable-select__list" role="listbox">
             {filteredOptions.length ? (
-              filteredOptions.map((option) => (
+              filteredOptions.slice(0, MAX_RENDERED_OPTIONS).map((option) => (
                 <button
                   key={option.key}
                   type="button"
@@ -229,6 +237,11 @@ export default function SearchableSelect({
                 {query.trim() ? "No matching options." : emptyMessage}
               </div>
             )}
+            {filteredOptions.length > MAX_RENDERED_OPTIONS ? (
+              <div className="searchable-select__empty">
+                Showing {MAX_RENDERED_OPTIONS} of {filteredOptions.length.toLocaleString("en-IN")}. Type to search.
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}
