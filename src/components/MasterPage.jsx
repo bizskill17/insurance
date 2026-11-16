@@ -403,9 +403,13 @@ export default function MasterPage({
   const claimScrollRef = useRef(null);
   const claimDragRef = useRef(null);
   const handleClaimMouseDown = (event) => {
-    if (!pendingClaimsOnly || event.button !== 0 || event.target.closest("a, button, input, select, textarea, [role=button]")) return;
+    if (!pendingClaimsOnly || event.button !== 0 || event.altKey || event.detail > 1 || event.target.closest("a, button, input, select, textarea, [role=button]")) return;
     const element = claimScrollRef.current;
-    if (element) claimDragRef.current = { x: event.clientX, left: element.scrollLeft, moved: false };
+    if (!element || element.scrollWidth <= element.clientWidth) return;
+    claimDragRef.current = { x: event.clientX, left: element.scrollLeft, moved: false };
+    // Default to dragging the table, not selecting text. Alt+drag or double-click
+    // still allows intentional text selection.
+    event.preventDefault();
   };
   const handleClaimMouseMove = (event) => {
     const drag = claimDragRef.current;
