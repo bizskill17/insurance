@@ -284,7 +284,7 @@ export const masterConfigs = {
       { key: "final_settlement_date", label: "Final Settlement Date" },
     ],
     fields: [
-      { name: "customer_name", label: "Customer Name", type: "text", required: true },
+      { name: "customer_name", label: "Customer Name", type: "select", optionsFrom: "customers", optionValueKey: "full_name", optionLabelKey: "full_name", required: true },
       { name: "policy_number", label: "Policy Number", type: "text" },
       { name: "contact_person", label: "Contact Person", type: "text" },
       { name: "phone", label: "Phone", type: "tel", required: true },
