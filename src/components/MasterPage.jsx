@@ -2013,7 +2013,7 @@ export default function MasterPage({
                                 {option.label}
                               </option>
                             ))
-                          : dynamicOptions.map((option) => (
+                          : [...dynamicOptions].sort((a, b) => String(field.optionLabelKey ? a[field.optionLabelKey] : getOptionLabel(field.optionsFrom, a)).localeCompare(String(field.optionLabelKey ? b[field.optionLabelKey] : getOptionLabel(field.optionsFrom, b)), undefined, { sensitivity: "base", numeric: true })).map((option) => (
                               <option
                                 key={`${field.name}-${field.optionValueKey || "id"}-${getOptionValue(field, option)}`}
                                 value={getOptionValue(field, option)}
