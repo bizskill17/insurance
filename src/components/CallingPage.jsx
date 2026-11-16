@@ -79,7 +79,7 @@ export default function CallingPage({ mode, currentUser }) {
               <input type="text" inputMode="decimal" placeholder="Rate not set" value={ruleValues[key]?.rate??""} onChange={e=>{if (/^\\d*(?:\\.\\d{0,2})?$/.test(e.target.value)) setRuleValues(v=>({...v,[key]:{...v[key],rate:e.target.value}}));}}/>
             </div>)}
           </div>
-          <div style={{ display:"flex", justifyContent:"flex-start", marginTop:24, paddingTop:8, clear:"both" }}><button type="button" className="btn btn--primary" disabled={saving} onClick={saveSettings}>Save Settings</button></div>
+          <div style={{ display:"flex", justifyContent:"flex-start", marginTop:12, paddingTop:0, clear:"both" }}><button type="button" className="btn btn--primary" disabled={saving} onClick={saveSettings}>Save Settings</button></div>
         </>:<>
           <p>Daily target: <strong>{target}</strong> calls per user (new + follow-up). Today's completed calls for selected user: <strong>{todayDone}</strong>. Remaining: <strong>{Math.max(0,target-todayDone)}</strong>.</p>
           {mode==="list"&&<form className="master-form" onSubmit={e=>{e.preventDefault();submit(async()=>{await api("/calling/entries",post(form));setForm(f=>({...f,customer_id:"",customer_name:"",mobile:""}))})}}>
