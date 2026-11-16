@@ -3,7 +3,6 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { API_BASE } from "../config/api";
 import { menuSections } from "../data/menu";
 import Sidebar from "./Sidebar";
-import StickyTableScrollbar from "./StickyTableScrollbar";
 
 function getIsMobileViewport() {
   return window.innerWidth <= 900;
@@ -186,7 +185,6 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
         <div className="content-body">
           <Outlet />
         </div>
-        <StickyTableScrollbar />
       </main>
     </div>
   );
