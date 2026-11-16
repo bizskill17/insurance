@@ -44,6 +44,16 @@ export const menuSections = [
     ]
   },
   {
+    label: "Calling",
+    path: "/calling",
+    icon: "tasks",
+    items: [
+      { label: "Call List", path: "/calling/list" },
+      { label: "Call Tracker & Incentive", path: "/calling/tracker" },
+      { label: "Incentive Settings", path: "/calling/settings" }
+    ]
+  },
+  {
     label: "Claim",
     path: "/claims",
     icon: "claims",
