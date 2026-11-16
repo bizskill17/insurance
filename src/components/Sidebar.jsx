@@ -230,7 +230,7 @@ export default function Sidebar({
         </nav>
 
         <div className="sidebar-footer">
-          <div className="user-line user-line--compact"><span className="user-line__avatar" aria-hidden="true">B</span><span className="user-line__details"><strong>Bizskill</strong><span className="user-line__role">Admin</span></span></div>
+          <div className="user-line user-line--compact"><span className="user-line__avatar" aria-hidden="true">B</span><span className="user-line__details"><strong>BizSkill</strong><span className="user-line__role">Admin</span></span></div>
           <button className="logout-button" type="button" onClick={onLogout}>
             <span className="menu-icon">
               <svg viewBox="0 0 24 24" aria-hidden="true">
