@@ -237,7 +237,7 @@ export default function Sidebar({
                 <path d="M10 4h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-8v-2h8V6h-8V4Zm1.7 4.3L13 9.6 11.6 11H5v2h6.6L13 14.4l-1.3 1.3L8 12l3.7-3.7Z" />
               </svg>
             </span>
-            <span>Logout</span>
+            <span>Log out</span>
           </button>
         </div>
       </aside>
