@@ -30,7 +30,9 @@ function buildOptions(children) {
         .toLowerCase();
 
       return {
-        key: child.key !== null && child.key !== undefined ? String(child.key) : `${String(child.props.value ?? "")}-${index}`,
+        // The position is always part of the key: two options can share a value or key
+        // (e.g. two customers with the same name), and duplicate keys leave wrong rows on screen when searching.
+        key: `${child.key !== null && child.key !== undefined ? String(child.key) : String(child.props.value ?? "")}-${index}`,
         value: String(child.props.value ?? ""),
         label,
         description,
