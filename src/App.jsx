@@ -97,7 +97,10 @@ export default function App() {
   const nativeFetchRef = useRef(window.fetch.bind(window));
   const hasValidAuth = Boolean(authUser?.organization_id);
   const effectiveViews = useMemo(() => {
-    const views = authUser?.views || [];
+    const views = [...(authUser?.views || []), "/calling/list", "/calling/tracker"];
+    if (authUser?.can_manage_organizations || (authUser?.views || []).includes("/masters/users")) {
+      views.push("/calling/settings");
+    }
 
     if (authUser?.can_manage_organizations) {
       return views;
