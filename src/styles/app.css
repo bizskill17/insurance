@@ -3740,3 +3740,35 @@ button {
 @media (min-width:901px) and (max-width:1100px) {
   .dash__attention {grid-template-columns:repeat(2,minmax(0,1fr));}
 }
+
+/* Dashboard refinement: compact, aligned desktop cards without changing data or sidebar. */
+@media (min-width: 901px) {
+  .dashboard-page.dash {gap:12px;}
+  .dashboard-page .dash__group {gap:7px;}
+  .dashboard-page .dash__attention {gap:10px;align-items:stretch;}
+  .dashboard-page .dash-stat {
+    min-height:155px;
+    padding:12px 14px;
+    gap:7px;
+    justify-content:flex-start;
+  }
+  .dashboard-page .dash-stat__top {min-height:32px;}
+  .dashboard-page .dash-stat__icon {width:32px;height:32px;}
+  .dashboard-page .dash-stat__icon svg {width:18px;height:18px;}
+  .dashboard-page .dash-stat__value {font-size:32px;line-height:1;}
+  .dashboard-page .dash-stat__label {font-size:13px;line-height:1.25;min-height:17px;}
+  .dashboard-page .dash-stat__hint {font-size:11px;line-height:1.35;margin-top:auto;}
+  .dashboard-page .dash__panel {padding:10px 12px;}
+  .dashboard-page .dash__today {gap:8px;}
+  .dashboard-page .dash-today {min-height:42px;padding:0 11px;}
+  .dashboard-page .dash-today strong {font-size:20px;}
+  .dashboard-page .dash__split {gap:12px;}
+  .dashboard-page .dash-panel__header {padding:9px 14px;}
+  .dashboard-page .dash-panel__header button {min-height:28px;}
+  .dashboard-page .dash-panel__body {padding:4px 14px 12px;}
+  .dashboard-page .dash-panel__row {min-height:42px;font-size:13px;}
+  .dashboard-page .dash-panel__row strong {min-width:38px;padding:3px 9px;}
+  .dashboard-page .dash-panel__subheading {margin:10px 0 6px;}
+  .dashboard-page .dash__actions {gap:8px;align-items:center;}
+  .dashboard-page .dash__action {height:38px;min-height:38px;padding:0 12px;white-space:nowrap;line-height:1;}
+}
