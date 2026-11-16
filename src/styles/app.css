@@ -3707,3 +3707,36 @@ button {
 .sidebar .sidebar-footer .logout-button:hover {background:#fff4f3;color:#b42318;}
 .sidebar .sidebar-footer .logout-button .menu-icon,
 .sidebar .sidebar-footer .logout-button .menu-icon svg {color:inherit;fill:currentColor;}
+
+/* Compact dashboard and prominent red Log out action. */
+.sidebar .sidebar-footer .logout-button {
+  background:#e11d24;
+  color:#fff;
+  border:1px solid #e11d24;
+  font-weight:700;
+}
+.sidebar .sidebar-footer .logout-button:hover {background:#be123c;color:#fff;border-color:#be123c;}
+@media (min-width: 901px) {
+  .dashboard-page.dash {gap:14px;}
+  .dash__top {gap:8px;}
+  .dash__actions {gap:8px;}
+  .dash__action {min-height:38px;padding:0 12px;font-size:13px;}
+  .dash__group {gap:8px;}
+  .dash__attention {gap:10px;grid-template-columns:repeat(4,minmax(0,1fr));}
+  .dash-stat {padding:14px;gap:9px;border-radius:14px;min-height:170px;}
+  .dash-stat__icon {width:36px;height:36px;border-radius:10px;}
+  .dash-stat__icon svg {width:19px;height:19px;}
+  .dash-stat__value {font-size:34px;}
+  .dash-stat__label {font-size:14px;}
+  .dash-stat__hint {font-size:12px;}
+  .dash__panel {padding:12px 14px;border-radius:14px;}
+  .dash__today {gap:8px;}
+  .dash-today {min-height:46px;padding:0 12px;font-size:13px;}
+  .dash-today strong {font-size:21px;}
+  .dash-panel {border-radius:14px;}
+  .dash-panel__header {padding:10px 14px;}
+  .dash-panel__header h2 {font-size:16px;}
+}
+@media (min-width:901px) and (max-width:1100px) {
+  .dash__attention {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
