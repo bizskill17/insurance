@@ -3513,3 +3513,69 @@ button {
 .cell-text__toggle:hover {
   text-decoration: underline;
 }
+
+
+/* Compact desktop sidebar: retain section colours and existing navigation behaviour. */
+@media (min-width: 901px) {
+  .sidebar:not(.sidebar--compact):not(.sidebar--collapsed) {
+    width: 244px;
+    flex-basis: 244px;
+  }
+  .sidebar:not(.sidebar--compact) .brand-panel {
+    min-height: 78px;
+    padding: 14px 16px;
+  }
+  .sidebar:not(.sidebar--compact) .menu {
+    padding: 10px 10px 14px;
+  }
+  .sidebar:not(.sidebar--compact) .menu-group + .menu-group,
+  .sidebar:not(.sidebar--compact) .menu > .menu-card + .menu-group,
+  .sidebar:not(.sidebar--compact) .menu > .menu-group + .menu-card,
+  .sidebar:not(.sidebar--compact) .menu > .menu-card + .menu-card {
+    margin-top: 7px;
+  }
+  .sidebar:not(.sidebar--compact) .menu-card {
+    min-height: 46px;
+    padding: 0 12px;
+    border-radius: 11px;
+    gap: 8px;
+  }
+  .sidebar:not(.sidebar--compact) .menu-card__left {
+    gap: 10px;
+  }
+  .sidebar:not(.sidebar--compact) .menu-card__left > span:last-child {
+    font-size: 14px;
+  }
+  .sidebar:not(.sidebar--compact) .menu-icon {
+    width: 20px;
+    height: 20px;
+  }
+  .sidebar:not(.sidebar--compact) .menu-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+  .sidebar:not(.sidebar--compact) .submenu {
+    margin: 6px 5px 0;
+    padding: 6px;
+    gap: 2px;
+    border-radius: 12px;
+  }
+  .sidebar:not(.sidebar--compact) .submenu-item {
+    min-height: 34px;
+    padding: 7px 9px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+  .sidebar:not(.sidebar--compact) .sidebar-footer {
+    padding: 10px 12px;
+  }
+  .sidebar:not(.sidebar--compact) .user-line {
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  .sidebar:not(.sidebar--compact) .logout-button {
+    min-height: 42px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+}
