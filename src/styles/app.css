@@ -3459,3 +3459,22 @@ button {
 .issue-policy-form > .form-field {
   align-content: start;
 }
+
+/* A field with a small action button beside it (e.g. Client Name + Add client) */
+.form-field__with-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.form-field__with-action > .searchable-select {
+  flex: 1;
+}
+
+.form-field__with-action > .inline-icon-button {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+}

@@ -676,8 +676,20 @@ export default function TasksPage({ viewPath }) {
                     </label>
 
                     <label className="form-field">
-                      <div className="form-field__label-row">
-                        <FormLabel required>Client Name</FormLabel>
+                      <FormLabel required>Client Name</FormLabel>
+                      <div className="form-field__with-action">
+                        <SearchableSelect
+                          required
+                          value={taskForm.client_name}
+                          onChange={(event) => handleTaskFormChange("client_name", event.target.value)}
+                        >
+                          <option value="">Select Client</option>
+                          {customers.map((customer) => (
+                            <option key={customer.id} value={customer.full_name} data-description={customer.mobile || ""} data-search-text={`${customer.full_name || ""} ${customer.mobile || ""}`.trim()}>
+                              {customer.full_name}
+                            </option>
+                          ))}
+                        </SearchableSelect>
                         <button
                           type="button"
                           className="inline-icon-button"
@@ -688,18 +700,6 @@ export default function TasksPage({ viewPath }) {
                           +
                         </button>
                       </div>
-                      <SearchableSelect
-                        required
-                        value={taskForm.client_name}
-                        onChange={(event) => handleTaskFormChange("client_name", event.target.value)}
-                      >
-                        <option value="">Select</option>
-                        {customers.map((customer) => (
-                          <option key={customer.id} value={customer.full_name} data-description={customer.mobile || ""} data-search-text={`${customer.full_name || ""} ${customer.mobile || ""}`.trim()}>
-                            {customer.full_name}
-                          </option>
-                        ))}
-                      </SearchableSelect>
                     </label>
 
                     <label className="form-field">
