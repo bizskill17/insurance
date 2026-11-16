@@ -137,12 +137,11 @@ export default function SearchableSelect({
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    if (isOpen) {
-      setQuery("");
-      onSearchChange?.("");
-    }
-  }, [isOpen, onSearchChange]);
+  const openDropdown = () => {
+    setQuery("");
+    onSearchChange?.("");
+    setIsOpen(true);
+  };
 
   const emitChange = (nextValue) => {
     onChange?.({
@@ -175,7 +174,7 @@ export default function SearchableSelect({
         className="searchable-select__native"
         onChange={(event) => emitChange(event.target.value)}
         onInvalid={() => {
-          setIsOpen(true);
+          openDropdown();
           window.setTimeout(() => searchRef.current?.focus(), 0);
         }}
       >
@@ -193,7 +192,7 @@ export default function SearchableSelect({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls={`${selectId}-listbox`}
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={() => { if (isOpen) setIsOpen(false); else openDropdown(); }}
       >
         <span className="searchable-select__value">{selectedLabel}</span>
         <span className="searchable-select__chevron" aria-hidden="true" />
