@@ -84,7 +84,7 @@ function getCurrentViewName(pathname) {
 export default function AppLayout({ currentUser, allowedMenuSections, allowedRoutes, onLogout }) {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(() => getIsMobileViewport());
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => !getIsMobileViewport());
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [appBrand, setAppBrand] = useState({
     name: currentUser?.organization_name || "Policy Management System",
     logo: currentUser?.organization_logo || ""
