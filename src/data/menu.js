@@ -48,7 +48,7 @@ export const menuSections = [
     path: "/claims",
     icon: "claims",
     items: [
-      { label: "Claim Form", path: "/claims/form", requiresAddPermission: true },
+      { label: "Add Claim", path: "/claims/form", requiresAddPermission: true },
       { label: "Pending", path: "/claims/pending" },
       { label: "Claim Master", path: "/claims/master" }
     ]
