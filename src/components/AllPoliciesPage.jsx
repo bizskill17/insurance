@@ -644,14 +644,14 @@ export default function AllPoliciesPage() {
                       </div>
                       <div className="customer-document-card__grid">
                         <label className="form-field">
-                          <div className="form-field__label-row">
-                            <FormLabel required>Document Type</FormLabel>
+                          <FormLabel required>Document Type</FormLabel>
+                          <div className="form-field__with-action">
+                            <SearchableSelect required value={document.document_type_id} onChange={(event) => updatePolicyDocument(index, "document_type_id", event.target.value)}>
+                              <option value="">Select Document Type</option>
+                              {policyDocumentTypes.map((documentType) => <option key={documentType.id} value={documentType.id}>{documentType.name}</option>)}
+                            </SearchableSelect>
                             <button type="button" className="inline-icon-button" onClick={() => setIsDocumentTypeFormOpen(true)} aria-label="Add document type" title="Add document type">+</button>
                           </div>
-                          <SearchableSelect required value={document.document_type_id} onChange={(event) => updatePolicyDocument(index, "document_type_id", event.target.value)}>
-                            <option value="">Select Document Type</option>
-                            {policyDocumentTypes.map((documentType) => <option key={documentType.id} value={documentType.id}>{documentType.name}</option>)}
-                          </SearchableSelect>
                         </label>
                         <label className="form-field">
                           <FormLabel required>Choose File</FormLabel>

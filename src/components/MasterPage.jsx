@@ -1996,12 +1996,35 @@ export default function MasterPage({
                       return String(option[field.dependsOnKey] ?? "") === String(parentValue);
                     })
                   : field.staticOptions || [];
+                const hasAddButton = resourceKey === "customers" && field.name === "group_id";
 
                 return (
                   <label key={field.name} className="form-field">
-                    <div className="form-field__label-row">
-                      <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
-                      {resourceKey === "customers" && field.name === "group_id" ? (
+                    <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
+                    <div className={hasAddButton ? "form-field__with-action" : "form-field__plain"}>
+                      <SearchableSelect
+                        value={formState[field.name]}
+                        onChange={(event) => handleChange(field, event.target.value)}
+                      >
+                        {!field.staticOptions ? <option value="">Select {field.label}</option> : null}
+                        {field.staticOptions
+                          ? field.staticOptions.map((option) => (
+                              <option key={`${field.name}-${option.value}`} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))
+                          : dynamicOptions.map((option) => (
+                              <option
+                                key={`${field.name}-${field.optionValueKey || "id"}-${getOptionValue(field, option)}`}
+                                value={getOptionValue(field, option)}
+                              >
+                                {field.optionLabelKey
+                                  ? option[field.optionLabelKey]
+                                  : getOptionLabel(field.optionsFrom, option)}
+                              </option>
+                            ))}
+                      </SearchableSelect>
+                      {hasAddButton ? (
                         <button
                           type="button"
                           className="inline-icon-button"
@@ -2013,28 +2036,6 @@ export default function MasterPage({
                         </button>
                       ) : null}
                     </div>
-                    <SearchableSelect
-                      value={formState[field.name]}
-                      onChange={(event) => handleChange(field, event.target.value)}
-                    >
-                      {!field.staticOptions ? <option value="">Select {field.label}</option> : null}
-                      {field.staticOptions
-                        ? field.staticOptions.map((option) => (
-                            <option key={`${field.name}-${option.value}`} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))
-                        : dynamicOptions.map((option) => (
-                            <option
-                              key={`${field.name}-${field.optionValueKey || "id"}-${getOptionValue(field, option)}`}
-                              value={getOptionValue(field, option)}
-                            >
-                              {field.optionLabelKey
-                                ? option[field.optionLabelKey]
-                                : getOptionLabel(field.optionsFrom, option)}
-                            </option>
-                          ))}
-                    </SearchableSelect>
                     {resourceKey === "insurance-products" && field.name === "category_id" && selectedCompanyType ? (
                       <p className="table-state">Selected Company Type: {selectedCompanyType}</p>
                     ) : null}
