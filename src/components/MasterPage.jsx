@@ -1999,7 +1999,7 @@ export default function MasterPage({
                 const hasAddButton = resourceKey === "customers" && field.name === "group_id";
 
                 return (
-                  <label key={field.name} className="form-field">
+                  <div key={field.name} className="form-field">
                     <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
                     <div className={hasAddButton ? "form-field__with-action" : "form-field__plain"}>
                       <SearchableSelect
@@ -2039,7 +2039,7 @@ export default function MasterPage({
                     {resourceKey === "insurance-products" && field.name === "category_id" && selectedCompanyType ? (
                       <p className="table-state">Selected Company Type: {selectedCompanyType}</p>
                     ) : null}
-                  </label>
+                  </div>
                 );
               }
 
