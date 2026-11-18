@@ -3011,6 +3011,9 @@ button {
 [data-section="payments"] { --section-dark: #0f766e; --section-tint: #ccfbf1; --section-line: #5eead4; --section-current: #99f6e4; --section-ink: #134e4a; }
 [data-section="reports"] { --section-dark: #a21caf; --section-tint: #fae8ff; --section-line: #f0abfc; --section-current: #f5d0fe; --section-ink: #701a75; }
 [data-section="expiry-reports"] { --section-dark: #92400e; --section-tint: #fef3c7; --section-line: #fcd34d; --section-current: #fde68a; --section-ink: #78350f; }
+[data-section="calendar"] { --section-dark: #0e7490; --section-tint: #cffafe; --section-line: #67e8f9; --section-current: #a5f3fc; --section-ink: #164e63; }
+[data-section="checklist"] { --section-dark: #4d7c0f; --section-tint: #ecfccb; --section-line: #bef264; --section-current: #d9f99d; --section-ink: #365314; }
+[data-section="employee-scoreboard"] { --section-dark: #7c3aed; --section-tint: #f3e8ff; --section-line: #d8b4fe; --section-current: #e9d5ff; --section-ink: #581c87; }
 
 /* Left menu */
 .menu-card[data-section],
