@@ -3820,3 +3820,6 @@ button {
 .check-calendar-grid>button.selected {background:#e8f0ff;border-color:#2d57d7;}
 .check-calendar-grid small {font-size:10px;color:#1d4ed8;}
 @media(max-width:700px){.check-card {padding:12px;border-radius:12px;}.check-calendar-grid>button {min-height:50px;padding:4px!important;}.check-calendar-grid small {font-size:9px;}.check-stats>* {min-width:120px;}}
+
+.check-calendar-grid .check-calendar-task {display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;line-height:1.4;text-align:left;color:#365314;background:#ecfccb;border-radius:4px;padding:2px 4px;}
+.check-calendar-grid .check-calendar-task.is-done {color:#166534;background:#dcfce7;text-decoration:line-through;}
