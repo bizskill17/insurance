@@ -103,6 +103,24 @@ function handleChecklistRoutes(string $path, string $method): bool {
         $q->execute([$org,$title]);
         $logUpdate('Checklist Created',['title'=>$title,'checklist_name'=>$title]);
       }
+      if ($method === 'DELETE') {
+        $id=(int)($body['id']??0);
+        if ($id<1) { \App\Response::json(['message'=>'Valid checklist ID is required'],422);return true; }
+        $pdo->beginTransaction();
+        try {
+          $q=$pdo->prepare('SELECT id,title FROM employee_checklists WHERE id=? AND organization_id=? FOR UPDATE');
+          $q->execute([$id,$org]);$list=$q->fetch(PDO::FETCH_ASSOC);
+          if (!$list) { $pdo->rollBack();\App\Response::json(['message'=>'Checklist not found'],404);return true; }
+          $q=$pdo->prepare('SELECT COUNT(*) FROM employee_checklist_tasks WHERE organization_id=? AND checklist_id=? AND deleted_at IS NULL');
+          $q->execute([$org,$id]);
+          if ((int)$q->fetchColumn()>0) { $pdo->rollBack();\App\Response::json(['message'=>'Delete all tasks under this checklist first'],409);return true; }
+          $q=$pdo->prepare('DELETE FROM employee_checklists WHERE id=? AND organization_id=?');
+          $q->execute([$id,$org]);
+          $logUpdate('Checklist Deleted',['checklist_name'=>$list['title']]);
+          $pdo->commit();
+        } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack();throw $e; }
+        $json(['deleted'=>true]);return true;
+      }
       if ($method === 'PUT') {
         $q=$pdo->prepare('UPDATE employee_checklists SET title=?,active=? WHERE organization_id=? AND id=?');
         $q->execute([trim((string)($body['title']??'')),empty($body['active'])?0:1,$org,(int)($body['id']??0)]);
