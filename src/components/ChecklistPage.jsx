@@ -177,7 +177,7 @@ function HistoryTable({history,from,to,setFrom,setTo,search,setSearch,employee,s
   const rows=filtered.slice((current-1)*20,current*20);
   const actionTone=value=>{const v=String(value||"").toLowerCase();return v.includes("delet")?"deleted":v.includes("complet")?"completed":v.includes("creat")?"created":v.includes("edit")||v.includes("updat")?"edited":v.includes("deactiv")?"deleted":"other";};
   return <>
-    <div className="check-history-intro"><span className="check-history-symbol" aria-hidden="true">▤</span><div><strong>Update History</strong><p>All checklist and task updates (create, edit, complete, activate, deactivate and delete).</p></div></div>
+    <div className="check-history-intro"><span className="check-history-symbol" aria-hidden="true">▤</span><div><strong>Update History</strong></div></div>
     <div className="check-history-filters">
       <label>From Date<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label>
       <label>To Date<input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label>
@@ -187,7 +187,7 @@ function HistoryTable({history,from,to,setFrom,setTo,search,setSearch,employee,s
       <label>Search<input placeholder="Search task or checklist..." aria-label="Search history" value={search} onChange={e=>setSearch(e.target.value)}/></label>
     </div>
     <div className="check-history-table-wrap"><table className="check-history-table"><thead><tr><th>#</th><th>Update Date &amp; Time</th><th>Checklist</th><th>Task</th><th>Employee</th><th>Action</th><th>Details</th><th>Updated By</th><th>Action</th></tr></thead><tbody>{rows.map((h,i)=><tr key={h.id}><td>{(current-1)*20+i+1}</td><td className="check-history-date">{h.updated_at?display(h.updated_at.slice(0,10))+" "+h.updated_at.slice(11,16):"—"}</td><td><span className="check-history-checklist">{h.checklist_name||"—"}</span></td><td>{h.task_title||"—"}</td><td>{h.employee_name||"—"}</td><td><span className={"check-history-pill check-history-pill--"+actionTone(h.action)}>{h.action}</span></td><td>{h.details||(h.due_date?"Task date: "+display(h.due_date):"—")}</td><td>{h.updated_by||"Not recorded"}</td><td><button type="button" className="check-history-delete" onClick={()=>onDelete(h.id)}>Delete</button></td></tr>)}</tbody></table></div>
-    {!filtered.length&&<p>No update records found for the selected period and filters. Earlier changes made before history tracking was enabled are not available.</p>}
+    
     <div className="check-history-footer">
       <span>Showing {filtered.length?(current-1)*20+1:0}–{Math.min(current*20,filtered.length)} of {filtered.length} records</span>
       <div className="check-history-pagination"><button type="button" disabled={current<=1} onClick={()=>setPage(current-1)}>Previous</button><span className="check-history-page">{current}</span><span>of {pages}</span><button type="button" disabled={current>=pages} onClick={()=>setPage(current+1)}>Next</button></div>
