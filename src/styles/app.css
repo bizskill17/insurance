@@ -3873,3 +3873,41 @@ button {
 .check-page .check-group-button.is-selected.check-group-button--6{background:#92400e}
 .check-page .check-group-button.is-selected.check-group-button--7{background:#334155}
 .check-page .check-group-count{background:rgba(255,255,255,.24);color:#fff}
+
+/* Checklist Master – approved Option 2 visual treatment */
+.check-master-toolbar{align-items:center;margin-bottom:22px}
+.check-master-actions{gap:10px}
+.check-page .check-master-actions button{min-height:40px;padding:9px 16px;border-radius:9px;font-weight:700}
+.check-master-filters{gap:8px}
+.check-master-filters input,.check-master-filters select{min-height:40px!important;background:#fff!important}
+.check-group-list{gap:12px;margin:8px 0 24px}
+.check-page .check-group-button{min-width:145px;justify-content:space-between;padding:11px 16px;border-radius:11px;font-size:14px;box-shadow:0 4px 10px rgba(15,23,42,.11)}
+.check-page .check-group-button--0{background:#6655e9;border-color:#6655e9}
+.check-page .check-group-button--1{background:#00872e;border-color:#00872e}
+.check-page .check-group-button--2{background:#f97316;border-color:#f97316}
+.check-page .check-group-button--3{background:#1672ef;border-color:#1672ef}
+.check-page .check-group-button--4{background:#ec3687;border-color:#ec3687}
+.check-page .check-group-button.is-selected.check-group-button--0{background:#5141cf}
+.check-page .check-group-button.is-selected.check-group-button--1{background:#007225}
+.check-page .check-group-button.is-selected.check-group-button--2{background:#e45c08}
+.check-page .check-group-button.is-selected.check-group-button--3{background:#125ccc}
+.check-page .check-group-button.is-selected.check-group-button--4{background:#d12472}
+.check-group-details{--group-color:#2563eb;--group-soft:#dbeafe;border:1px solid #d7e2ee;border-radius:14px;overflow:hidden;padding:0 10px 10px;background:#fff}
+.check-group-details--0{--group-color:#6655e9;--group-soft:#ebe8ff}
+.check-group-details--1{--group-color:#00872e;--group-soft:#d9f5dd}
+.check-group-details--2{--group-color:#ea580c;--group-soft:#ffedd5}
+.check-group-details--3{--group-color:#1672ef;--group-soft:#dbeafe}
+.check-group-details--4{--group-color:#db2777;--group-soft:#fce7f3}
+.check-group-details--5{--group-color:#0891b2;--group-soft:#cffafe}
+.check-group-details--6{--group-color:#b45309;--group-soft:#fef3c7}
+.check-group-details--7{--group-color:#475569;--group-soft:#e2e8f0}
+.check-group-details .check-group-heading{background:var(--group-soft);margin:0 -10px 12px;padding:14px 16px;min-height:55px}
+.check-group-details .check-group-heading h3{font-size:17px;color:#12233a}
+.check-group-details .check-group-heading>span{background:#fff9;padding:5px 10px;border-radius:99px;color:var(--group-color);font-weight:700}
+.check-group-details .check-table-wrap table{border-collapse:separate;border-spacing:0;width:100%}
+.check-group-details .check-table-wrap th{background:var(--group-color);color:#fff;font-weight:700}
+.check-group-details .check-table-wrap td{padding:12px 11px;background:#fff}
+.check-frequency-pill{display:inline-block;padding:4px 9px;border-radius:99px;background:#e8edff;color:#273f91;text-transform:capitalize;font-weight:600}
+.check-status-pill{display:inline-block;padding:4px 10px;border-radius:99px;background:#dcfce7;color:#166534;font-weight:700}
+.check-status-pill.is-inactive{background:#fee2e2;color:#991b1b}
+@media(max-width:700px){.check-page .check-group-button{min-width:0;flex:1 1 130px}.check-group-list{gap:8px}.check-group-details .check-table-wrap{overflow-x:auto}}
