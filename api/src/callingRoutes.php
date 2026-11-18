@@ -89,8 +89,8 @@ function handleCallingRoutes(string $path, string $method): bool {
     if (preg_match('~^entries/(\\d+)$~',$route,$m) && $method === 'DELETE') {
         $q=$pdo->prepare('DELETE FROM calling_entries WHERE id=? AND organization_id=?');
         $q->execute([(int)$m[1],$org]);
-        if (!$q->rowCount()) { \\App\\Response::json(['message'=>'Call not found.'],404);return true; }
-        \\App\\Response::json(['status'=>'ok']);return true;
+        if (!$q->rowCount()) { \App\Response::json(['message'=>'Call not found.'],404);return true; }
+        \App\Response::json(['status'=>'ok']);return true;
     }
     if (preg_match('~^entries/(\d+)$~',$route,$m) && $method === 'PUT') {
         $status=(string)($body['status']??'');
