@@ -42,9 +42,46 @@ function handleChecklistRoutes(string $path, string $method): bool {
       completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       UNIQUE KEY uq_completion (organization_id,task_id,due_date)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS employee_checklist_update_history (
+      id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      organization_id BIGINT NOT NULL,
+      task_id BIGINT UNSIGNED NULL,
+      checklist_name VARCHAR(200) NULL,
+      task_title VARCHAR(255) NULL,
+      employee_name VARCHAR(255) NULL,
+      action VARCHAR(40) NOT NULL,
+      due_date DATE NULL,
+      details TEXT NULL,
+      updated_by VARCHAR(255) NULL,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_org_date (organization_id,updated_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $actorId=(int)($_SERVER['HTTP_X_CHECKLIST_ACTOR_ID']??0);
+    $actorName=null;
+    if ($actorId>0) {
+      $actorQuery=$pdo->prepare('SELECT full_name FROM users WHERE organization_id=? AND id=?');
+      $actorQuery->execute([$org,$actorId]);$actorName=$actorQuery->fetchColumn()?:null;
+    }
+    $logUpdate=static function(string $action,?array $task=null,?string $due=null,?string $details=null) use ($pdo,$org,$actorName): void {
+      $q=$pdo->prepare('INSERT INTO employee_checklist_update_history (organization_id,task_id,checklist_name,task_title,employee_name,action,due_date,details,updated_by) VALUES (?,?,?,?,?,?,?,?,?)');
+      $q->execute([$org,$task['id']??null,$task['checklist_name']??null,$task['title']??null,$task['employee_name']??null,$action,$due,$details,$actorName]);
+    };
+    $taskSnapshot=static function(int $id) use ($pdo,$org): ?array {
+      $q=$pdo->prepare('SELECT t.id,t.title,c.title AS checklist_name,u.full_name AS employee_name FROM employee_checklist_tasks t LEFT JOIN employee_checklists c ON c.id=t.checklist_id AND c.organization_id=t.organization_id LEFT JOIN users u ON u.id=t.assigned_user_id AND u.organization_id=t.organization_id WHERE t.organization_id=? AND t.id=?');
+      $q->execute([$org,$id]);return $q->fetch(PDO::FETCH_ASSOC)?:null;
+    };
     $route = substr($path,strlen('/api/checklists/'));
     $body = json_decode(file_get_contents('php://input'),true) ?: [];
     $json = static function($data): void { \App\Response::json(['data'=>$data]); };
+    if ($route === 'history' && $method === 'GET') {
+      $from=(string)($_GET['from']??date('Y-m-01'));
+      $to=(string)($_GET['to']??date('Y-m-d'));
+      if (!preg_match('/^\\d{4}-\\d{2}-\\d{2}$/',$from)||!preg_match('/^\\d{4}-\\d{2}-\\d{2}$/',$to)||$to<$from) {
+        \App\Response::json(['message'=>'Invalid date range'],422);return true;
+      }
+      $q=$pdo->prepare('SELECT * FROM employee_checklist_update_history WHERE organization_id=? AND DATE(updated_at) BETWEEN ? AND ? ORDER BY updated_at DESC,id DESC LIMIT 5000');
+      $q->execute([$org,$from,$to]);$json($q->fetchAll(PDO::FETCH_ASSOC));return true;
+    }
     if ($route === 'users' && $method === 'GET') {
       $q=$pdo->prepare('SELECT id,full_name FROM users WHERE organization_id=? ORDER BY full_name');
       $q->execute([$org]);$json($q->fetchAll(PDO::FETCH_ASSOC));return true;
@@ -55,6 +92,7 @@ function handleChecklistRoutes(string $path, string $method): bool {
         if ($title==='') {\App\Response::json(['message'=>'Checklist name is required'],422);return true;}
         $q=$pdo->prepare('INSERT INTO employee_checklists (organization_id,title) VALUES (?,?)');
         $q->execute([$org,$title]);
+        $logUpdate('Checklist Created',['title'=>$title,'checklist_name'=>$title]);
       }
       if ($method === 'PUT') {
         $q=$pdo->prepare('UPDATE employee_checklists SET title=?,active=? WHERE organization_id=? AND id=?');
@@ -94,6 +132,7 @@ function handleChecklistRoutes(string $path, string $method): bool {
         }
         $q=$pdo->prepare('INSERT INTO employee_checklist_tasks (organization_id,checklist_id,title,assigned_user_id,frequency,start_date,weekday_num,month_day,exclude_sundays,quarter_offset,annual_month,sunday_action) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
         $q->execute([$org,(int)$body['checklist_id'],$title,(int)$body['assigned_user_id'],$freq,$start,$weekday,$monthDay,!empty($body['exclude_sundays'])?1:0,$offset,$annualMonth,$sundayAction]);
+        $logUpdate('Task Created',$taskSnapshot((int)$pdo->lastInsertId()),null,'Frequency: '.$freq.'; effective from: '.$start);
       }
       if ($method === 'PUT' && !empty($body['edit_details'])) {
         $id=(int)($body['id']??0);
@@ -123,11 +162,13 @@ function handleChecklistRoutes(string $path, string $method): bool {
         $q->execute([$user,$org]);if (!(int)$q->fetchColumn()) {\App\Response::json(['message'=>'Employee not found'],422);return true;}
         $q=$pdo->prepare('UPDATE employee_checklist_tasks SET checklist_id=?,title=?,assigned_user_id=?,frequency=?,start_date=?,weekday_num=?,month_day=?,exclude_sundays=?,quarter_offset=?,annual_month=?,sunday_action=? WHERE id=? AND organization_id=?');
         $q->execute([$list,$title,$user,$freq,$start,$weekday,$monthDay,!empty($body['exclude_sundays'])?1:0,$offset,$annualMonth,$sundayAction,$id,$org]);
+        $logUpdate('Task Edited',$taskSnapshot($id),null,'Frequency: '.$freq.'; effective from: '.$start);
         $json(['updated'=>true]);return true;
       }
       if ($method === 'PUT') {
         $q=$pdo->prepare('UPDATE employee_checklist_tasks SET active=? WHERE id=? AND organization_id=?');
         $q->execute([!empty($body['active'])?1:0,(int)($body['id']??0),$org]);
+        $logUpdate(!empty($body['active'])?'Task Activated':'Task Deactivated',$taskSnapshot((int)($body['id']??0)));
       }
       $q=$pdo->prepare('SELECT t.*,c.title AS checklist_name,u.full_name AS employee_name,c.active AS checklist_active FROM employee_checklist_tasks t JOIN employee_checklists c ON c.id=t.checklist_id AND c.organization_id=t.organization_id LEFT JOIN users u ON u.id=t.assigned_user_id AND u.organization_id=t.organization_id WHERE t.organization_id=? AND t.deleted_at IS NULL ORDER BY t.id DESC');
       $q->execute([$org]);$json($q->fetchAll(PDO::FETCH_ASSOC));return true;
@@ -141,6 +182,7 @@ function handleChecklistRoutes(string $path, string $method): bool {
       $q=$pdo->prepare('SELECT id FROM employee_checklist_tasks WHERE id=? AND organization_id=? AND deleted_at IS NULL');
       $q->execute([$id,$org]);
       if (!$q->fetchColumn()) { \App\Response::json(['message'=>'Task not found'],404);return true; }
+      $snapshot=$taskSnapshot($id);
       if ($mode==='task_only') {
         // Stop future occurrences while retaining existing completion history and task details.
         $q=$pdo->prepare('UPDATE employee_checklist_tasks SET active=0,deleted_at=NOW() WHERE id=? AND organization_id=?');
@@ -155,6 +197,7 @@ function handleChecklistRoutes(string $path, string $method): bool {
           $pdo->commit();
         } catch (Throwable $e) { $pdo->rollBack();throw $e; }
       }
+      $logUpdate($mode==='task_only'?'Task Deleted (History Kept)':'Task Deleted with History',$snapshot);
       $json(['deleted'=>true,'mode'=>$mode]);return true;
     }
     if ($route === 'complete' && $method === 'POST') {
@@ -165,7 +208,9 @@ function handleChecklistRoutes(string $path, string $method): bool {
         \App\Response::json(['message'=>'Task occurrence is not eligible for completion'],422);return true;
       }
       $q=$pdo->prepare('INSERT IGNORE INTO employee_checklist_completions (organization_id,task_id,due_date) VALUES (?,?,?)');
-      $q->execute([$org,$id,$due]);$json(['saved'=>true]);return true;
+      $q->execute([$org,$id,$due]);
+      if ($q->rowCount()>0) $logUpdate('Task Completed',$taskSnapshot($id),$due);
+      $json(['saved'=>true]);return true;
     }
     if ($route === 'occurrences' && $method === 'GET') {
       $from=(string)($_GET['from']??date('Y-m-01'));
