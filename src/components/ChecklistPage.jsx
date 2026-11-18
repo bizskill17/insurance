@@ -153,6 +153,20 @@ export default function ChecklistPage({mode,currentUser}) {
           <label>To<input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label>
           {!["mine","scoreboard-mine"].includes(mode)&&<label>Employee<select value={employee} onChange={e=>setEmployee(e.target.value)}><option value="">All Employees</option>{users.map(x=><option key={x.id} value={x.id}>{x.full_name}</option>)}</select></label>}
         </div>
+        {["scoreboard","scoreboard-mine"].includes(mode) ? (() => {
+          const grouped = new Map();
+          due.forEach(item => {
+            const key = item.due_date + "|" + item.assigned_user_id;
+            if (!grouped.has(key)) grouped.set(key,{date:item.due_date,assignee:item.employee_name||users.find(u=>String(u.id)===String(item.assigned_user_id))?.full_name||"—",total:0,complete:0});
+            const row=grouped.get(key);row.total++;if(item.completed_at)row.complete++;
+          });
+          const rows=[...grouped.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.assignee.localeCompare(b.assignee));
+          const total=rows.reduce((a,r)=>a+r.total,0),done=rows.reduce((a,r)=>a+r.complete,0);
+          return <div className="check-table-wrap"><table><thead><tr><th>Date</th><th>Assignee</th><th>Total</th><th>Complete</th><th>Pending</th><th>Complete %</th></tr></thead><tbody>
+            {rows.map(r=><tr key={r.date+"|"+r.assignee}><td>{display(r.date)}</td><td>{r.assignee}</td><td>{r.total}</td><td>{r.complete}</td><td>{r.total-r.complete}</td><td style={{color:r.complete===r.total?"#008b38":r.complete===0?"#c62828":"inherit",fontWeight:600}}>{Math.round(r.complete/r.total*100)}%</td></tr>)}
+            {rows.length>0&&<tr style={{background:"#e7efff",fontWeight:700}}><td>Total</td><td>—</td><td>{total}</td><td>{done}</td><td>{total-done}</td><td>{Math.round(done/total*100)}%</td></tr>}
+          </tbody></table>{rows.length===0&&<p>No checklist tasks found for this period.</p>}</div>;
+        })() : <>
         <div className="check-stats">
           <button onClick={()=>setDetail("all")}>Due <strong>{due.length}</strong></button>
           <button onClick={()=>setDetail("completed")}>Completed <strong>{completed.length}</strong></button>
@@ -160,8 +174,12 @@ export default function ChecklistPage({mode,currentUser}) {
           <div>Completion Score <strong>{due.length?Math.round(completed.length/due.length*100):0}%</strong></div>
         </div>
         {["scoreboard","scoreboard-mine"].includes(mode)&&<div className="check-table-wrap"><table><thead><tr><th>Employee</th><th>Due</th><th>Completed</th><th>Not Done</th><th>Score</th></tr></thead><tbody>{users.filter(u=>(mode!=="scoreboard-mine"||String(u.id)===myId)&&(!employee||String(u.id)===employee)).map(u=>{const rows=due.filter(i=>String(i.assigned_user_id)===String(u.id));const done=rows.filter(i=>i.completed_at).length;return <tr key={u.id}><td>{u.full_name}</td><td>{rows.length}</td><td>{done}</td><td>{rows.length-done}</td><td>{rows.length?Math.round(done/rows.length*100):0}%</td></tr>})}</tbody></table></div>}
+
+        </>}
+        {mode==="mine"&&<>
         <h3>{detail==="pending"?"Not Done Tasks":detail==="completed"?"Completed Tasks":"Task Details"}</h3>
         <div className="check-table-wrap"><table><thead><tr><th>Due Date</th><th>Checklist</th><th>Task</th><th>Employee</th><th>Frequency</th><th>Status</th>{mode==="mine"&&<th>Action</th>}</tr></thead><tbody>{shown.map(i=><tr key={i.task_id+"-"+i.due_date}><td>{display(i.due_date)}</td><td>{i.checklist_name}</td><td>{i.title}</td><td>{i.employee_name}</td><td>{i.frequency}</td><td>{i.status}</td>{mode==="mine"&&<td>{!i.completed_at&&i.due_date<=today()&&<button disabled={busy} onClick={()=>run(async()=>{await request("complete",post({task_id:i.task_id,due_date:i.due_date}));await reloadItems();})}>Complete</button>}</td>}</tr>)}</tbody></table>{!shown.length&&<p>No checklist tasks found for this period.</p>}</div>
+        </>}
       </>}
     </section>
   </div>;
