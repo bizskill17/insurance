@@ -3784,3 +3784,36 @@ button {
     line-height:1.4;
   }
 }
+
+/* Checklist, scoreboard and calendar */
+.check-page {padding:0 0 22px;}
+.check-card {background:#fff;border-radius:20px;padding:18px 20px;box-shadow:0 12px 28px rgba(32,55,82,.06);}
+.check-card h2 {font-size:21px;margin:0 0 16px;color:#14253a;}
+.check-card h3 {font-size:16px;margin:18px 0 10px;}
+.check-error {color:#b91c1c;background:#fee2e2;padding:9px;border-radius:7px;}
+.check-success {color:#166534;background:#dcfce7;padding:9px;border-radius:7px;}
+.check-inline,.check-form,.check-filters {display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin-bottom:14px;}
+.check-inline label,.check-form label,.check-filters label {display:flex;flex-direction:column;gap:5px;font-size:13px;min-width:160px;flex:1;}
+.check-form label {flex:1 1 210px;}
+.check-page input:not([type="checkbox"]),.check-page select {width:100%;min-height:38px;padding:8px 10px;border:1px solid #c6d5e7;border-radius:8px;background:#f8fafc;color:#152438;font:inherit;}
+.check-page button {min-height:36px;padding:7px 12px;border:1px solid #b6c8e2;border-radius:8px;background:#eef4ff;color:#173b86;cursor:pointer;font-weight:600;}
+.check-page button:hover {background:#dae7ff;}
+.check-page button:disabled {opacity:.5;cursor:default;}
+.check-page .check-checkbox {display:flex;flex-direction:row;align-items:center;gap:7px;flex:0 1 auto;min-width:0;}
+.check-page .check-checkbox input {width:16px;height:16px;margin:0;}
+.check-table-wrap {overflow:auto;width:100%;}
+.check-table-wrap table {border-collapse:collapse;width:100%;font-size:13px;}
+.check-table-wrap th {background:#2d57d7;color:#fff;text-align:left;white-space:nowrap;}
+.check-table-wrap td,.check-table-wrap th {padding:10px 12px;border:1px solid #d7e1ef;}
+.check-table-wrap td {vertical-align:middle;}
+.check-stats {display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;}
+.check-stats>* {flex:1;min-width:145px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px!important;background:#f1f6ff!important;border:1px solid #cfdef5!important;border-radius:10px!important;color:#183151!important;}
+.check-stats strong {font-size:20px;}
+.check-calendar-toolbar {display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.check-calendar-toolbar h3 {margin:8px;}
+.check-calendar-grid {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:12px 0;}
+.check-calendar-grid>strong {text-align:center;font-size:12px;padding:8px 0;}
+.check-calendar-grid>button {display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;min-height:70px;padding:8px!important;background:#fff;border:1px solid #d5dfec;border-radius:8px;color:#172b46;}
+.check-calendar-grid>button.selected {background:#e8f0ff;border-color:#2d57d7;}
+.check-calendar-grid small {font-size:10px;color:#1d4ed8;}
+@media(max-width:700px){.check-card {padding:12px;border-radius:12px;}.check-calendar-grid>button {min-height:50px;padding:4px!important;}.check-calendar-grid small {font-size:9px;}.check-stats>* {min-width:120px;}}
