@@ -158,7 +158,8 @@ export const menuSections = [
       { label: "Calendar", path: "/calendar" },
       { label: "Checklist Master", path: "/checklists/master" },
       { label: "My Checklist", path: "/checklists/mine" },
-      { label: "Checklist Tracker", path: "/checklists/tracker" }
+      { label: "Checklist Tracker", path: "/checklists/tracker" },
+      { label: "Update History", path: "/checklists/history" }
     ]
   },
   {
