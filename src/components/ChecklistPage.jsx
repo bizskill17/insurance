@@ -22,6 +22,7 @@ export default function ChecklistPage({mode,currentUser}) {
   const [to,setTo]=useState(today()),[employee,setEmployee]=useState("");
   const [error,setError]=useState(""),[message,setMessage]=useState(""),[busy,setBusy]=useState(false);
   const [modal,setModal]=useState(""),[search,setSearch]=useState(""),[filterEmployee,setFilterEmployee]=useState(""),[filterFrequency,setFilterFrequency]=useState("");
+  const [openChecklist,setOpenChecklist]=useState("");
   const admin=Boolean(currentUser?.can_manage_organizations||(currentUser?.views||[]).includes("/masters/users"));
   const myId=String(currentUser?.id||"");
   const reload=async()=>{const [a,b,c]=await Promise.all([request("lists"),request("tasks"),request("users")]);setLists(a);setTasks(b);setUsers(c);};
@@ -32,6 +33,7 @@ export default function ChecklistPage({mode,currentUser}) {
   const visible=useMemo(()=>items.filter(i=>(!["mine","scoreboard-mine"].includes(mode)||String(i.assigned_user_id)===myId)&&(!employee||String(i.assigned_user_id)===employee)),[items,mode,myId,employee]);
   const due=visible.filter(i=>i.due_date<=today()),completed=due.filter(i=>i.completed_at),pending=due.filter(i=>!i.completed_at);
   const filteredTasks=useMemo(()=>tasks.filter(t=>(!search||[t.checklist_name,t.title,t.employee_name].some(v=>String(v||"").toLowerCase().includes(search.toLowerCase())))&&(!filterEmployee||String(t.assigned_user_id)===filterEmployee)&&(!filterFrequency||t.frequency===filterFrequency)),[tasks,search,filterEmployee,filterFrequency]);
+  const visibleLists=useMemo(()=>lists.filter(l=>!search||String(l.title||"").toLowerCase().includes(search.toLowerCase())||filteredTasks.some(t=>String(t.checklist_id)===String(l.id))),[lists,search,filteredTasks]);
   const [detail,setDetail]=useState("all");
   const shown=detail==="completed"?completed:detail==="pending"?pending:visible;
   return <div className="check-page">
@@ -50,7 +52,23 @@ export default function ChecklistPage({mode,currentUser}) {
             <select aria-label="Filter frequency" value={filterFrequency} onChange={e=>setFilterFrequency(e.target.value)}><option value="">All Frequencies</option>{frequencies.map(f=><option key={f} value={f}>{f[0].toUpperCase()+f.slice(1)}</option>)}</select>
           </div>
         </div>
-        <div className="check-table-wrap"><table><thead><tr><th>Checklist</th><th>Task</th><th>Employee</th><th>Frequency</th><th>Effective From</th><th>Status</th><th>Action</th></tr></thead><tbody>{filteredTasks.map(t=><tr key={t.id}><td>{t.checklist_name}</td><td>{t.title}</td><td>{t.employee_name}</td><td>{t.frequency}</td><td>{display(t.start_date)}</td><td>{Number(t.active)&&Number(t.checklist_active)?"Active":"Inactive"}</td><td><button type="button" disabled={busy} onClick={()=>run(async()=>{await request("tasks",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:t.id,active:!Number(t.active)})});await reload();})}>{Number(t.active)?"Deactivate":"Activate"}</button></td></tr>)}</tbody></table>{!filteredTasks.length&&<p>No matching checklist tasks.</p>}</div>
+        <div className="check-group-list" aria-label="Checklist groups">
+          {visibleLists.map(l=>{
+            const rows=filteredTasks.filter(t=>String(t.checklist_id)===String(l.id));
+            const expanded=openChecklist===String(l.id);
+            return <button type="button" key={l.id} className={"check-group-button"+(expanded?" is-selected":"")} aria-expanded={expanded} onClick={()=>setOpenChecklist(expanded?"":String(l.id))}>
+              <span>{l.title}</span><span className="check-group-count">{rows.length}</span><span aria-hidden="true">{expanded?"⌃":"⌄"}</span>
+            </button>;
+          })}
+        </div>
+        {visibleLists.length===0&&<p>No matching checklists.</p>}
+        {visibleLists.filter(l=>String(l.id)===openChecklist).map(l=>{
+          const rows=filteredTasks.filter(t=>String(t.checklist_id)===String(l.id));
+          return <div key={l.id} className="check-group-details">
+            <div className="check-group-heading"><h3>{l.title} — Tasks</h3><span>{rows.length} task{rows.length===1?"":"s"}</span></div>
+            <div className="check-table-wrap"><table><thead><tr><th>Task</th><th>Employee</th><th>Frequency</th><th>Effective From</th><th>Status</th><th>Action</th></tr></thead><tbody>{rows.map(t=><tr key={t.id}><td>{t.title}</td><td>{t.employee_name}</td><td>{t.frequency}</td><td>{display(t.start_date)}</td><td>{Number(t.active)&&Number(t.checklist_active)?"Active":"Inactive"}</td><td><button type="button" disabled={busy} onClick={()=>run(async()=>{await request("tasks",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:t.id,active:!Number(t.active)})});await reload();})}>{Number(t.active)?"Deactivate":"Activate"}</button></td></tr>)}</tbody></table>{rows.length===0&&<p>No matching tasks in this checklist.</p>}</div>
+          </div>;
+        })}
         {modal&&<div className="check-modal-overlay" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setModal("");}}>
           <section className="check-modal" role="dialog" aria-modal="true" aria-label={modal==="checklist"?"Add Checklist":"Add Recurring Task"}>
             <div className="check-modal-header"><h3>{modal==="checklist"?"Add Checklist":"Add Recurring Task"}</h3><button type="button" aria-label="Close form" onClick={()=>setModal("")} disabled={busy}>×</button></div>
