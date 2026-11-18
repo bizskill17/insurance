@@ -155,20 +155,11 @@ export const menuSections = [
     path: "/checklists",
     icon: "tasks",
     items: [
-      { label: "Calendar", path: "/calendar" },
       { label: "Checklist Master", path: "/checklists/master" },
+      { label: "Calendar", path: "/calendar" },
       { label: "My Checklist", path: "/checklists/mine" },
-      { label: "Checklist Tracker", path: "/checklists/tracker" },
-      { label: "Update History", path: "/checklists/history" }
-    ]
-  },
-  {
-    label: "Employee Scoreboard",
-    path: "/scoreboard",
-    icon: "reports",
-    items: [
-      { label: "My Scoreboard", path: "/scoreboard/mine" },
-      { label: "Team Scoreboard", path: "/scoreboard/team" }
+      { label: "Update History", path: "/checklists/history" },
+      { label: "My Scoreboard", path: "/scoreboard/mine" }
     ]
   },
   {
