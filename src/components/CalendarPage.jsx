@@ -12,7 +12,7 @@ export default function CalendarPage(){
  const first=iso(new Date(month.getFullYear(),month.getMonth(),1));
  const last=iso(new Date(month.getFullYear(),month.getMonth()+1,0));
  useEffect(()=>{let active=true;const load=async()=>{
-  try{const r=await fetch(API_BASE+"/checklists/occurrences?from="+first+"&to="+last);if(!r.ok)throw Error("Checklist unavailable");const j=await r.json();if(active){setEvents((j.data||[]).map(x=>({date:x.due_date,type:"Checklist",title:x.title+" — "+(x.employee_name||"Unassigned"),status:x.status,path:"/checklists/tracker"})));setError("");}}catch(e){if(active){setEvents([]);setError("Checklist events could not be loaded.");}}
+  try{const r=await fetch(API_BASE+"/checklists/occurrences?from="+first+"&to="+last);if(!r.ok){let detail="";try{const failure=await r.json();detail=failure.message||failure.error||"";}catch{}throw Error(`Checklist request failed (${r.status})${detail?": "+detail:""}`);}const j=await r.json();if(active){setEvents((j.data||[]).map(x=>({date:x.due_date,type:"Checklist",title:x.title+" — "+(x.employee_name||"Unassigned"),status:x.status,path:"/checklists/tracker"})));setError("");}}catch(e){if(active){setEvents([]);setError(`Checklist events could not be loaded. ${e.message||"Please retry."}`);}}
  };load();return()=>{active=false};},[first,last]);
  const dayEvents=useMemo(()=>events.filter(e=>e.date===selected),[events,selected]);
  const checklistByDay=useMemo(()=>{const m={};events.forEach(e=>{(m[e.date]??=[]).push(e);});return m;},[events]);
