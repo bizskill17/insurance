@@ -69,9 +69,9 @@ function buildRoutes(items, currentUser) {
         ) : item.path === "/claims/form" ? (
           <ClaimFormPage currentUser={currentUser} />
         ) : item.section === "Calendar" ? (
-          <CalendarPage />
+          <CalendarPage currentUser={currentUser} />
         ) : item.section === "Checklist" ? (
-          item.path === "/calendar" ? <CalendarPage /> : <ChecklistPage mode={item.path.split("/").pop()} currentUser={currentUser} />
+          item.path === "/calendar" ? <CalendarPage currentUser={currentUser} /> : <ChecklistPage mode={item.path.split("/").pop()} currentUser={currentUser} />
         ) : item.section === "Employee Scoreboard" ? (
           <ChecklistPage mode={item.path.endsWith("/mine")?"scoreboard-mine":"scoreboard"} currentUser={currentUser} />
         ) : item.section === "Calling" ? (
