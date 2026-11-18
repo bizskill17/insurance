@@ -3949,3 +3949,28 @@ button {
 .check-group-delete{border:1px solid #fca5a5;border-radius:8px;background:#fff1f2;color:#b91c1c;font-size:11px;font-weight:700;padding:8px 9px;cursor:pointer}
 .check-group-delete:hover{background:#ffe4e6}
 .check-group-delete:disabled{opacity:.5;cursor:not-allowed}
+
+/* Checklist Master: clean card-based layout */
+.check-master-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.check-master-filters{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.check-master-filters input{width:260px;max-width:100%}
+.check-master-filters select{width:170px;max-width:100%}
+.check-group-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:18px 0 22px}
+.check-page .check-group-entry{--tile-color:#6553ed;--tile-bg:#f7f5ff;--tile-border:#c7b9ff;display:flex;align-items:center;gap:12px;min-width:0;min-height:106px;padding:18px;border:1px solid var(--tile-border);border-radius:13px;background:var(--tile-bg);box-shadow:0 3px 10px rgba(15,23,42,.04);transition:box-shadow .15s,border-color .15s}
+.check-page .check-group-entry--1{--tile-color:#009a50;--tile-bg:#f0fbf3;--tile-border:#a4dfb3}
+.check-page .check-group-entry--2{--tile-color:#f47708;--tile-bg:#fff8f0;--tile-border:#fdc48d}
+.check-page .check-group-entry--3{--tile-color:#1672ef;--tile-bg:#f1f7ff;--tile-border:#a9caff}
+.check-page .check-group-entry--4{--tile-color:#d72b82;--tile-bg:#fff2f8;--tile-border:#f6b5d7}
+.check-page .check-group-entry--5{--tile-color:#0891b2;--tile-bg:#ecfeff;--tile-border:#9ddbe7}
+.check-page .check-group-entry--6{--tile-color:#b45309;--tile-bg:#fffbeb;--tile-border:#f4d28d}
+.check-page .check-group-entry--7{--tile-color:#475569;--tile-bg:#f8fafc;--tile-border:#cbd5e1}
+.check-page .check-group-entry.is-selected,.check-page .check-group-entry:hover{box-shadow:0 5px 17px rgba(15,23,42,.1);border-color:var(--tile-color)}
+.check-group-card-main{display:flex;align-items:center;gap:14px;flex:1;min-width:0;padding:0;border:0;background:transparent;text-align:left;cursor:pointer;color:#162133}
+.check-group-card-icon{width:54px;height:54px;display:grid;place-items:center;flex-shrink:0;border-radius:12px;background:color-mix(in srgb,var(--tile-color) 15%,white);color:var(--tile-color);font-size:25px;font-weight:700}
+.check-group-card-text{display:flex;flex-direction:column;gap:7px;min-width:0}
+.check-group-card-text strong{font-size:17px;overflow-wrap:anywhere}
+.check-group-card-text small{font-size:13px;color:#475569}
+.check-page .check-group-delete{flex-shrink:0;background:transparent;color:#dc2626;border:1px solid #f87171;border-radius:9px;padding:9px 12px;font-size:13px;font-weight:700}
+.check-page .check-group-delete:hover{background:#fee2e2}
+@media(max-width:1100px){.check-group-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.check-group-list{grid-template-columns:1fr;gap:10px}.check-page .check-group-entry{min-height:88px;padding:12px}.check-master-toolbar,.check-master-filters{align-items:stretch}.check-master-filters{width:100%}.check-master-filters input{width:100%}.check-master-filters select{flex:1;min-width:130px}}
