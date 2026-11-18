@@ -3851,3 +3851,25 @@ button {
 .check-group-heading h3{margin:0;font-size:16px}
 .check-group-heading>span{color:#64748b;font-size:12px}
 .check-group-details{margin-top:6px}
+
+/* Distinct colours for each checklist group */
+.check-page .check-group-button{color:#fff;border:1px solid transparent;font-weight:700;box-shadow:0 2px 5px rgba(15,23,42,.13);transition:transform .15s,box-shadow .15s}
+.check-page .check-group-button:hover{transform:translateY(-1px);box-shadow:0 4px 9px rgba(15,23,42,.18)}
+.check-page .check-group-button--0{background:#2563eb;border-color:#1d4ed8}
+.check-page .check-group-button--1{background:#059669;border-color:#047857}
+.check-page .check-group-button--2{background:#ea580c;border-color:#c2410c}
+.check-page .check-group-button--3{background:#7c3aed;border-color:#6d28d9}
+.check-page .check-group-button--4{background:#0891b2;border-color:#0e7490}
+.check-page .check-group-button--5{background:#db2777;border-color:#be185d}
+.check-page .check-group-button--6{background:#b45309;border-color:#92400e}
+.check-page .check-group-button--7{background:#475569;border-color:#334155}
+.check-page .check-group-button.is-selected{color:#fff;outline:3px solid rgba(37,99,235,.17);outline-offset:2px}
+.check-page .check-group-button.is-selected.check-group-button--0{background:#1d4ed8}
+.check-page .check-group-button.is-selected.check-group-button--1{background:#047857}
+.check-page .check-group-button.is-selected.check-group-button--2{background:#c2410c}
+.check-page .check-group-button.is-selected.check-group-button--3{background:#6d28d9}
+.check-page .check-group-button.is-selected.check-group-button--4{background:#0e7490}
+.check-page .check-group-button.is-selected.check-group-button--5{background:#be185d}
+.check-page .check-group-button.is-selected.check-group-button--6{background:#92400e}
+.check-page .check-group-button.is-selected.check-group-button--7{background:#334155}
+.check-page .check-group-count{background:rgba(255,255,255,.24);color:#fff}
