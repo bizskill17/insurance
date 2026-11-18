@@ -93,6 +93,22 @@ function handleChecklistRoutes(string $path, string $method): bool {
       $q=$pdo->prepare('SELECT t.*,c.title AS checklist_name,u.full_name AS employee_name,c.active AS checklist_active FROM employee_checklist_tasks t JOIN employee_checklists c ON c.id=t.checklist_id AND c.organization_id=t.organization_id LEFT JOIN users u ON u.id=t.assigned_user_id AND u.organization_id=t.organization_id WHERE t.organization_id=? ORDER BY t.id DESC');
       $q->execute([$org]);$json($q->fetchAll(PDO::FETCH_ASSOC));return true;
     }
+    if ($route === 'tasks' && $method === 'DELETE') {
+      $id=(int)($body['id']??0);
+      if ($id<1) { \\App\\Response::json(['message'=>'Valid task ID is required'],422);return true; }
+      $q=$pdo->prepare('SELECT id FROM employee_checklist_tasks WHERE id=? AND organization_id=?');
+      $q->execute([$id,$org]);
+      if (!$q->fetchColumn()) { \\App\\Response::json(['message'=>'Task not found'],404);return true; }
+      $pdo->beginTransaction();
+      try {
+        $q=$pdo->prepare('DELETE FROM employee_checklist_completions WHERE task_id=? AND organization_id=?');
+        $q->execute([$id,$org]);
+        $q=$pdo->prepare('DELETE FROM employee_checklist_tasks WHERE id=? AND organization_id=?');
+        $q->execute([$id,$org]);
+        $pdo->commit();
+      } catch (Throwable $e) { $pdo->rollBack();throw $e; }
+      $json(['deleted'=>true]);return true;
+    }
     if ($route === 'complete' && $method === 'POST') {
       $id=(int)($body['task_id']??0);$due=(string)($body['due_date']??'');
       $q=$pdo->prepare('SELECT * FROM employee_checklist_tasks WHERE id=? AND organization_id=? AND active=1');
