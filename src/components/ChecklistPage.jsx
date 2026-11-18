@@ -158,26 +158,22 @@ function HistoryTable({history,from,to,setFrom,setTo,search,setSearch,employee,s
   const pages=Math.max(1,Math.ceil(filtered.length/20));
   const current=Math.min(page,pages);
   const rows=filtered.slice((current-1)*20,current*20);
+  const actionTone=value=>{const v=String(value||"").toLowerCase();return v.includes("delet")?"deleted":v.includes("complet")?"completed":v.includes("creat")?"created":v.includes("edit")||v.includes("updat")?"edited":v.includes("deactiv")?"deleted":"other";};
   return <>
-    <div className="check-master-toolbar">
-      <div className="check-master-filters" style={{display:"flex",flexWrap:"wrap",gap:8,width:"100%"}}>
-        <label>From Date <input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label>
-        <label>To Date <input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label>
-        <select aria-label="Employee" value={employee} onChange={e=>setEmployee(e.target.value)}><option value="">All Employees</option>{employees.map(v=><option key={v}>{v}</option>)}</select>
-        <select aria-label="Checklist" value={checklist} onChange={e=>setChecklist(e.target.value)}><option value="">All Checklists</option>{checklists.map(v=><option key={v}>{v}</option>)}</select>
-        <select aria-label="Action" value={action} onChange={e=>setAction(e.target.value)}><option value="">All Actions</option>{actions.map(v=><option key={v}>{v}</option>)}</select>
-        <input placeholder="Search task or checklist..." aria-label="Search history" value={search} onChange={e=>setSearch(e.target.value)}/>
-      </div>
+    <div className="check-history-intro"><span className="check-history-symbol" aria-hidden="true">▤</span><div><strong>Update History</strong><p>All checklist and task updates (create, edit, complete, activate, deactivate and delete).</p></div></div>
+    <div className="check-history-filters">
+      <label>From Date<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label>
+      <label>To Date<input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label>
+      <label>Employee<select aria-label="Employee" value={employee} onChange={e=>setEmployee(e.target.value)}><option value="">All Employees</option>{employees.map(v=><option key={v}>{v}</option>)}</select></label>
+      <label>Checklist<select aria-label="Checklist" value={checklist} onChange={e=>setChecklist(e.target.value)}><option value="">All Checklists</option>{checklists.map(v=><option key={v}>{v}</option>)}</select></label>
+      <label>Action<select aria-label="Action" value={action} onChange={e=>setAction(e.target.value)}><option value="">All Actions</option>{actions.map(v=><option key={v}>{v}</option>)}</select></label>
+      <label>Search<input placeholder="Search task or checklist..." aria-label="Search history" value={search} onChange={e=>setSearch(e.target.value)}/></label>
     </div>
-    <div className="table-wrap"><table><thead><tr><th>#</th><th>Update Date & Time</th><th>Checklist</th><th>Task</th><th>Employee</th><th>Action</th><th>Details</th><th>Updated By</th></tr></thead><tbody>{rows.map((h,i)=><tr key={h.id}><td>{(current-1)*20+i+1}</td><td>{h.updated_at?display(h.updated_at.slice(0,10))+" "+h.updated_at.slice(11,16):"—"}</td><td>{h.checklist_name||"—"}</td><td>{h.task_title||"—"}</td><td>{h.employee_name||"—"}</td><td><span className="check-history-action">{h.action}</span></td><td>{h.details|| (h.due_date?"Task date: "+display(h.due_date):"—")}</td><td>{h.updated_by||"Not recorded"}</td></tr>)}</tbody></table></div>
+    <div className="check-history-table-wrap"><table className="check-history-table"><thead><tr><th>#</th><th>Update Date &amp; Time</th><th>Checklist</th><th>Task</th><th>Employee</th><th>Action</th><th>Details</th><th>Updated By</th></tr></thead><tbody>{rows.map((h,i)=><tr key={h.id}><td>{(current-1)*20+i+1}</td><td className="check-history-date">{h.updated_at?display(h.updated_at.slice(0,10))+" "+h.updated_at.slice(11,16):"—"}</td><td><span className="check-history-checklist">{h.checklist_name||"—"}</span></td><td>{h.task_title||"—"}</td><td>{h.employee_name||"—"}</td><td><span className={"check-history-pill check-history-pill--"+actionTone(h.action)}>{h.action}</span></td><td>{h.details||(h.due_date?"Task date: "+display(h.due_date):"—")}</td><td>{h.updated_by||"Not recorded"}</td></tr>)}</tbody></table></div>
     {!filtered.length&&<p>No update records found for the selected period and filters. Earlier changes made before history tracking was enabled are not available.</p>}
-    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginTop:12,flexWrap:"wrap"}}>
+    <div className="check-history-footer">
       <span>Showing {filtered.length?(current-1)*20+1:0}–{Math.min(current*20,filtered.length)} of {filtered.length} records</span>
-      <div style={{display:"flex",alignItems:"center",gap:8}}>
-        <button type="button" disabled={current<=1} onClick={()=>setPage(current-1)}>Previous</button>
-        <span>Page {current} of {pages}</span>
-        <button type="button" disabled={current>=pages} onClick={()=>setPage(current+1)}>Next</button>
-      </div>
+      <div className="check-history-pagination"><button type="button" disabled={current<=1} onClick={()=>setPage(current-1)}>Previous</button><span className="check-history-page">{current}</span><span>of {pages}</span><button type="button" disabled={current>=pages} onClick={()=>setPage(current+1)}>Next</button></div>
     </div>
   </>;
 }
