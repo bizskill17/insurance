@@ -3974,3 +3974,16 @@ button {
 .check-page .check-group-delete:hover{background:#fee2e2}
 @media(max-width:1100px){.check-group-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.check-group-list{grid-template-columns:1fr;gap:10px}.check-page .check-group-entry{min-height:88px;padding:12px}.check-master-toolbar,.check-master-filters{align-items:stretch}.check-master-filters{width:100%}.check-master-filters input{width:100%}.check-master-filters select{flex:1;min-width:130px}}
+
+/* Compact checklist master cards and controls */
+.check-page .check-group-list{gap:10px;margin:12px 0 14px}
+.check-page .check-group-entry{min-height:68px;padding:9px 11px;gap:8px;border-radius:10px}
+.check-page .check-group-card-main{gap:9px}
+.check-page .check-group-card-icon{width:36px;height:36px;border-radius:8px;font-size:18px}
+.check-page .check-group-card-text{gap:2px}
+.check-page .check-group-card-text strong{font-size:14px}
+.check-page .check-group-card-text small{font-size:11px}
+.check-page .check-group-delete{display:grid;place-items:center;width:34px;height:34px;padding:0;border-radius:7px;font-size:17px;line-height:1}
+.check-page .check-master-toolbar{gap:10px}
+.check-page .check-master-filters{gap:7px}
+@media(max-width:700px){.check-page .check-group-entry{min-height:62px;padding:8px 10px}}
