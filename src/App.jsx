@@ -5,6 +5,8 @@ import AttachDocumentsPage from "./components/AttachDocumentsPage";
 import AppLayout from "./components/AppLayout";
 import ClaimFormPage from "./components/ClaimFormPage";
 import CallingPage from "./components/CallingPage";
+import ChecklistPage from "./components/ChecklistPage";
+import CalendarPage from "./components/CalendarPage";
 import DashboardPage from "./components/DashboardPage";
 import DailyActivityReportPage from "./components/DailyActivityReportPage";
 import ExpiryReportsPage from "./components/ExpiryReportsPage";
@@ -66,6 +68,12 @@ function buildRoutes(items, currentUser) {
           <InactivatedPoliciesPage />
         ) : item.path === "/claims/form" ? (
           <ClaimFormPage currentUser={currentUser} />
+        ) : item.section === "Calendar" ? (
+          <CalendarPage />
+        ) : item.section === "Checklist" ? (
+          <ChecklistPage mode={item.path.split("/").pop()} currentUser={currentUser} />
+        ) : item.section === "Employee Scoreboard" ? (
+          <ChecklistPage mode={item.path.endsWith("/mine")?"mine":"scoreboard"} currentUser={currentUser} />
         ) : item.section === "Calling" ? (
           <CallingPage mode={item.path.split("/").pop()} currentUser={currentUser} />
         ) : item.section === "Claim" ? (
@@ -97,7 +105,8 @@ export default function App() {
   const nativeFetchRef = useRef(window.fetch.bind(window));
   const hasValidAuth = Boolean(authUser?.organization_id);
   const effectiveViews = useMemo(() => {
-    const views = [...(authUser?.views || []), "/calling/list", "/calling/tracker"];
+    const views = [...(authUser?.views || []), "/calling/list", "/calling/tracker", "/calendar", "/checklists/mine", "/scoreboard/mine"];
+    if (authUser?.can_manage_organizations || (authUser?.views || []).includes("/masters/users")) { views.push("/checklists/master", "/checklists/tracker", "/scoreboard/team"); }
     if (authUser?.can_manage_organizations || (authUser?.views || []).includes("/masters/users")) {
       views.push("/calling/settings");
     }
