@@ -106,7 +106,7 @@ export default function App() {
   const hasValidAuth = Boolean(authUser?.organization_id);
   const effectiveViews = useMemo(() => {
     const views = [...(authUser?.views || []), "/calling/list", "/calling/tracker", "/calendar", "/checklists/mine", "/scoreboard/mine"];
-    if (authUser?.can_manage_organizations || (authUser?.views || []).includes("/masters/users")) { views.push("/checklists/master", "/checklists/tracker", "/scoreboard/team"); }
+    if (authUser?.can_manage_organizations || (authUser?.views || []).includes("/masters/users")) { views.push("/checklists/master", "/checklists/tracker", "/checklists/history", "/scoreboard/team"); }
     if (authUser?.can_manage_organizations || (authUser?.views || []).includes("/masters/users")) {
       views.push("/calling/settings");
     }
