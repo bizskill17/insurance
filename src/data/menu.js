@@ -151,17 +151,11 @@ export const menuSections = [
     ]
   },
   {
-    label: "Calendar",
-    path: "/calendar",
-    standalone: true,
-    icon: "tasks",
-    items: [{ label: "Calendar", path: "/calendar" }]
-  },
-  {
     label: "Checklist",
     path: "/checklists",
     icon: "tasks",
     items: [
+      { label: "Calendar", path: "/calendar" },
       { label: "Checklist Master", path: "/checklists/master" },
       { label: "My Checklist", path: "/checklists/mine" },
       { label: "Checklist Tracker", path: "/checklists/tracker" }
