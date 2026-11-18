@@ -3823,3 +3823,20 @@ button {
 
 .check-calendar-grid .check-calendar-task {display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;line-height:1.4;text-align:left;color:#365314;background:#ecfccb;border-radius:4px;padding:2px 4px;}
 .check-calendar-grid .check-calendar-task.is-done {color:#166534;background:#dcfce7;text-decoration:line-through;}
+
+/* Checklist Master: compact table-first layout and popup forms */
+.check-master-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+.check-master-actions,.check-master-filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.check-master-actions button:first-child,.check-modal-footer button:last-child{background:#2d57d7;color:#fff;border-color:#2d57d7}
+.check-master-filters input{width:min(290px,100%)!important}
+.check-master-filters select{width:auto;min-width:150px}
+.check-modal-overlay{position:fixed;inset:0;background:rgba(17,31,49,.52);z-index:1200;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+.check-modal{width:min(650px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#fff;border-radius:14px;box-shadow:0 20px 70px rgba(0,0,0,.22);padding:20px}
+.check-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.check-modal-header h3{margin:0;font-size:19px}
+.check-modal-header button{font-size:22px;line-height:1;padding:4px 10px}
+.check-modal form>label,.check-modal-fields>label:not(.check-checkbox){display:flex;flex-direction:column;gap:6px;font-size:13px}
+.check-modal-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.check-modal-fields .check-checkbox{align-self:center;margin-top:16px}
+.check-modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+@media(max-width:650px){.check-master-actions,.check-master-filters{width:100%}.check-master-filters>*{flex:1;min-width:125px}.check-modal-fields{grid-template-columns:1fr}.check-modal{padding:14px}}
