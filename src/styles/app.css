@@ -3840,3 +3840,14 @@ button {
 .check-modal-fields .check-checkbox{align-self:center;margin-top:16px}
 .check-modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
 @media(max-width:650px){.check-master-actions,.check-master-filters{width:100%}.check-master-filters>*{flex:1;min-width:125px}.check-modal-fields{grid-template-columns:1fr}.check-modal{padding:14px}}
+
+/* Checklist-wise expandable task groups */
+.check-group-list{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:10px 0 14px}
+.check-page .check-group-button{display:inline-flex;align-items:center;gap:10px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:9px;padding:9px 12px;min-height:38px}
+.check-page .check-group-button.is-selected{background:#2d57d7;color:#fff;border-color:#2d57d7}
+.check-group-count{display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:23px;padding:0 6px;background:rgba(29,78,216,.12);border-radius:99px;font-size:12px}
+.check-group-button.is-selected .check-group-count{background:rgba(255,255,255,.22)}
+.check-group-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0}
+.check-group-heading h3{margin:0;font-size:16px}
+.check-group-heading>span{color:#64748b;font-size:12px}
+.check-group-details{margin-top:6px}
