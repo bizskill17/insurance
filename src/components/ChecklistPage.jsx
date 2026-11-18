@@ -12,12 +12,15 @@ async function request(path,options) {
   return result.data;
 }
 const frequencies=["daily","weekly","monthly","quarterly","annually"];
+const weekdays=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
 export default function ChecklistPage({mode,currentUser}) {
   const [lists,setLists]=useState([]),[tasks,setTasks]=useState([]),[users,setUsers]=useState([]);
   const [items,setItems]=useState([]),[name,setName]=useState("");
   const [selectedList,setSelectedList]=useState(""),[title,setTitle]=useState("");
   const [assigned,setAssigned]=useState(""),[frequency,setFrequency]=useState("daily");
   const [start,setStart]=useState(today()),[excludeSundays,setExcludeSundays]=useState(false);
+  const [weekday,setWeekday]=useState("1"),[monthDay,setMonthDay]=useState("1"),[quarterOffset,setQuarterOffset]=useState("0"),[annualMonth,setAnnualMonth]=useState("1"),[sundayAction,setSundayAction]=useState("skip");
   const [from,setFrom]=useState(iso(new Date(new Date().getFullYear(),new Date().getMonth(),1)));
   const [to,setTo]=useState(today()),[employee,setEmployee]=useState("");
   const [error,setError]=useState(""),[message,setMessage]=useState(""),[busy,setBusy]=useState(false);
@@ -77,14 +80,22 @@ export default function ChecklistPage({mode,currentUser}) {
                 <label>Checklist Name *<input required autoFocus value={name} onChange={e=>setName(e.target.value)} placeholder="Enter checklist name"/></label>
                 <div className="check-modal-footer"><button type="button" onClick={()=>setModal("")} disabled={busy}>Cancel</button><button disabled={busy}>Save Checklist</button></div>
               </form>:
-              <form onSubmit={e=>{e.preventDefault();run(async()=>{await request("tasks",post({checklist_id:selectedList,title,assigned_user_id:assigned,frequency,start_date:start,exclude_sundays:excludeSundays}));setTitle("");await reload();setModal("");});}}>
+              <form onSubmit={e=>{e.preventDefault();run(async()=>{await request("tasks",post({checklist_id:selectedList,title,assigned_user_id:assigned,frequency,start_date:start,exclude_sundays:excludeSundays,weekday_num:Number(weekday),month_day:Number(monthDay),quarter_offset:Number(quarterOffset),annual_month:Number(annualMonth),sunday_action:sundayAction}));setTitle("");await reload();setModal("");});}}>
                 <div className="check-modal-fields">
                   <label>Checklist *<select required value={selectedList} onChange={e=>setSelectedList(e.target.value)}><option value="">Select Checklist</option>{lists.filter(x=>Number(x.active)).map(x=><option key={x.id} value={x.id}>{x.title}</option>)}</select></label>
                   <label>Task *<input required value={title} onChange={e=>setTitle(e.target.value)} placeholder="Task description"/></label>
                   <label>Assigned User *<select required value={assigned} onChange={e=>setAssigned(e.target.value)}><option value="">Select User</option>{users.map(x=><option key={x.id} value={x.id}>{x.full_name}</option>)}</select></label>
                   <label>Frequency *<select value={frequency} onChange={e=>setFrequency(e.target.value)}>{frequencies.map(x=><option key={x} value={x}>{x[0].toUpperCase()+x.slice(1)}</option>)}</select></label>
+                  {frequency==="weekly"&&<label>Week Day *<select value={weekday} onChange={e=>setWeekday(e.target.value)}>{weekdays.map((d,i)=><option key={d} value={i+1}>{d}</option>)}</select></label>}
+                  {frequency==="monthly"&&<label>Day of Month *<select value={monthDay} onChange={e=>setMonthDay(e.target.value)}>{Array.from({length:31},(_,i)=><option key={i+1} value={i+1}>{i+1}</option>)}</select></label>}
+                  {frequency==="quarterly"&&<label>Days After Quarter Ending *<input type="number" min="0" max="365" required value={quarterOffset} onChange={e=>setQuarterOffset(e.target.value)}/></label>}
+                  {frequency==="annually"&&<>
+                    <label>Month *<select value={annualMonth} onChange={e=>setAnnualMonth(e.target.value)}>{months.map((m,i)=><option key={m} value={i+1}>{m}</option>)}</select></label>
+                    <label>Day *<select value={monthDay} onChange={e=>setMonthDay(e.target.value)}>{Array.from({length:new Date(2024,Number(annualMonth),0).getDate()},(_,i)=><option key={i+1} value={i+1}>{i+1}</option>)}</select></label>
+                  </>}
                   <label>Effective Start Date *<input type="date" required value={start} onChange={e=>setStart(e.target.value)}/></label>
                   <label className="check-checkbox"><input type="checkbox" checked={excludeSundays} onChange={e=>setExcludeSundays(e.target.checked)}/>Exclude Sundays</label>
+                  {excludeSundays&&<label>When due on Sunday<select value={sundayAction} onChange={e=>setSundayAction(e.target.value)}><option value="skip">Skip occurrence</option><option value="monday">Move to Monday</option></select></label>}
                 </div>
                 <div className="check-modal-footer"><button type="button" onClick={()=>setModal("")} disabled={busy}>Cancel</button><button disabled={busy}>Save Task</button></div>
               </form>
