@@ -59,7 +59,7 @@ export default function ChecklistPage({mode,currentUser}) {
   const shown=detail==="completed"?completed:detail==="pending"?pending:visible;
   return <div className="check-page">
     <section className="check-card">
-      <h2>{mode==="history"?"Update History":mode==="master"?"Checklist Master":mode==="mine"?"My Checklist":mode==="tracker"?"Checklist Tracker":mode==="scoreboard-mine"?"My Scoreboard":"Team Scoreboard"}</h2>
+      {!["history","master","mine","tracker"].includes(mode)&&<h2>{mode==="scoreboard-mine"?"My Scoreboard":"Team Scoreboard"}</h2>}
       {error&&<p className="check-error" role="alert">{error}</p>}{message&&<p className="check-success">{message}</p>}
       {mode==="history"&&historyDeleteId!==null&&<div className="check-modal-overlay" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setHistoryDeleteId(null);}}>
         <section className="check-modal" role="dialog" aria-modal="true" aria-label="Delete update history record">
