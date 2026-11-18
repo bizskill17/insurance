@@ -4,9 +4,10 @@ import { API_BASE } from "../config/api";
 const iso = d => [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 const today = () => iso(new Date());
 const display = s => s ? s.slice(0,10).split("-").reverse().join("/") : "—";
+let checklistActorId = '';
 const post = data => ({method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
 async function request(path,options) {
-  const response=await fetch(API_BASE+"/checklists/"+path,options);
+  const response=await fetch(API_BASE+"/checklists/"+path,{...options,headers:{...(options?.headers||{}),"X-Checklist-Actor-Id":checklistActorId}});
   const result=await response.json();
   if(!response.ok) throw Error(result.message||"Request failed");
   return result.data;
@@ -29,9 +30,12 @@ export default function ChecklistPage({mode,currentUser}) {
   const [taskToDelete,setTaskToDelete]=useState(null);
   const admin=Boolean(currentUser?.can_manage_organizations||(currentUser?.views||[]).includes("/masters/users"));
   const myId=String(currentUser?.id||"");
+  checklistActorId=myId;
+  const [history,setHistory]=useState([]);
   const reload=async()=>{const [a,b,c]=await Promise.all([request("lists"),request("tasks"),request("users")]);setLists(a);setTasks(b);setUsers(c);};
   const reloadItems=async()=>setItems(await request("occurrences?from="+from+"&to="+to));
-  useEffect(()=>{reload().catch(e=>setError(e.message));},[]);
+  useEffect(()=>{if(mode!=="history")reload().catch(e=>setError(e.message));},[mode]);
+  useEffect(()=>{if(mode==="history")request("history?from="+from+"&to="+to).then(setHistory).catch(e=>setError(e.message));},[mode,from,to]);
   useEffect(()=>{if(mode!=="master")reloadItems().catch(e=>setError(e.message));},[from,to,mode]);
   const run=async fn=>{setBusy(true);setError("");setMessage("");try{await fn();setMessage("Saved successfully.");}catch(e){setError(e.message);}finally{setBusy(false);}};
   const visible=useMemo(()=>items.filter(i=>(!["mine","scoreboard-mine"].includes(mode)||String(i.assigned_user_id)===myId)&&(!employee||String(i.assigned_user_id)===employee)),[items,mode,myId,employee]);
@@ -51,9 +55,9 @@ export default function ChecklistPage({mode,currentUser}) {
   const shown=detail==="completed"?completed:detail==="pending"?pending:visible;
   return <div className="check-page">
     <section className="check-card">
-      <h2>{mode==="master"?"Checklist Master":mode==="mine"?"My Checklist":mode==="tracker"?"Checklist Tracker":mode==="scoreboard-mine"?"My Scoreboard":"Team Scoreboard"}</h2>
+      <h2>{mode==="history"?"Update History":mode==="master"?"Checklist Master":mode==="mine"?"My Checklist":mode==="tracker"?"Checklist Tracker":mode==="scoreboard-mine"?"My Scoreboard":"Team Scoreboard"}</h2>
       {error&&<p className="check-error" role="alert">{error}</p>}{message&&<p className="check-success">{message}</p>}
-      {mode==="master" ? (admin ? <>
+      {mode==="history" ? (admin ? <><div className="check-master-toolbar"><div className="check-master-filters"><label>From <input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label>To <input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label><input placeholder="Search history..." aria-label="Search history" value={search} onChange={e=>setSearch(e.target.value)}/></div></div><div className="table-wrap"><table><thead><tr><th>Updated At</th><th>Checklist</th><th>Task</th><th>Employee</th><th>Action</th><th>Task Date</th><th>Updated By</th><th>Details</th></tr></thead><tbody>{history.filter(h=>!search||[h.checklist_name,h.task_title,h.employee_name,h.action,h.updated_by,h.details].some(v=>String(v||"").toLowerCase().includes(search.toLowerCase()))).map(h=><tr key={h.id}><td>{h.updated_at?display(h.updated_at.slice(0,10))+" "+h.updated_at.slice(11,16):"—"}</td><td>{h.checklist_name||"—"}</td><td>{h.task_title||"—"}</td><td>{h.employee_name||"—"}</td><td>{h.action}</td><td>{display(h.due_date)}</td><td>{h.updated_by||"Not recorded"}</td><td>{h.details||"—"}</td></tr>)}</tbody></table>{history.length===0&&<p>No recorded updates for this period. Earlier changes made before history tracking was enabled are not available.</p>}</div></> : <p>Access restricted to administrators.</p>) : mode==="master" ? (admin ? <>
         <div className="check-master-toolbar">
           <div className="check-master-actions">
             <button type="button" onClick={()=>{setError("");setMessage("");setModal("checklist");}}>+ Add Checklist</button>
