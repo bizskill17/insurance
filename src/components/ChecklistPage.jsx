@@ -28,13 +28,13 @@ export default function ChecklistPage({mode,currentUser}) {
   useEffect(()=>{reload().catch(e=>setError(e.message));},[]);
   useEffect(()=>{if(mode!=="master")reloadItems().catch(e=>setError(e.message));},[from,to,mode]);
   const run=async fn=>{setBusy(true);setError("");setMessage("");try{await fn();setMessage("Saved successfully.");}catch(e){setError(e.message);}finally{setBusy(false);}};
-  const visible=useMemo(()=>items.filter(i=>(mode!=="mine"||String(i.assigned_user_id)===myId)&&(!employee||String(i.assigned_user_id)===employee)),[items,mode,myId,employee]);
+  const visible=useMemo(()=>items.filter(i=>(!["mine","scoreboard-mine"].includes(mode)||String(i.assigned_user_id)===myId)&&(!employee||String(i.assigned_user_id)===employee)),[items,mode,myId,employee]);
   const due=visible.filter(i=>i.due_date<=today()),completed=due.filter(i=>i.completed_at),pending=due.filter(i=>!i.completed_at);
   const [detail,setDetail]=useState("all");
   const shown=detail==="completed"?completed:detail==="pending"?pending:visible;
   return <div className="check-page">
     <section className="check-card">
-      <h2>{mode==="master"?"Checklist Master":mode==="mine"?"My Checklist":mode==="tracker"?"Checklist Tracker":"Employee Scoreboard"}</h2>
+      <h2>{mode==="master"?"Checklist Master":mode==="mine"?"My Checklist":mode==="tracker"?"Checklist Tracker":mode==="scoreboard-mine"?"My Scoreboard":"Team Scoreboard"}</h2>
       {error&&<p className="check-error" role="alert">{error}</p>}{message&&<p className="check-success">{message}</p>}
       {mode==="master" ? (admin ? <>
         <form className="check-inline" onSubmit={e=>{e.preventDefault();run(async()=>{await request("lists",post({title:name}));setName("");await reload();});}}>
@@ -57,7 +57,7 @@ export default function ChecklistPage({mode,currentUser}) {
         <div className="check-filters">
           <label>From<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label>
           <label>To<input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label>
-          {mode!=="mine"&&<label>Employee<select value={employee} onChange={e=>setEmployee(e.target.value)}><option value="">All Employees</option>{users.map(x=><option key={x.id} value={x.id}>{x.full_name}</option>)}</select></label>}
+          {!["mine","scoreboard-mine"].includes(mode)&&<label>Employee<select value={employee} onChange={e=>setEmployee(e.target.value)}><option value="">All Employees</option>{users.map(x=><option key={x.id} value={x.id}>{x.full_name}</option>)}</select></label>}
         </div>
         <div className="check-stats">
           <button onClick={()=>setDetail("all")}>Due <strong>{due.length}</strong></button>
@@ -65,7 +65,7 @@ export default function ChecklistPage({mode,currentUser}) {
           <button onClick={()=>setDetail("pending")}>Not Done <strong>{pending.length}</strong></button>
           <div>Completion Score <strong>{due.length?Math.round(completed.length/due.length*100):0}%</strong></div>
         </div>
-        {mode==="scoreboard"&&<div className="check-table-wrap"><table><thead><tr><th>Employee</th><th>Due</th><th>Completed</th><th>Not Done</th><th>Score</th></tr></thead><tbody>{users.filter(u=>!employee||String(u.id)===employee).map(u=>{const rows=due.filter(i=>String(i.assigned_user_id)===String(u.id));const done=rows.filter(i=>i.completed_at).length;return <tr key={u.id}><td>{u.full_name}</td><td>{rows.length}</td><td>{done}</td><td>{rows.length-done}</td><td>{rows.length?Math.round(done/rows.length*100):0}%</td></tr>})}</tbody></table></div>}
+        {["scoreboard","scoreboard-mine"].includes(mode)&&<div className="check-table-wrap"><table><thead><tr><th>Employee</th><th>Due</th><th>Completed</th><th>Not Done</th><th>Score</th></tr></thead><tbody>{users.filter(u=>(mode!=="scoreboard-mine"||String(u.id)===myId)&&(!employee||String(u.id)===employee)).map(u=>{const rows=due.filter(i=>String(i.assigned_user_id)===String(u.id));const done=rows.filter(i=>i.completed_at).length;return <tr key={u.id}><td>{u.full_name}</td><td>{rows.length}</td><td>{done}</td><td>{rows.length-done}</td><td>{rows.length?Math.round(done/rows.length*100):0}%</td></tr>})}</tbody></table></div>}
         <h3>{detail==="pending"?"Not Done Tasks":detail==="completed"?"Completed Tasks":"Task Details"}</h3>
         <div className="check-table-wrap"><table><thead><tr><th>Due Date</th><th>Checklist</th><th>Task</th><th>Employee</th><th>Frequency</th><th>Status</th>{mode==="mine"&&<th>Action</th>}</tr></thead><tbody>{shown.map(i=><tr key={i.task_id+"-"+i.due_date}><td>{display(i.due_date)}</td><td>{i.checklist_name}</td><td>{i.title}</td><td>{i.employee_name}</td><td>{i.frequency}</td><td>{i.status}</td>{mode==="mine"&&<td>{!i.completed_at&&i.due_date<=today()&&<button disabled={busy} onClick={()=>run(async()=>{await request("complete",post({task_id:i.task_id,due_date:i.due_date}));await reloadItems();})}>Complete</button>}</td>}</tr>)}</tbody></table>{!shown.length&&<p>No checklist tasks found for this period.</p>}</div>
       </>}
