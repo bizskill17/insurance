@@ -25,9 +25,11 @@ export default function CallingPage({ mode, currentUser }) {
   const [settings,setSettings] = useState({ daily_target:30,rules:[] });
   const [form,setForm] = useState({ assigned_user_id:"",customer_id:"",customer_name:"",mobile:"",call_type:"New",scheduled_date:today() });
   const [editing,setEditing] = useState(null);
+  const [editingEntry,setEditingEntry] = useState(null);
+  const [formOpen,setFormOpen] = useState(false);
   const [result,setResult] = useState({status:"Connected",outcome:"",remarks:"",next_followup_date:""});
   const [search,setSearch] = useState("");
-  const [employee,setEmployee] = useState("");
+  const [employee,setEmployee] = useState(()=>String(currentUser?.id||""));
   const [error,setError] = useState("");
   const [notice,setNotice] = useState("");
   const [loading,setLoading] = useState(true);
@@ -42,7 +44,7 @@ export default function CallingPage({ mode, currentUser }) {
   };
   useEffect(()=>{let live=true;Promise.all([load(),api("/masters/customers?limit=500000")]).then(([,c])=>{if(live)setCustomers(c);}).catch(e=>{if(live)setError(e.message)}).finally(()=>{if(live)setLoading(false)});return ()=>{live=false};},[]);
   const submit = async fn => {setSaving(true);setError("");setNotice("");try{await fn();await load();setNotice("Saved successfully.");}catch(e){setError(e.message)}finally{setSaving(false)}};
-  const todayEntries = entries.filter(e=>e.scheduled_date===today() && String(e.assigned_user_id)===String(employee||currentUser?.id));
+  const todayEntries = entries.filter(e=>e.scheduled_date===today() && (!employee||String(e.assigned_user_id)===String(employee)));
   const todayDone = todayEntries.filter(e=>e.status!=="Pending").length;
   const target = Number(settings.daily_target)||30;
   const selectedRows = useMemo(()=>entries.filter(e=>(!employee||String(e.assigned_user_id)===employee)&&
@@ -59,6 +61,9 @@ export default function CallingPage({ mode, currentUser }) {
     return Math.max(...candidates);
   };
   const money = value => "₹"+Number(value||0).toLocaleString("en-IN",{maximumFractionDigits:2,minimumFractionDigits:2});
+  const resetForm = () => {setForm({assigned_user_id:String(currentUser?.id||""),customer_id:"",customer_name:"",mobile:"",call_type:"New",scheduled_date:today()});setEditingEntry(null);setFormOpen(false);};
+  const startEdit = entry => {setForm({assigned_user_id:String(entry.assigned_user_id),customer_id:String(entry.customer_id||""),customer_name:entry.customer_name,mobile:entry.mobile||"",call_type:entry.call_type,scheduled_date:entry.scheduled_date?.slice(0,10)||today()});setEditingEntry(entry);setFormOpen(true);};
+  const deleteEntry = entry => {if(!window.confirm(`Delete call for "${entry.customer_name}" on ${dateText(entry.scheduled_date)}? This cannot be undone.`))return;submit(()=>api("/calling/entries/"+entry.id,{method:"DELETE"}));};
   const saveSettings = () => submit(()=>api("/calling/settings",post({daily_target:target,rules:ruleValues})));
   const exportCsv = () => {
     const rows=[["Employee","Customer","Mobile","Call Type","Scheduled","Status","Outcome","Follow-up","Incentive"],...selectedRows.map(e=>[e.employee_name,e.customer_name,e.mobile,e.call_type,e.scheduled_date,e.status,e.outcome,e.next_followup_date,incentive(e)])];
@@ -82,22 +87,23 @@ export default function CallingPage({ mode, currentUser }) {
           <div style={{ display:"flex", justifyContent:"flex-start", marginTop:12, paddingTop:0, clear:"both" }}><button type="button" className="btn btn--primary" disabled={saving} onClick={saveSettings}>Save Settings</button></div>
         </>:<>
           <p>Daily target: <strong>{target}</strong> calls per user (new + follow-up). Today's completed calls for selected user: <strong>{todayDone}</strong>. Remaining: <strong>{Math.max(0,target-todayDone)}</strong>.</p>
-          {mode==="list"&&<form className="master-form" onSubmit={e=>{e.preventDefault();submit(async()=>{await api("/calling/entries",post(form));setForm(f=>({...f,customer_id:"",customer_name:"",mobile:""}))})}}>
+          {mode==="list"&&<div style={{marginBottom:12}}><button type="button" className="btn btn--primary" onClick={()=>{setEditingEntry(null);setForm({assigned_user_id:String(currentUser?.id||""),customer_id:"",customer_name:"",mobile:"",call_type:"New",scheduled_date:today()});setFormOpen(true);}}>+ Add Call</button></div>}
+          {mode==="list"&&formOpen&&<div className="master-modal" role="dialog" aria-modal="true"><div className="master-modal__backdrop" onClick={()=>!saving&&resetForm()}/><section className="master-card master-modal__panel" style={{padding:20}}><h3>{editingEntry?"Edit Call":"Add Call"}</h3><form className="master-form" onSubmit={e=>{e.preventDefault();submit(async()=>{await api(editingEntry?"/calling/entries/"+editingEntry.id:"/calling/entries",post(form,editingEntry?"PATCH":"POST"));resetForm();})}}>
             <div className="form-field"><label>Assigned User *</label><SearchableSelect value={form.assigned_user_id} onChange={e=>setForm(f=>({...f,assigned_user_id:e.target.value}))}><option value="">Select User</option>{users.map(u=><option key={u.id} value={u.id}>{u.full_name}</option>)}</SearchableSelect></div>
             <div className="form-field"><label>Customer Name *</label><SearchableSelect value={form.customer_id} onChange={e=>{const c=customers.find(x=>String(x.id)===e.target.value);setForm(f=>({...f,customer_id:e.target.value,customer_name:c?.full_name||"",mobile:c?.mobile||""}))}}><option value="">Select Customer</option>{[...customers].sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(c=><option key={c.id} value={c.id}>{c.full_name}</option>)}</SearchableSelect></div>
             <div className="form-field"><label>Mobile</label><input value={form.mobile} readOnly/></div>
             <div className="form-field"><label>Call Type</label><select value={form.call_type} onChange={e=>setForm(f=>({...f,call_type:e.target.value}))}><option>New</option><option>Follow-up</option></select></div>
             <div className="form-field"><label>Call Date</label><input type="date" required value={form.scheduled_date} onChange={e=>setForm(f=>({...f,scheduled_date:e.target.value}))}/></div>
-            <button disabled={saving||!form.customer_name||!form.assigned_user_id}>Add to Call List</button>
-          </form>}
+            <button disabled={saving||!form.customer_name||!form.assigned_user_id}>{editingEntry?"Save Changes":"Add to Call List"}</button><button type="button" disabled={saving} onClick={resetForm}>Cancel</button>
+          </form></section></div>}
           <div className="data-toolbar" style={{display:"flex",gap:8,flexWrap:"wrap",margin:"14px 0"}}>
             <input placeholder="Search calls..." value={search} onChange={e=>setSearch(e.target.value)}/>
             <select value={employee} onChange={e=>setEmployee(e.target.value)}><option value="">All Users</option>{users.map(u=><option key={u.id} value={u.id}>{u.full_name}</option>)}</select>
             <button type="button" onClick={exportCsv}>Export Excel (CSV)</button>
           </div>
-          {mode==="tracker"&&<p><strong>Completed Calls:</strong> {selectedRows.filter(e=>e.status!=="Pending").length} | <strong>Estimated Per-Call Incentive:</strong> {money(selectedRows.reduce((sum,e)=>sum+incentive(e),0))}</p>}
-          <div className="table-wrap"><table className="master-table"><thead><tr>{["Date","Employee","Customer","Mobile","Type","Status","Outcome","Follow-up","Incentive","Action"].map(x=><th key={x}>{x}</th>)}</tr></thead><tbody>{selectedRows.map(e=><tr key={e.id}><td>{dateText(e.scheduled_date)}</td><td>{e.employee_name}</td><td>{e.customer_name}</td><td>{e.mobile||"—"}</td><td>{e.call_type}</td><td>{e.status}</td><td>{e.outcome||"—"}</td><td>{dateText(e.next_followup_date)}</td><td>{money(incentive(e))}</td><td>{e.status==="Pending"?<button type="button" onClick={()=>{setEditing(e);setResult({status:"Connected",outcome:"",remarks:"",next_followup_date:""})}}>Record Call</button>:"Completed"}</td></tr>)}</tbody></table></div>
-          {editing&&<div className="master-modal" role="dialog" aria-modal="true"><div className="master-modal__backdrop" onClick={()=>setEditing(null)}/><section className="master-card master-modal__panel" style={{padding:20}}><h3>Record Call — {editing.customer_name}</h3><form className="master-form" onSubmit={e=>{e.preventDefault();submit(async()=>{await api("/calling/entries/"+editing.id,post(result,"PUT"));setEditing(null)})}}>
+          {mode==="tracker"&&<p><strong>Assigned Calls:</strong> {selectedRows.length} | <strong>Pending:</strong> {selectedRows.filter(e=>e.status==="Pending").length} | <strong>Completed:</strong> {selectedRows.filter(e=>e.status!=="Pending").length} | <strong>Estimated Incentive:</strong> {money(selectedRows.reduce((sum,e)=>sum+incentive(e),0))}</p>}
+          <div className="table-wrap"><table className="master-table"><thead><tr>{["Date","Employee","Customer","Mobile","Type","Status","Outcome","Follow-up","Incentive","Action"].map(x=><th key={x}>{x}</th>)}</tr></thead><tbody>{selectedRows.map(e=><tr key={e.id}><td>{dateText(e.scheduled_date)}</td><td>{e.employee_name}</td><td>{e.customer_name}</td><td>{e.mobile||"—"}</td><td>{e.call_type}</td><td>{e.status}</td><td>{e.outcome||"—"}</td><td>{dateText(e.next_followup_date)}</td><td>{money(incentive(e))}</td><td>{mode==="list"?<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{e.status==="Pending"&&<button type="button" onClick={()=>{setEditing(e);setResult({status:"Connected",outcome:"",remarks:"",next_followup_date:""})}}>Record Call</button>}<button type="button" onClick={()=>startEdit(e)}>Edit</button><button type="button" style={{color:"#b91c1c",borderColor:"#fca5a5"}} onClick={()=>deleteEntry(e)}>Delete</button></div>:"View Only"}</td></tr>)}</tbody></table></div>
+          {mode==="list"&&editing&&<div className="master-modal" role="dialog" aria-modal="true"><div className="master-modal__backdrop" onClick={()=>setEditing(null)}/><section className="master-card master-modal__panel" style={{padding:20}}><h3>Record Call — {editing.customer_name}</h3><form className="master-form" onSubmit={e=>{e.preventDefault();submit(async()=>{await api("/calling/entries/"+editing.id,post(result,"PUT"));setEditing(null)})}}>
             <div className="form-field"><label>Call Status</label><select value={result.status} onChange={e=>setResult(v=>({...v,status:e.target.value}))}>{["Connected","Not Answered","Busy","Switched Off","Wrong Number"].map(x=><option key={x}>{x}</option>)}</select></div>
             <div className="form-field"><label>Outcome</label><select value={result.outcome} onChange={e=>setResult(v=>({...v,outcome:e.target.value}))}>{["","Interested","Not Interested","Follow-up","Converted"].map(x=><option key={x}>{x}</option>)}</select></div>
             <div className="form-field"><label>Next Follow-up</label><input type="date" value={result.next_followup_date} onChange={e=>setResult(v=>({...v,next_followup_date:e.target.value}))}/></div>
