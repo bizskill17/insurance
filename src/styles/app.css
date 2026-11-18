@@ -3911,3 +3911,33 @@ button {
 .check-status-pill{display:inline-block;padding:4px 10px;border-radius:99px;background:#dcfce7;color:#166534;font-weight:700}
 .check-status-pill.is-inactive{background:#fee2e2;color:#991b1b}
 @media(max-width:700px){.check-page .check-group-button{min-width:0;flex:1 1 130px}.check-group-list{gap:8px}.check-group-details .check-table-wrap{overflow-x:auto}}
+
+
+/* Checklist Update History — compact, readable audit log */
+.check-history-intro{display:flex;align-items:center;gap:13px;margin:4px 0 16px}
+.check-history-intro strong{display:block;font-size:17px;color:#172033}
+.check-history-intro p{margin:3px 0 0;color:#475569;font-size:12px}
+.check-history-symbol{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;background:#e0e7ff;color:#244ad4;font-size:25px}
+.check-history-filters{display:grid;grid-template-columns:repeat(2,minmax(135px,1fr)) repeat(3,minmax(120px,1fr)) minmax(170px,1.4fr);gap:9px;align-items:end;background:#f8fafc;border:1px solid #e0e8f3;padding:12px;border-radius:12px;margin-bottom:18px}
+.check-history-filters label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#1e293b;min-width:0}
+.check-page .check-history-filters input,.check-page .check-history-filters select{width:100%;min-width:0;min-height:36px;padding:7px 9px;border:1px solid #c8d6ea;border-radius:7px;background:#fff;color:#172033;font-size:12px}
+.check-history-table-wrap{width:100%;overflow-x:auto;border:1px solid #d8e3f2;border-radius:10px}
+.check-page .check-history-table{width:100%;min-width:900px;border-collapse:collapse;font-size:12px}
+.check-page .check-history-table th{background:#00602e;color:#fff;text-align:left;padding:11px 10px;white-space:nowrap;font-weight:700}
+.check-page .check-history-table td{padding:11px 10px;border-bottom:1px solid #e3ebf6;vertical-align:middle;color:#172033}
+.check-page .check-history-table tbody tr:nth-child(even){background:#f5f8fd}
+.check-page .check-history-table tbody tr:last-child td{border-bottom:0}
+.check-history-date{white-space:nowrap}
+.check-history-checklist{display:inline-block;background:#dbeafe;color:#1e40af;border-radius:99px;padding:4px 9px;font-weight:700;white-space:nowrap}
+.check-history-pill{display:inline-block;border-radius:99px;padding:5px 9px;font-weight:700;white-space:nowrap;background:#e2e8f0;color:#334155}
+.check-history-pill--deleted{background:#fee2e2;color:#991b1b}
+.check-history-pill--completed{background:#dcfce7;color:#166534}
+.check-history-pill--created{background:#e9d5ff;color:#6b21a8}
+.check-history-pill--edited{background:#dbeafe;color:#1d4ed8}
+.check-history-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;flex-wrap:wrap;font-size:12px}
+.check-history-pagination{display:flex;align-items:center;gap:9px}
+.check-history-pagination button{border:1px solid #c8d6ea;background:#eff6ff;color:#1d4ed8;border-radius:7px;padding:8px 11px}
+.check-history-pagination button:disabled{opacity:.45;cursor:not-allowed}
+.check-history-page{display:grid;place-items:center;min-width:32px;height:32px;border-radius:8px;background:#2d57d7;color:#fff;font-weight:700}
+@media(max-width:1100px){.check-history-filters{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.check-history-filters{grid-template-columns:repeat(2,minmax(0,1fr));padding:9px}.check-history-filters label:last-child{grid-column:1/-1}.check-history-intro p{font-size:11px}}
