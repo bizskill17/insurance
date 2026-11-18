@@ -22,6 +22,11 @@ function handleChecklistRoutes(string $path, string $method): bool {
       INDEX idx_org_user (organization_id, assigned_user_id),
       INDEX idx_checklist (organization_id, checklist_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    // Add scheduling fields without changing existing task records.
+    $columns=$pdo->query("SHOW COLUMNS FROM employee_checklist_tasks")->fetchAll(PDO::FETCH_COLUMN);
+    foreach (['quarter_offset'=>'SMALLINT UNSIGNED NULL','annual_month'=>'TINYINT UNSIGNED NULL','sunday_action'=>"VARCHAR(12) NOT NULL DEFAULT 'skip'"] as $col=>$definition) {
+      if (!in_array($col,$columns,true)) $pdo->exec("ALTER TABLE employee_checklist_tasks ADD COLUMN ".$col." ".$definition);
+    }
     $pdo->exec("CREATE TABLE IF NOT EXISTS employee_checklist_completions (
       id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, organization_id BIGINT NOT NULL,
       task_id BIGINT UNSIGNED NOT NULL, due_date DATE NOT NULL,
@@ -66,8 +71,20 @@ function handleChecklistRoutes(string $path, string $method): bool {
         $q->execute([(int)$body['assigned_user_id'],$org]);
         if (!(int)$q->fetchColumn()) {\App\Response::json(['message'=>'Employee not found'],422);return true;}
         $date=new DateTimeImmutable($start);
-        $q=$pdo->prepare('INSERT INTO employee_checklist_tasks (organization_id,checklist_id,title,assigned_user_id,frequency,start_date,weekday_num,month_day,exclude_sundays) VALUES (?,?,?,?,?,?,?,?,?)');
-        $q->execute([$org,(int)$body['checklist_id'],$title,(int)$body['assigned_user_id'],$freq,$start,(int)$date->format('N'),(int)$date->format('j'),!empty($body['exclude_sundays'])?1:0]);
+        $weekday=(int)($body['weekday_num']??$date->format('N'));
+        $monthDay=(int)($body['month_day']??$date->format('j'));
+        $annualMonth=(int)($body['annual_month']??$date->format('n'));
+        $offset=(int)($body['quarter_offset']??0);
+        $sundayAction=(string)($body['sunday_action']??'skip');
+        if (($freq==='weekly'&&($weekday<1||$weekday>7)) ||
+            (in_array($freq,['monthly','annually'],true)&&($monthDay<1||$monthDay>31)) ||
+            ($freq==='annually'&&($annualMonth<1||$annualMonth>12||($annualMonth===2&&$monthDay>29)||in_array($annualMonth,[4,6,9,11],true)&&$monthDay>30)) ||
+            ($freq==='quarterly'&&($offset<0||$offset>365)) ||
+            !in_array($sundayAction,['skip','monday'],true)) {
+          \\App\\Response::json(['message'=>'Invalid recurrence scheduling details'],422);return true;
+        }
+        $q=$pdo->prepare('INSERT INTO employee_checklist_tasks (organization_id,checklist_id,title,assigned_user_id,frequency,start_date,weekday_num,month_day,exclude_sundays,quarter_offset,annual_month,sunday_action) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
+        $q->execute([$org,(int)$body['checklist_id'],$title,(int)$body['assigned_user_id'],$freq,$start,$weekday,$monthDay,!empty($body['exclude_sundays'])?1:0,$offset,$annualMonth,$sundayAction]);
       }
       if ($method === 'PUT') {
         $q=$pdo->prepare('UPDATE employee_checklist_tasks SET active=? WHERE id=? AND organization_id=?');
@@ -118,14 +135,43 @@ function checklistOccurs(array $t,string $day): bool {
   try {$d=new DateTimeImmutable($day);$start=new DateTimeImmutable($t['start_date']);}
   catch(Throwable $e){return false;}
   if ($d<$start || $d->format('Y-m-d')!==$day) return false;
-  if (!empty($t['exclude_sundays']) && $d->format('N')==='7') return false;
-  $months=((int)$d->format('Y')-(int)$start->format('Y'))*12+(int)$d->format('n')-(int)$start->format('n');
-  return match($t['frequency']){
-    'daily'=>true,
-    'weekly'=>$d->format('N')===(string)$t['weekday_num'],
-    'monthly'=>(int)$d->format('j')===(int)$t['month_day'],
-    'quarterly'=>$months%3===0 && (int)$d->format('j')===(int)$t['month_day'],
-    'annually'=>$d->format('m-d')===$start->format('m-d'),
-    default=>false
-  };
+  $freq=$t['frequency'];
+  $weekday=(int)$d->format('N');
+  $exclude=!empty($t['exclude_sundays']);
+  $action=$t['sunday_action']??'skip';
+  // Evaluate the scheduled day and, if requested, the preceding Sunday moved to Monday.
+  $candidates=[$d];
+  if ($exclude && $action==='monday' && $weekday===1) $candidates[]=$d->modify('-1 day');
+  foreach($candidates as $scheduled){
+    if ($scheduled<$start) continue;
+    if ($exclude && (int)$scheduled->format('N')===7 && $scheduled===$d) continue;
+    $year=(int)$scheduled->format('Y');$month=(int)$scheduled->format('n');
+    $dayNum=(int)$scheduled->format('j');
+    $monthLast=(int)$scheduled->format('t');
+    $months=($year-(int)$start->format('Y'))*12+$month-(int)$start->format('n');
+    $match=match($freq){
+      'daily'=>true,
+      'weekly'=>(int)$scheduled->format('N')===(int)$t['weekday_num'],
+      'monthly'=>$dayNum===min((int)$t['month_day'],$monthLast),
+      'quarterly'=>checklistQuarterDue($scheduled,$t),
+      'annually'=>$month===(int)($t['annual_month']??$start->format('n')) &&
+        $dayNum===min((int)$t['month_day'],$monthLast),
+      default=>false
+    };
+    if ($match) return true;
+  }
+  return false;
+}
+function checklistQuarterDue(DateTimeImmutable $day,array $task): bool {
+  if ($task['quarter_offset']===null) {
+    // Preserve the original quarterly schedule for previously created tasks.
+    $start=new DateTimeImmutable($task['start_date']);
+    $months=((int)$day->format('Y')-(int)$start->format('Y'))*12+(int)$day->format('n')-(int)$start->format('n');
+    return $months%3===0 && (int)$day->format('j')===(int)$task['month_day'];
+  }
+  $offset=(int)$task['quarter_offset'];
+  $candidate=$day->modify('-'.$offset.' days');
+  $month=(int)$candidate->format('n');
+  return in_array($month,[3,6,9,12],true) &&
+    $candidate->format('j')===$candidate->format('t');
 }
