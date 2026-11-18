@@ -32,11 +32,13 @@ export default function ChecklistPage({mode,currentUser}) {
   const myId=String(currentUser?.id||"");
   checklistActorId=myId;
   const [history,setHistory]=useState([]);
+  const [historyEmployee,setHistoryEmployee]=useState(""),[historyChecklist,setHistoryChecklist]=useState(""),[historyAction,setHistoryAction]=useState(""),[historyPage,setHistoryPage]=useState(1);
   const reload=async()=>{const [a,b,c]=await Promise.all([request("lists"),request("tasks"),request("users")]);setLists(a);setTasks(b);setUsers(c);};
   const reloadItems=async()=>setItems(await request("occurrences?from="+from+"&to="+to));
   useEffect(()=>{if(mode!=="history")reload().catch(e=>setError(e.message));},[mode]);
-  useEffect(()=>{if(mode==="history")request("history?from="+from+"&to="+to).then(setHistory).catch(e=>setError(e.message));},[mode,from,to]);
-  useEffect(()=>{if(mode!=="master")reloadItems().catch(e=>setError(e.message));},[from,to,mode]);
+  useEffect(()=>{if(mode==="history"){setError("");request("history?from="+from+"&to="+to).then(setHistory).catch(e=>setError(e.message));}},[mode,from,to]);
+  useEffect(()=>{setHistoryPage(1);},[search,historyEmployee,historyChecklist,historyAction,from,to]);
+  useEffect(()=>{if(mode!=="master"&&mode!=="history")reloadItems().catch(e=>setError(e.message));},[from,to,mode]);
   const run=async fn=>{setBusy(true);setError("");setMessage("");try{await fn();setMessage("Saved successfully.");}catch(e){setError(e.message);}finally{setBusy(false);}};
   const visible=useMemo(()=>items.filter(i=>(!["mine","scoreboard-mine"].includes(mode)||String(i.assigned_user_id)===myId)&&(!employee||String(i.assigned_user_id)===employee)),[items,mode,myId,employee]);
   const due=visible.filter(i=>i.due_date<=today()),completed=due.filter(i=>i.completed_at),pending=due.filter(i=>!i.completed_at);
@@ -57,7 +59,7 @@ export default function ChecklistPage({mode,currentUser}) {
     <section className="check-card">
       <h2>{mode==="history"?"Update History":mode==="master"?"Checklist Master":mode==="mine"?"My Checklist":mode==="tracker"?"Checklist Tracker":mode==="scoreboard-mine"?"My Scoreboard":"Team Scoreboard"}</h2>
       {error&&<p className="check-error" role="alert">{error}</p>}{message&&<p className="check-success">{message}</p>}
-      {mode==="history" ? (admin ? <><div className="check-master-toolbar"><div className="check-master-filters"><label>From <input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label>To <input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label><input placeholder="Search history..." aria-label="Search history" value={search} onChange={e=>setSearch(e.target.value)}/></div></div><div className="table-wrap"><table><thead><tr><th>Updated At</th><th>Checklist</th><th>Task</th><th>Employee</th><th>Action</th><th>Task Date</th><th>Updated By</th><th>Details</th></tr></thead><tbody>{history.filter(h=>!search||[h.checklist_name,h.task_title,h.employee_name,h.action,h.updated_by,h.details].some(v=>String(v||"").toLowerCase().includes(search.toLowerCase()))).map(h=><tr key={h.id}><td>{h.updated_at?display(h.updated_at.slice(0,10))+" "+h.updated_at.slice(11,16):"—"}</td><td>{h.checklist_name||"—"}</td><td>{h.task_title||"—"}</td><td>{h.employee_name||"—"}</td><td>{h.action}</td><td>{display(h.due_date)}</td><td>{h.updated_by||"Not recorded"}</td><td>{h.details||"—"}</td></tr>)}</tbody></table>{history.length===0&&<p>No recorded updates for this period. Earlier changes made before history tracking was enabled are not available.</p>}</div></> : <p>Access restricted to administrators.</p>) : mode==="master" ? (admin ? <>
+      {mode==="history" ? (admin ? <HistoryTable history={history} from={from} to={to} setFrom={setFrom} setTo={setTo} search={search} setSearch={setSearch} employee={historyEmployee} setEmployee={setHistoryEmployee} checklist={historyChecklist} setChecklist={setHistoryChecklist} action={historyAction} setAction={setHistoryAction} page={historyPage} setPage={setHistoryPage}/> : <p>Access restricted to administrators.</p>) : mode==="master" ? (admin ? <>
         <div className="check-master-toolbar">
           <div className="check-master-actions">
             <button type="button" onClick={()=>{setError("");setMessage("");setModal("checklist");}}>+ Add Checklist</button>
@@ -146,4 +148,36 @@ export default function ChecklistPage({mode,currentUser}) {
       </>}
     </section>
   </div>;
+}
+
+function HistoryTable({history,from,to,setFrom,setTo,search,setSearch,employee,setEmployee,checklist,setChecklist,action,setAction,page,setPage}) {
+  const employees=[...new Set(history.map(h=>h.employee_name).filter(Boolean))].sort();
+  const checklists=[...new Set(history.map(h=>h.checklist_name).filter(Boolean))].sort();
+  const actions=[...new Set(history.map(h=>h.action).filter(Boolean))].sort();
+  const filtered=history.filter(h=>(!employee||h.employee_name===employee)&&(!checklist||h.checklist_name===checklist)&&(!action||h.action===action)&&(!search||[h.checklist_name,h.task_title,h.employee_name,h.action,h.updated_by,h.details].some(v=>String(v||"").toLowerCase().includes(search.toLowerCase()))));
+  const pages=Math.max(1,Math.ceil(filtered.length/20));
+  const current=Math.min(page,pages);
+  const rows=filtered.slice((current-1)*20,current*20);
+  return <>
+    <div className="check-master-toolbar">
+      <div className="check-master-filters" style={{display:"flex",flexWrap:"wrap",gap:8,width:"100%"}}>
+        <label>From Date <input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label>
+        <label>To Date <input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label>
+        <select aria-label="Employee" value={employee} onChange={e=>setEmployee(e.target.value)}><option value="">All Employees</option>{employees.map(v=><option key={v}>{v}</option>)}</select>
+        <select aria-label="Checklist" value={checklist} onChange={e=>setChecklist(e.target.value)}><option value="">All Checklists</option>{checklists.map(v=><option key={v}>{v}</option>)}</select>
+        <select aria-label="Action" value={action} onChange={e=>setAction(e.target.value)}><option value="">All Actions</option>{actions.map(v=><option key={v}>{v}</option>)}</select>
+        <input placeholder="Search task or checklist..." aria-label="Search history" value={search} onChange={e=>setSearch(e.target.value)}/>
+      </div>
+    </div>
+    <div className="table-wrap"><table><thead><tr><th>#</th><th>Update Date & Time</th><th>Checklist</th><th>Task</th><th>Employee</th><th>Action</th><th>Details</th><th>Updated By</th></tr></thead><tbody>{rows.map((h,i)=><tr key={h.id}><td>{(current-1)*20+i+1}</td><td>{h.updated_at?display(h.updated_at.slice(0,10))+" "+h.updated_at.slice(11,16):"—"}</td><td>{h.checklist_name||"—"}</td><td>{h.task_title||"—"}</td><td>{h.employee_name||"—"}</td><td><span className="check-history-action">{h.action}</span></td><td>{h.details|| (h.due_date?"Task date: "+display(h.due_date):"—")}</td><td>{h.updated_by||"Not recorded"}</td></tr>)}</tbody></table></div>
+    {!filtered.length&&<p>No update records found for the selected period and filters. Earlier changes made before history tracking was enabled are not available.</p>}
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginTop:12,flexWrap:"wrap"}}>
+      <span>Showing {filtered.length?(current-1)*20+1:0}–{Math.min(current*20,filtered.length)} of {filtered.length} records</span>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <button type="button" disabled={current<=1} onClick={()=>setPage(current-1)}>Previous</button>
+        <span>Page {current} of {pages}</span>
+        <button type="button" disabled={current>=pages} onClick={()=>setPage(current+1)}>Next</button>
+      </div>
+    </div>
+  </>;
 }
