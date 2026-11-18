@@ -81,7 +81,7 @@ function handleChecklistRoutes(string $path, string $method): bool {
             ($freq==='annually'&&($annualMonth<1||$annualMonth>12||($annualMonth===2&&$monthDay>29)||in_array($annualMonth,[4,6,9,11],true)&&$monthDay>30)) ||
             ($freq==='quarterly'&&($offset<0||$offset>365)) ||
             !in_array($sundayAction,['skip','monday'],true)) {
-          \\App\\Response::json(['message'=>'Invalid recurrence scheduling details'],422);return true;
+          \App\Response::json(['message'=>'Invalid recurrence scheduling details'],422);return true;
         }
         $q=$pdo->prepare('INSERT INTO employee_checklist_tasks (organization_id,checklist_id,title,assigned_user_id,frequency,start_date,weekday_num,month_day,exclude_sundays,quarter_offset,annual_month,sunday_action) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
         $q->execute([$org,(int)$body['checklist_id'],$title,(int)$body['assigned_user_id'],$freq,$start,$weekday,$monthDay,!empty($body['exclude_sundays'])?1:0,$offset,$annualMonth,$sundayAction]);
@@ -95,10 +95,10 @@ function handleChecklistRoutes(string $path, string $method): bool {
     }
     if ($route === 'tasks' && $method === 'DELETE') {
       $id=(int)($body['id']??0);
-      if ($id<1) { \\App\\Response::json(['message'=>'Valid task ID is required'],422);return true; }
+      if ($id<1) { \App\Response::json(['message'=>'Valid task ID is required'],422);return true; }
       $q=$pdo->prepare('SELECT id FROM employee_checklist_tasks WHERE id=? AND organization_id=?');
       $q->execute([$id,$org]);
-      if (!$q->fetchColumn()) { \\App\\Response::json(['message'=>'Task not found'],404);return true; }
+      if (!$q->fetchColumn()) { \App\Response::json(['message'=>'Task not found'],404);return true; }
       $pdo->beginTransaction();
       try {
         $q=$pdo->prepare('DELETE FROM employee_checklist_completions WHERE task_id=? AND organization_id=?');
