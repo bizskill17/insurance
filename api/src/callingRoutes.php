@@ -72,19 +72,19 @@ function handleCallingRoutes(string $path, string $method): bool {
         $q->execute([$org,$user,!empty($body['customer_id'])?(int)$body['customer_id']:null,$name,(string)($body['mobile']??''),($body['call_type']??'New')==='Follow-up'?'Follow-up':'New',$date]);
         \App\Response::json(['data'=>['id'=>$pdo->lastInsertId()]],201);return true;
     }
-    if (preg_match('~^entries/(\\d+)$~',$route,$m) && $method === 'PATCH') {
+    if (preg_match('~^entries/(\d+)$~',$route,$m) && $method === 'PATCH') {
         $id=(int)$m[1];
         $user=(int)($body['assigned_user_id']??0);
         $name=trim((string)($body['customer_name']??''));
         $date=(string)($body['scheduled_date']??'');
-        if (!$user || !$name || !preg_match('/^\\d{4}-\\d{2}-\\d{2}$/',$date) || !checkdate((int)substr($date,5,2),(int)substr($date,8,2),(int)substr($date,0,4))) {
-            \\App\\Response::json(['message'=>'Employee, customer and valid date are required.'],422);return true;
+        if (!$user || !$name || !preg_match('/^\d{4}-\d{2}-\d{2}$/',$date) || !checkdate((int)substr($date,5,2),(int)substr($date,8,2),(int)substr($date,0,4))) {
+            \App\Response::json(['message'=>'Employee, customer and valid date are required.'],422);return true;
         }
         $q=$pdo->prepare('SELECT COUNT(*) FROM users WHERE id=? AND organization_id=?');$q->execute([$user,$org]);
-        if (!(int)$q->fetchColumn()) { \\App\\Response::json(['message'=>'Invalid employee.'],422);return true; }
+        if (!(int)$q->fetchColumn()) { \App\Response::json(['message'=>'Invalid employee.'],422);return true; }
         $q=$pdo->prepare('UPDATE calling_entries SET assigned_user_id=?,customer_id=?,customer_name=?,mobile=?,call_type=?,scheduled_date=? WHERE id=? AND organization_id=?');
         $q->execute([$user,!empty($body['customer_id'])?(int)$body['customer_id']:null,$name,(string)($body['mobile']??''),($body['call_type']??'New')==='Follow-up'?'Follow-up':'New',$date,$id,$org]);
-        \\App\\Response::json(['status'=>'ok']);return true;
+        \App\Response::json(['status'=>'ok']);return true;
     }
     if (preg_match('~^entries/(\\d+)$~',$route,$m) && $method === 'DELETE') {
         $q=$pdo->prepare('DELETE FROM calling_entries WHERE id=? AND organization_id=?');
