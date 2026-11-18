@@ -32,6 +32,7 @@ export default function ChecklistPage({mode,currentUser}) {
   const myId=String(currentUser?.id||"");
   checklistActorId=myId;
   const [history,setHistory]=useState([]);
+  const [historyDeleteId,setHistoryDeleteId]=useState(null);
   const [historyEmployee,setHistoryEmployee]=useState(""),[historyChecklist,setHistoryChecklist]=useState(""),[historyAction,setHistoryAction]=useState(""),[historyPage,setHistoryPage]=useState(1);
   const reload=async()=>{const [a,b,c]=await Promise.all([request("lists"),request("tasks"),request("users")]);setLists(a);setTasks(b);setUsers(c);};
   const reloadItems=async()=>setItems(await request("occurrences?from="+from+"&to="+to));
@@ -59,7 +60,14 @@ export default function ChecklistPage({mode,currentUser}) {
     <section className="check-card">
       <h2>{mode==="history"?"Update History":mode==="master"?"Checklist Master":mode==="mine"?"My Checklist":mode==="tracker"?"Checklist Tracker":mode==="scoreboard-mine"?"My Scoreboard":"Team Scoreboard"}</h2>
       {error&&<p className="check-error" role="alert">{error}</p>}{message&&<p className="check-success">{message}</p>}
-      {mode==="history" ? (admin ? <HistoryTable history={history} from={from} to={to} setFrom={setFrom} setTo={setTo} search={search} setSearch={setSearch} employee={historyEmployee} setEmployee={setHistoryEmployee} checklist={historyChecklist} setChecklist={setHistoryChecklist} action={historyAction} setAction={setHistoryAction} page={historyPage} setPage={setHistoryPage}/> : <p>Access restricted to administrators.</p>) : mode==="master" ? (admin ? <>
+      {mode==="history"&&historyDeleteId!==null&&<div className="check-modal-overlay" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setHistoryDeleteId(null);}}>
+        <section className="check-modal" role="dialog" aria-modal="true" aria-label="Delete update history record">
+          <div className="check-modal-header"><h3>Delete History Record</h3><button type="button" disabled={busy} onClick={()=>setHistoryDeleteId(null)}>×</button></div>
+          <p>Delete this update history record permanently? The original checklist task and its completion status will remain unchanged.</p>
+          <div className="check-modal-footer"><button type="button" disabled={busy} onClick={()=>setHistoryDeleteId(null)}>Cancel</button><button type="button" disabled={busy} className="check-history-delete" onClick={()=>run(async()=>{await request("history",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:historyDeleteId})});setHistory(current=>current.filter(h=>String(h.id)!==String(historyDeleteId)));setHistoryDeleteId(null);})}>Delete Record</button></div>
+        </section>
+      </div>}
+      {mode==="history" ? (admin ? <HistoryTable history={history} from={from} to={to} setFrom={setFrom} setTo={setTo} search={search} setSearch={setSearch} employee={historyEmployee} setEmployee={setHistoryEmployee} checklist={historyChecklist} setChecklist={setHistoryChecklist} action={historyAction} setAction={setHistoryAction} page={historyPage} setPage={setHistoryPage} onDelete={id=>setHistoryDeleteId(id)}/> : <p>Access restricted to administrators.</p>) : mode==="master" ? (admin ? <>
         <div className="check-master-toolbar">
           <div className="check-master-actions">
             <button type="button" onClick={()=>{setError("");setMessage("");setModal("checklist");}}>+ Add Checklist</button>
@@ -150,7 +158,7 @@ export default function ChecklistPage({mode,currentUser}) {
   </div>;
 }
 
-function HistoryTable({history,from,to,setFrom,setTo,search,setSearch,employee,setEmployee,checklist,setChecklist,action,setAction,page,setPage}) {
+function HistoryTable({history,from,to,setFrom,setTo,search,setSearch,employee,setEmployee,checklist,setChecklist,action,setAction,page,setPage,onDelete}) {
   const employees=[...new Set(history.map(h=>h.employee_name).filter(Boolean))].sort();
   const checklists=[...new Set(history.map(h=>h.checklist_name).filter(Boolean))].sort();
   const actions=[...new Set(history.map(h=>h.action).filter(Boolean))].sort();
@@ -169,7 +177,7 @@ function HistoryTable({history,from,to,setFrom,setTo,search,setSearch,employee,s
       <label>Action<select aria-label="Action" value={action} onChange={e=>setAction(e.target.value)}><option value="">All Actions</option>{actions.map(v=><option key={v}>{v}</option>)}</select></label>
       <label>Search<input placeholder="Search task or checklist..." aria-label="Search history" value={search} onChange={e=>setSearch(e.target.value)}/></label>
     </div>
-    <div className="check-history-table-wrap"><table className="check-history-table"><thead><tr><th>#</th><th>Update Date &amp; Time</th><th>Checklist</th><th>Task</th><th>Employee</th><th>Action</th><th>Details</th><th>Updated By</th></tr></thead><tbody>{rows.map((h,i)=><tr key={h.id}><td>{(current-1)*20+i+1}</td><td className="check-history-date">{h.updated_at?display(h.updated_at.slice(0,10))+" "+h.updated_at.slice(11,16):"—"}</td><td><span className="check-history-checklist">{h.checklist_name||"—"}</span></td><td>{h.task_title||"—"}</td><td>{h.employee_name||"—"}</td><td><span className={"check-history-pill check-history-pill--"+actionTone(h.action)}>{h.action}</span></td><td>{h.details||(h.due_date?"Task date: "+display(h.due_date):"—")}</td><td>{h.updated_by||"Not recorded"}</td></tr>)}</tbody></table></div>
+    <div className="check-history-table-wrap"><table className="check-history-table"><thead><tr><th>#</th><th>Update Date &amp; Time</th><th>Checklist</th><th>Task</th><th>Employee</th><th>Action</th><th>Details</th><th>Updated By</th><th>Action</th></tr></thead><tbody>{rows.map((h,i)=><tr key={h.id}><td>{(current-1)*20+i+1}</td><td className="check-history-date">{h.updated_at?display(h.updated_at.slice(0,10))+" "+h.updated_at.slice(11,16):"—"}</td><td><span className="check-history-checklist">{h.checklist_name||"—"}</span></td><td>{h.task_title||"—"}</td><td>{h.employee_name||"—"}</td><td><span className={"check-history-pill check-history-pill--"+actionTone(h.action)}>{h.action}</span></td><td>{h.details||(h.due_date?"Task date: "+display(h.due_date):"—")}</td><td>{h.updated_by||"Not recorded"}</td><td><button type="button" className="check-history-delete" onClick={()=>onDelete(h.id)}>Delete</button></td></tr>)}</tbody></table></div>
     {!filtered.length&&<p>No update records found for the selected period and filters. Earlier changes made before history tracking was enabled are not available.</p>}
     <div className="check-history-footer">
       <span>Showing {filtered.length?(current-1)*20+1:0}–{Math.min(current*20,filtered.length)} of {filtered.length} records</span>
