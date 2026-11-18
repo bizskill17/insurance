@@ -77,7 +77,7 @@ export default function ChecklistPage({mode,currentUser}) {
           <div className="check-master-filters">
             <input aria-label="Search checklists and tasks" placeholder="Search checklist or task..." value={search} onChange={e=>setSearch(e.target.value)}/>
             <select aria-label="Filter employee" value={filterEmployee} onChange={e=>setFilterEmployee(e.target.value)}><option value="">All Employees</option>{users.map(u=><option key={u.id} value={u.id}>{u.full_name}</option>)}</select>
-            <select aria-label="Filter frequency" value={filterFrequency} onChange={e=>setFilterFrequency(e.target.value)}><option value="">All Frequencies</option>{frequencies.map(f=><option key={f} value={f}>{f[0].toUpperCase()+f.slice(1)}</option>)}</select>
+            
           </div>
         </div>
         <div className="check-group-list" aria-label="Checklist groups">
