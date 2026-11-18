@@ -57,16 +57,16 @@ export default function ChecklistPage({mode,currentUser}) {
             const rows=filteredTasks.filter(t=>String(t.checklist_id)===String(l.id));
             const expanded=openChecklist===String(l.id);
             return <button type="button" key={l.id} className={"check-group-button check-group-button--"+(index%8)+(expanded?" is-selected":"")} aria-expanded={expanded} onClick={()=>setOpenChecklist(expanded?"":String(l.id))}>
-              <span>{l.title}</span><span className="check-group-count">{rows.length}</span><span aria-hidden="true">{expanded?"⌃":"⌄"}</span>
+              <span aria-hidden="true">☷</span><span>{l.title}</span><span className="check-group-count">{rows.length}</span><span aria-hidden="true">{expanded?"⌃":"⌄"}</span>
             </button>;
           })}
         </div>
         {visibleLists.length===0&&<p>No matching checklists.</p>}
         {visibleLists.filter(l=>String(l.id)===openChecklist).map(l=>{
           const rows=filteredTasks.filter(t=>String(t.checklist_id)===String(l.id));
-          return <div key={l.id} className="check-group-details">
-            <div className="check-group-heading"><h3>{l.title} — Tasks</h3><span>{rows.length} task{rows.length===1?"":"s"}</span></div>
-            <div className="check-table-wrap"><table><thead><tr><th>Task</th><th>Employee</th><th>Frequency</th><th>Effective From</th><th>Status</th><th>Action</th></tr></thead><tbody>{rows.map(t=><tr key={t.id}><td>{t.title}</td><td>{t.employee_name}</td><td>{t.frequency}</td><td>{display(t.start_date)}</td><td>{Number(t.active)&&Number(t.checklist_active)?"Active":"Inactive"}</td><td><button type="button" disabled={busy} onClick={()=>run(async()=>{await request("tasks",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:t.id,active:!Number(t.active)})});await reload();})}>{Number(t.active)?"Deactivate":"Activate"}</button></td></tr>)}</tbody></table>{rows.length===0&&<p>No matching tasks in this checklist.</p>}</div>
+          return <div key={l.id} className={"check-group-details check-group-details--"+(visibleLists.findIndex(x=>String(x.id)===String(l.id))%8)}>
+            <div className="check-group-heading"><h3>☷ &nbsp;{l.title} — Tasks</h3><span>{rows.length} task{rows.length===1?"":"s"}</span></div>
+            <div className="check-table-wrap"><table><thead><tr><th>#</th><th>Task</th><th>Employee</th><th>Frequency</th><th>Effective From</th><th>Status</th><th>Action</th></tr></thead><tbody>{rows.map((t,i)=><tr key={t.id}><td>{i+1}</td><td>{t.title}</td><td>{t.employee_name}</td><td><span className="check-frequency-pill">{t.frequency}</span></td><td>{display(t.start_date)}</td><td><span className={"check-status-pill"+(Number(t.active)&&Number(t.checklist_active)?"":" is-inactive")}>{Number(t.active)&&Number(t.checklist_active)?"Active":"Inactive"}</span></td><td><button type="button" disabled={busy} onClick={()=>run(async()=>{await request("tasks",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:t.id,active:!Number(t.active)})});await reload();})}>{Number(t.active)?"Deactivate":"Activate"}</button></td></tr>)}</tbody></table>{rows.length===0&&<p>No matching tasks in this checklist.</p>}</div>
           </div>;
         })}
         {modal&&<div className="check-modal-overlay" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setModal("");}}>
