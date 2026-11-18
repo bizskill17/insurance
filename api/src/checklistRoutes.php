@@ -82,6 +82,15 @@ function handleChecklistRoutes(string $path, string $method): bool {
       $q=$pdo->prepare('SELECT * FROM employee_checklist_update_history WHERE organization_id=? AND DATE(updated_at) BETWEEN ? AND ? ORDER BY updated_at DESC,id DESC LIMIT 5000');
       $q->execute([$org,$from,$to]);$json($q->fetchAll(PDO::FETCH_ASSOC));return true;
     }
+    if ($route === 'history' && $method === 'DELETE') {
+      $id=(int)($body['id']??0);
+      if ($id<1) { \App\Response::json(['message'=>'Valid history record ID is required'],422);return true; }
+      if ($actorId<1 || !$actorName) { \App\Response::json(['message'=>'A valid logged-in user is required'],403);return true; }
+      $q=$pdo->prepare('DELETE FROM employee_checklist_update_history WHERE id=? AND organization_id=?');
+      $q->execute([$id,$org]);
+      if (!$q->rowCount()) { \App\Response::json(['message'=>'History record not found'],404);return true; }
+      $json(['deleted'=>true]);return true;
+    }
     if ($route === 'users' && $method === 'GET') {
       $q=$pdo->prepare('SELECT id,full_name FROM users WHERE organization_id=? ORDER BY full_name');
       $q->execute([$org]);$json($q->fetchAll(PDO::FETCH_ASSOC));return true;
