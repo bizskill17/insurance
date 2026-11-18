@@ -60,6 +60,33 @@ export default function Sidebar({
   const location = useLocation();
   const visibleMenuSections = providedMenuSections || menuSections;
   const [counts, setCounts] = useState({});
+  const [resolvedUser, setResolvedUser] = useState(null);
+  const loginId = String(currentUser?.login_id || currentUser?.username || "").trim();
+  const sessionName = String(currentUser?.full_name || currentUser?.user_name || currentUser?.name || "").trim();
+  const isOrganizationName = sessionName && sessionName.toLowerCase() === String(currentUser?.organization_name || "").trim().toLowerCase();
+  const displayedName = resolvedUser?.full_name || (!isOrganizationName && sessionName) || loginId || "User";
+  const displayedRole = resolvedUser?.role_name || currentUser?.role_name || (currentUser?.can_manage_organizations ? "Admin" : "User");
+
+  useEffect(() => {
+    let active = true;
+    setResolvedUser(null);
+    if (!currentUser?.organization_id || (!loginId && !currentUser?.id)) return () => { active = false; };
+    fetch(`${API_BASE}/masters/users?limit=500000`)
+      .then(async response => {
+        if (!response.ok) return null;
+        const json = await response.json();
+        return Array.isArray(json.data) ? json.data : [];
+      })
+      .then(users => {
+        if (!active || !users) return;
+        const matched = users.find(user => loginId && String(user.login_id || "").trim().toLowerCase() === loginId.toLowerCase())
+          || users.find(user => currentUser?.id && Number(user.id) === Number(currentUser.id));
+        if (matched) setResolvedUser({ full_name: matched.full_name, role_name: matched.role_name });
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [currentUser?.organization_id, currentUser?.id, loginId]);
+
   const [appBrandName, setAppBrandName] = useState(currentUser?.organization_name || "Policy Management System");
 
   useEffect(() => {
@@ -230,7 +257,7 @@ export default function Sidebar({
         </nav>
 
         <div className="sidebar-footer">
-          <div className="user-line user-line--compact"><span className="user-line__avatar" aria-hidden="true">{(currentUser?.full_name || currentUser?.login_id || "U").trim().charAt(0).toUpperCase()}</span><span className="user-line__details"><strong>{currentUser?.full_name || currentUser?.login_id || "User"}</strong><span className="user-line__role">{currentUser?.role_name || (currentUser?.can_manage_organizations ? "Admin" : "User")}</span></span></div>
+          <div className="user-line user-line--compact"><span className="user-line__avatar" aria-hidden="true">{displayedName.charAt(0).toUpperCase()}</span><span className="user-line__details"><strong>{displayedName}</strong><span className="user-line__role">{displayedRole}</span></span></div>
           <button className="logout-button" type="button" onClick={onLogout}>
             <span className="menu-icon">
               <svg viewBox="0 0 24 24" aria-hidden="true">
