@@ -73,7 +73,7 @@ function buildRoutes(items, currentUser) {
         ) : item.section === "Checklist" ? (
           <ChecklistPage mode={item.path.split("/").pop()} currentUser={currentUser} />
         ) : item.section === "Employee Scoreboard" ? (
-          <ChecklistPage mode={item.path.endsWith("/mine")?"mine":"scoreboard"} currentUser={currentUser} />
+          <ChecklistPage mode={item.path.endsWith("/mine")?"scoreboard-mine":"scoreboard"} currentUser={currentUser} />
         ) : item.section === "Calling" ? (
           <CallingPage mode={item.path.split("/").pop()} currentUser={currentUser} />
         ) : item.section === "Claim" ? (
