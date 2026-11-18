@@ -53,10 +53,10 @@ export default function ChecklistPage({mode,currentUser}) {
           </div>
         </div>
         <div className="check-group-list" aria-label="Checklist groups">
-          {visibleLists.map(l=>{
+          {visibleLists.map((l,index)=>{
             const rows=filteredTasks.filter(t=>String(t.checklist_id)===String(l.id));
             const expanded=openChecklist===String(l.id);
-            return <button type="button" key={l.id} className={"check-group-button"+(expanded?" is-selected":"")} aria-expanded={expanded} onClick={()=>setOpenChecklist(expanded?"":String(l.id))}>
+            return <button type="button" key={l.id} className={"check-group-button check-group-button--"+(index%8)+(expanded?" is-selected":"")} aria-expanded={expanded} onClick={()=>setOpenChecklist(expanded?"":String(l.id))}>
               <span>{l.title}</span><span className="check-group-count">{rows.length}</span><span aria-hidden="true">{expanded?"⌃":"⌄"}</span>
             </button>;
           })}
