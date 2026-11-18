@@ -4000,4 +4000,11 @@ button {
 .check-calendar-hover-row:last-child{border-bottom:0}
 .check-calendar-hover-row small{display:block;color:#475569;font-size:11px;margin-top:3px}
 @media(hover:hover){.check-calendar-grid>button:hover .check-calendar-hover{display:block}}
+/* Keep checklist hover details inside the calendar at edge columns. */
+.check-calendar-grid>button:nth-child(7n + 1) .check-calendar-hover,
+.check-calendar-grid>button:nth-child(7n + 2) .check-calendar-hover{left:0;right:auto;transform:none}
+.check-calendar-grid>button:nth-child(7n + 6) .check-calendar-hover,
+.check-calendar-grid>button:nth-child(7n) .check-calendar-hover{left:auto;right:0;transform:none}
+/* Early weeks open downward to avoid the fixed page header. */
+.check-calendar-grid>button:nth-child(-n + 21) .check-calendar-hover{bottom:auto;top:calc(100% + 10px)}
 @media(max-width:700px){.check-calendar-hover{display:none!important}}
