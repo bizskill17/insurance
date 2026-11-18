@@ -104,14 +104,14 @@ function handleChecklistRoutes(string $path, string $method): bool {
           || (in_array($freq,['monthly','annually'],true)&&($monthDay<1||$monthDay>31))
           || ($freq==='annually'&&($annualMonth<1||$annualMonth>12||($annualMonth===2&&$monthDay>29)||(in_array($annualMonth,[4,6,9,11],true)&&$monthDay>30)))
           || ($freq==='quarterly'&&($offset<0||$offset>365)) || !in_array($sundayAction,['skip','monday'],true)) {
-          \\App\\Response::json(['message'=>'Invalid checklist task details'],422);return true;
+          \App\Response::json(['message'=>'Invalid checklist task details'],422);return true;
         }
         $q=$pdo->prepare('SELECT COUNT(*) FROM employee_checklist_tasks WHERE id=? AND organization_id=?');
-        $q->execute([$id,$org]);if (!(int)$q->fetchColumn()) {\\App\\Response::json(['message'=>'Task not found'],404);return true;}
+        $q->execute([$id,$org]);if (!(int)$q->fetchColumn()) {\App\Response::json(['message'=>'Task not found'],404);return true;}
         $q=$pdo->prepare('SELECT COUNT(*) FROM employee_checklists WHERE id=? AND organization_id=? AND active=1');
-        $q->execute([$list,$org]);if (!(int)$q->fetchColumn()) {\\App\\Response::json(['message'=>'Checklist not found'],422);return true;}
+        $q->execute([$list,$org]);if (!(int)$q->fetchColumn()) {\App\Response::json(['message'=>'Checklist not found'],422);return true;}
         $q=$pdo->prepare('SELECT COUNT(*) FROM users WHERE id=? AND organization_id=?');
-        $q->execute([$user,$org]);if (!(int)$q->fetchColumn()) {\\App\\Response::json(['message'=>'Employee not found'],422);return true;}
+        $q->execute([$user,$org]);if (!(int)$q->fetchColumn()) {\App\Response::json(['message'=>'Employee not found'],422);return true;}
         $q=$pdo->prepare('UPDATE employee_checklist_tasks SET checklist_id=?,title=?,assigned_user_id=?,frequency=?,start_date=?,weekday_num=?,month_day=?,exclude_sundays=?,quarter_offset=?,annual_month=?,sunday_action=? WHERE id=? AND organization_id=?');
         $q->execute([$list,$title,$user,$freq,$start,$weekday,$monthDay,!empty($body['exclude_sundays'])?1:0,$offset,$annualMonth,$sundayAction,$id,$org]);
         $json(['updated'=>true]);return true;
