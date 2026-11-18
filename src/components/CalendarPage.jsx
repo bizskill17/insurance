@@ -4,7 +4,7 @@ import {API_BASE} from "../config/api";
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 const dateOnly=v=>typeof v==="string"?v.slice(0,10):"";
 const sources=[
-  {name:"Policy Expiry",url:"/policies?limit=50000",date:["expiry_date","policy_expiry_date","end_date","expiry"],title:["policy_number","customer_name","full_name"],path:"/policies/all"},
+  {name:"Policy Expiry",url:"/policies?limit=50000",date:["risk_end_date","expiry_date","policy_expiry_date","end_date","expiry"],title:["policy_number","customer_name","full_name"],path:"/policies/all"},
   {name:"Task",url:"/tasks?view=all",date:["due_date","task_due_date"],title:["description","task_name","title"],path:"/tasks/all"},
   {name:"Claim",url:"/masters/claims?limit=50000",date:["follow_up_date","due_date","next_followup_date"],title:["claim_number","customer_name"],path:"/claims/master"},
   {name:"Follow-up Call",url:"/calling/entries",date:["next_followup_date","scheduled_date"],title:["customer_name"],path:"/calling/list"}
