@@ -230,7 +230,7 @@ export default function Sidebar({
         </nav>
 
         <div className="sidebar-footer">
-          <div className="user-line user-line--compact"><span className="user-line__avatar" aria-hidden="true">B</span><span className="user-line__details"><strong>BizSkill</strong><span className="user-line__role">Admin</span></span></div>
+          <div className="user-line user-line--compact"><span className="user-line__avatar" aria-hidden="true">{(currentUser?.full_name || currentUser?.login_id || "U").trim().charAt(0).toUpperCase()}</span><span className="user-line__details"><strong>{currentUser?.full_name || currentUser?.login_id || "User"}</strong><span className="user-line__role">{currentUser?.role_name || (currentUser?.can_manage_organizations ? "Admin" : "User")}</span></span></div>
           <button className="logout-button" type="button" onClick={onLogout}>
             <span className="menu-icon">
               <svg viewBox="0 0 24 24" aria-hidden="true">
