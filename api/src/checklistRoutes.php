@@ -25,7 +25,16 @@ function handleChecklistRoutes(string $path, string $method): bool {
     // Add scheduling fields without changing existing task records.
     $columns=$pdo->query("SHOW COLUMNS FROM employee_checklist_tasks")->fetchAll(PDO::FETCH_COLUMN);
     foreach (['quarter_offset'=>'SMALLINT UNSIGNED NULL','annual_month'=>'TINYINT UNSIGNED NULL','sunday_action'=>"VARCHAR(12) NOT NULL DEFAULT 'skip'",'deleted_at'=>'DATETIME NULL'] as $col=>$definition) {
-      if (!in_array($col,$columns,true)) $pdo->exec("ALTER TABLE employee_checklist_tasks ADD COLUMN ".$col." ".$definition);
+      if (!in_array($col,$columns,true)) {
+        try {
+          $pdo->exec("ALTER TABLE employee_checklist_tasks ADD COLUMN ".$col." ".$definition);
+        } catch (\PDOException $e) {
+          // Concurrent checklist requests can both see a missing column.
+          // Ignore only duplicate-column errors; surface all other failures.
+          $code=$e->errorInfo[1]??null;
+          if ((int)$code!==1060) throw $e;
+        }
+      }
     }
     $pdo->exec("CREATE TABLE IF NOT EXISTS employee_checklist_completions (
       id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, organization_id BIGINT NOT NULL,
