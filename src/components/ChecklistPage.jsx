@@ -28,6 +28,7 @@ export default function ChecklistPage({mode,currentUser}) {
   const [editingTaskId,setEditingTaskId]=useState(null); const [modal,setModal]=useState(""),[search,setSearch]=useState(""),[filterEmployee,setFilterEmployee]=useState(""),[filterFrequency,setFilterFrequency]=useState("");
   const [openChecklist,setOpenChecklist]=useState("");
   const [taskToDelete,setTaskToDelete]=useState(null);
+  const [listToDelete,setListToDelete]=useState(null);
   const admin=Boolean(currentUser?.can_manage_organizations||(currentUser?.views||[]).includes("/masters/users"));
   const myId=String(currentUser?.id||"");
   checklistActorId=myId;
@@ -83,9 +84,10 @@ export default function ChecklistPage({mode,currentUser}) {
           {visibleLists.map((l,index)=>{
             const rows=filteredTasks.filter(t=>String(t.checklist_id)===String(l.id));
             const expanded=openChecklist===String(l.id);
-            return <button type="button" key={l.id} className={"check-group-button check-group-button--"+(index%8)+(expanded?" is-selected":"")} aria-expanded={expanded} onClick={()=>setOpenChecklist(expanded?"":String(l.id))}>
+            const hasTasks=tasks.some(t=>String(t.checklist_id)===String(l.id));
+            return <div key={l.id} className="check-group-entry"><button type="button" className={"check-group-button check-group-button--"+(index%8)+(expanded?" is-selected":"")} aria-expanded={expanded} onClick={()=>setOpenChecklist(expanded?"":String(l.id))}>
               <span aria-hidden="true">☷</span><span>{l.title}</span><span className="check-group-count">{rows.length}</span>
-            </button>;
+            </button>{!hasTasks&&<button type="button" className="check-group-delete" disabled={busy} title={"Delete "+l.title} aria-label={"Delete checklist "+l.title} onClick={()=>{setListToDelete(l);setError("");}}>Delete</button>}</div>;
           })}
         </div>
         {visibleLists.length===0&&<p>No matching checklists.</p>}
@@ -96,6 +98,13 @@ export default function ChecklistPage({mode,currentUser}) {
             <div className="check-table-wrap"><table><thead><tr><th>#</th><th>Task</th><th>Employee</th><th>Frequency</th><th>Effective From</th><th>Status</th><th>Action</th></tr></thead><tbody>{rows.map((t,i)=><tr key={t.id}><td>{i+1}</td><td>{t.title}</td><td>{t.employee_name}</td><td><span className="check-frequency-pill">{t.frequency}</span></td><td>{display(t.start_date)}</td><td><span className={"check-status-pill"+(Number(t.active)&&Number(t.checklist_active)?"":" is-inactive")}>{Number(t.active)&&Number(t.checklist_active)?"Active":"Inactive"}</span></td><td><div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><button type="button" disabled={busy} onClick={()=>openTaskEdit(t)}>Edit</button><button type="button" disabled={busy} onClick={()=>run(async()=>{await request("tasks",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:t.id,active:!Number(t.active)})});await reload();})}>{Number(t.active)?"Deactivate":"Activate"}</button><button type="button" disabled={busy} style={{color:"#c81919",border:"1px solid #ef4444",background:"#fff5f5"}} onClick={()=>{setTaskToDelete(t);setModal("delete");setError("");}}>Delete</button></div></td></tr>)}</tbody></table>{rows.length===0&&<p>No matching tasks in this checklist.</p>}</div>
           </div>;
         })}
+        {listToDelete&&<div className="check-modal-overlay" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setListToDelete(null);}}>
+          <section className="check-modal" role="dialog" aria-modal="true" aria-label="Delete checklist">
+            <div className="check-modal-header"><h3>Delete Checklist</h3><button type="button" disabled={busy} onClick={()=>setListToDelete(null)}>×</button></div>
+            <p>Delete checklist <strong>{listToDelete.title}</strong>? This is permanent. Checklist update history will be retained.</p>
+            <div className="check-modal-footer"><button type="button" disabled={busy} onClick={()=>setListToDelete(null)}>Cancel</button><button type="button" disabled={busy} className="check-history-delete" onClick={()=>run(async()=>{await request("lists",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:listToDelete.id})});if(openChecklist===String(listToDelete.id))setOpenChecklist("");setListToDelete(null);await reload();})}>Delete Checklist</button></div>
+          </section>
+        </div>}
         {modal==="delete"&&taskToDelete&&<div className="check-modal-overlay" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy){setModal("");setTaskToDelete(null);}}}>
           <section className="check-modal" role="dialog" aria-modal="true" aria-label="Delete checklist task">
             <div className="check-modal-header"><h3>Delete Task</h3><button type="button" disabled={busy} onClick={()=>{setModal("");setTaskToDelete(null);}}>×</button></div>
