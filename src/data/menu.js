@@ -151,6 +151,32 @@ export const menuSections = [
     ]
   },
   {
+    label: "Calendar",
+    path: "/calendar",
+    standalone: true,
+    icon: "tasks",
+    items: [{ label: "Calendar", path: "/calendar" }]
+  },
+  {
+    label: "Checklist",
+    path: "/checklists",
+    icon: "tasks",
+    items: [
+      { label: "Checklist Master", path: "/checklists/master" },
+      { label: "My Checklist", path: "/checklists/mine" },
+      { label: "Checklist Tracker", path: "/checklists/tracker" }
+    ]
+  },
+  {
+    label: "Employee Scoreboard",
+    path: "/scoreboard",
+    icon: "reports",
+    items: [
+      { label: "My Scoreboard", path: "/scoreboard/mine" },
+      { label: "Team Scoreboard", path: "/scoreboard/team" }
+    ]
+  },
+  {
     label: "Calling",
     path: "/calling",
     icon: "calling",
