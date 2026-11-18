@@ -3944,3 +3944,8 @@ button {
 
 .check-page .check-history-delete{color:#c81919;border:1px solid #ef4444;background:#fff5f5;border-radius:7px;padding:7px 12px;font-weight:600;white-space:nowrap}
 .check-page .check-history-delete:hover{background:#fee2e2}
+
+.check-group-entry{display:inline-flex;align-items:center;gap:5px}
+.check-group-delete{border:1px solid #fca5a5;border-radius:8px;background:#fff1f2;color:#b91c1c;font-size:11px;font-weight:700;padding:8px 9px;cursor:pointer}
+.check-group-delete:hover{background:#ffe4e6}
+.check-group-delete:disabled{opacity:.5;cursor:not-allowed}
