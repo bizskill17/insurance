@@ -24,7 +24,7 @@ export default function ChecklistPage({mode,currentUser}) {
   const [from,setFrom]=useState(iso(new Date(new Date().getFullYear(),new Date().getMonth(),1)));
   const [to,setTo]=useState(today()),[employee,setEmployee]=useState("");
   const [error,setError]=useState(""),[message,setMessage]=useState(""),[busy,setBusy]=useState(false);
-  const [modal,setModal]=useState(""),[search,setSearch]=useState(""),[filterEmployee,setFilterEmployee]=useState(""),[filterFrequency,setFilterFrequency]=useState("");
+  const [editingTaskId,setEditingTaskId]=useState(null); const [modal,setModal]=useState(""),[search,setSearch]=useState(""),[filterEmployee,setFilterEmployee]=useState(""),[filterFrequency,setFilterFrequency]=useState("");
   const [openChecklist,setOpenChecklist]=useState("");
   const admin=Boolean(currentUser?.can_manage_organizations||(currentUser?.views||[]).includes("/masters/users"));
   const myId=String(currentUser?.id||"");
@@ -37,6 +37,15 @@ export default function ChecklistPage({mode,currentUser}) {
   const due=visible.filter(i=>i.due_date<=today()),completed=due.filter(i=>i.completed_at),pending=due.filter(i=>!i.completed_at);
   const filteredTasks=useMemo(()=>tasks.filter(t=>(!search||[t.checklist_name,t.title,t.employee_name].some(v=>String(v||"").toLowerCase().includes(search.toLowerCase())))&&(!filterEmployee||String(t.assigned_user_id)===filterEmployee)&&(!filterFrequency||t.frequency===filterFrequency)),[tasks,search,filterEmployee,filterFrequency]);
   const visibleLists=useMemo(()=>lists.filter(l=>!search||String(l.title||"").toLowerCase().includes(search.toLowerCase())||filteredTasks.some(t=>String(t.checklist_id)===String(l.id))),[lists,search,filteredTasks]);
+  const openTaskEdit=t=>{
+    setEditingTaskId(Number(t.id));setSelectedList(String(t.checklist_id));setTitle(t.title||"");
+    setAssigned(String(t.assigned_user_id));setFrequency(t.frequency||"daily");
+    setStart(String(t.start_date||"").slice(0,10));setExcludeSundays(Boolean(Number(t.exclude_sundays)));
+    setWeekday(String(t.weekday_num||1));setMonthDay(String(t.month_day||1));
+    setQuarterOffset(String(t.quarter_offset??0));setAnnualMonth(String(t.annual_month||1));
+    setSundayAction(t.sunday_action||"skip");setError("");setMessage("");setModal("task");
+  };
+  const openTaskAdd=()=>{setEditingTaskId(null);setSelectedList("");setTitle("");setAssigned("");setFrequency("daily");setStart(today());setExcludeSundays(false);setWeekday("1");setMonthDay("1");setQuarterOffset("0");setAnnualMonth("1");setSundayAction("skip");setError("");setMessage("");setModal("task");};
   const [detail,setDetail]=useState("all");
   const shown=detail==="completed"?completed:detail==="pending"?pending:visible;
   return <div className="check-page">
@@ -47,7 +56,7 @@ export default function ChecklistPage({mode,currentUser}) {
         <div className="check-master-toolbar">
           <div className="check-master-actions">
             <button type="button" onClick={()=>{setError("");setMessage("");setModal("checklist");}}>+ Add Checklist</button>
-            <button type="button" onClick={()=>{setError("");setMessage("");setModal("task");}}>+ Add Task</button>
+            <button type="button" onClick={openTaskAdd}>+ Add Task</button>
           </div>
           <div className="check-master-filters">
             <input aria-label="Search checklists and tasks" placeholder="Search checklist or task..." value={search} onChange={e=>setSearch(e.target.value)}/>
@@ -69,18 +78,18 @@ export default function ChecklistPage({mode,currentUser}) {
           const rows=filteredTasks.filter(t=>String(t.checklist_id)===String(l.id));
           return <div key={l.id} className={"check-group-details check-group-details--"+(visibleLists.findIndex(x=>String(x.id)===String(l.id))%8)}>
             <div className="check-group-heading"><h3>☷ &nbsp;{l.title} — Tasks</h3><span>{rows.length} task{rows.length===1?"":"s"}</span></div>
-            <div className="check-table-wrap"><table><thead><tr><th>#</th><th>Task</th><th>Employee</th><th>Frequency</th><th>Effective From</th><th>Status</th><th>Action</th></tr></thead><tbody>{rows.map((t,i)=><tr key={t.id}><td>{i+1}</td><td>{t.title}</td><td>{t.employee_name}</td><td><span className="check-frequency-pill">{t.frequency}</span></td><td>{display(t.start_date)}</td><td><span className={"check-status-pill"+(Number(t.active)&&Number(t.checklist_active)?"":" is-inactive")}>{Number(t.active)&&Number(t.checklist_active)?"Active":"Inactive"}</span></td><td><div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><button type="button" disabled={busy} onClick={()=>run(async()=>{await request("tasks",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:t.id,active:!Number(t.active)})});await reload();})}>{Number(t.active)?"Deactivate":"Activate"}</button><button type="button" disabled={busy} style={{color:"#c81919",border:"1px solid #ef4444",background:"#fff5f5"}} onClick={()=>{if(!window.confirm(`Permanently delete "${t.title}" and its completion history? This cannot be undone.`))return;run(async()=>{await request("tasks",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:t.id})});await reload();});}}>Delete</button></div></td></tr>)}</tbody></table>{rows.length===0&&<p>No matching tasks in this checklist.</p>}</div>
+            <div className="check-table-wrap"><table><thead><tr><th>#</th><th>Task</th><th>Employee</th><th>Frequency</th><th>Effective From</th><th>Status</th><th>Action</th></tr></thead><tbody>{rows.map((t,i)=><tr key={t.id}><td>{i+1}</td><td>{t.title}</td><td>{t.employee_name}</td><td><span className="check-frequency-pill">{t.frequency}</span></td><td>{display(t.start_date)}</td><td><span className={"check-status-pill"+(Number(t.active)&&Number(t.checklist_active)?"":" is-inactive")}>{Number(t.active)&&Number(t.checklist_active)?"Active":"Inactive"}</span></td><td><div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><button type="button" disabled={busy} onClick={()=>openTaskEdit(t)}>Edit</button><button type="button" disabled={busy} onClick={()=>run(async()=>{await request("tasks",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:t.id,active:!Number(t.active)})});await reload();})}>{Number(t.active)?"Deactivate":"Activate"}</button><button type="button" disabled={busy} style={{color:"#c81919",border:"1px solid #ef4444",background:"#fff5f5"}} onClick={()=>{if(!window.confirm(`Permanently delete "${t.title}" and its completion history? This cannot be undone.`))return;run(async()=>{await request("tasks",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:t.id})});await reload();});}}>Delete</button></div></td></tr>)}</tbody></table>{rows.length===0&&<p>No matching tasks in this checklist.</p>}</div>
           </div>;
         })}
         {modal&&<div className="check-modal-overlay" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setModal("");}}>
-          <section className="check-modal" role="dialog" aria-modal="true" aria-label={modal==="checklist"?"Add Checklist":"Add Recurring Task"}>
-            <div className="check-modal-header"><h3>{modal==="checklist"?"Add Checklist":"Add Recurring Task"}</h3><button type="button" aria-label="Close form" onClick={()=>setModal("")} disabled={busy}>×</button></div>
+          <section className="check-modal" role="dialog" aria-modal="true" aria-label={modal==="checklist"?"Add Checklist":editingTaskId?"Edit Recurring Task":"Add Recurring Task"}>
+            <div className="check-modal-header"><h3>{modal==="checklist"?"Add Checklist":editingTaskId?"Edit Recurring Task":"Add Recurring Task"}</h3><button type="button" aria-label="Close form" onClick={()=>setModal("")} disabled={busy}>×</button></div>
             {modal==="checklist"?
               <form onSubmit={e=>{e.preventDefault();run(async()=>{await request("lists",post({title:name}));setName("");await reload();setModal("");});}}>
                 <label>Checklist Name *<input required autoFocus value={name} onChange={e=>setName(e.target.value)} placeholder="Enter checklist name"/></label>
                 <div className="check-modal-footer"><button type="button" onClick={()=>setModal("")} disabled={busy}>Cancel</button><button disabled={busy}>Save Checklist</button></div>
               </form>:
-              <form onSubmit={e=>{e.preventDefault();run(async()=>{await request("tasks",post({checklist_id:selectedList,title,assigned_user_id:assigned,frequency,start_date:start,exclude_sundays:excludeSundays,weekday_num:Number(weekday),month_day:Number(monthDay),quarter_offset:Number(quarterOffset),annual_month:Number(annualMonth),sunday_action:sundayAction}));setTitle("");await reload();setModal("");});}}>
+              <form onSubmit={e=>{e.preventDefault();run(async()=>{await request("tasks",editingTaskId?{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:editingTaskId,edit_details:true,checklist_id:selectedList,title,assigned_user_id:assigned,frequency,start_date:start,exclude_sundays:excludeSundays,weekday_num:Number(weekday),month_day:Number(monthDay),quarter_offset:Number(quarterOffset),annual_month:Number(annualMonth),sunday_action:sundayAction})}:post({checklist_id:selectedList,title,assigned_user_id:assigned,frequency,start_date:start,exclude_sundays:excludeSundays,weekday_num:Number(weekday),month_day:Number(monthDay),quarter_offset:Number(quarterOffset),annual_month:Number(annualMonth),sunday_action:sundayAction}));setTitle("");await reload();setModal("");});}}>
                 <div className="check-modal-fields">
                   <label>Checklist *<select required value={selectedList} onChange={e=>setSelectedList(e.target.value)}><option value="">Select Checklist</option>{lists.filter(x=>Number(x.active)).map(x=><option key={x.id} value={x.id}>{x.title}</option>)}</select></label>
                   <label>Task *<input required value={title} onChange={e=>setTitle(e.target.value)} placeholder="Task description"/></label>
@@ -97,7 +106,7 @@ export default function ChecklistPage({mode,currentUser}) {
                   <label className="check-checkbox"><input type="checkbox" checked={excludeSundays} onChange={e=>setExcludeSundays(e.target.checked)}/>Exclude Sundays</label>
                   {excludeSundays&&<label>When due on Sunday<select value={sundayAction} onChange={e=>setSundayAction(e.target.value)}><option value="skip">Skip occurrence</option><option value="monday">Move to Monday</option></select></label>}
                 </div>
-                <div className="check-modal-footer"><button type="button" onClick={()=>setModal("")} disabled={busy}>Cancel</button><button disabled={busy}>Save Task</button></div>
+                <div className="check-modal-footer"><button type="button" onClick={()=>setModal("")} disabled={busy}>Cancel</button><button disabled={busy}>{editingTaskId?"Update Task":"Save Task"}</button></div>
               </form>
             }
             {error&&<p className="check-error" role="alert">{error}</p>}
