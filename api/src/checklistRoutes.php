@@ -86,6 +86,36 @@ function handleChecklistRoutes(string $path, string $method): bool {
         $q=$pdo->prepare('INSERT INTO employee_checklist_tasks (organization_id,checklist_id,title,assigned_user_id,frequency,start_date,weekday_num,month_day,exclude_sundays,quarter_offset,annual_month,sunday_action) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
         $q->execute([$org,(int)$body['checklist_id'],$title,(int)$body['assigned_user_id'],$freq,$start,$weekday,$monthDay,!empty($body['exclude_sundays'])?1:0,$offset,$annualMonth,$sundayAction]);
       }
+      if ($method === 'PUT' && !empty($body['edit_details'])) {
+        $id=(int)($body['id']??0);
+        $title=trim((string)($body['title']??''));
+        $freq=(string)($body['frequency']??'');
+        $start=(string)($body['start_date']??'');
+        $list=(int)($body['checklist_id']??0);
+        $user=(int)($body['assigned_user_id']??0);
+        $weekday=(int)($body['weekday_num']??0);
+        $monthDay=(int)($body['month_day']??0);
+        $offset=(int)($body['quarter_offset']??0);
+        $annualMonth=(int)($body['annual_month']??0);
+        $sundayAction=(string)($body['sunday_action']??'skip');
+        if ($id<1 || $title==='' || !in_array($freq,['daily','weekly','monthly','quarterly','annually'],true)
+          || !preg_match('/^\\d{4}-\\d{2}-\\d{2}$/',$start) || !checkdate((int)substr($start,5,2),(int)substr($start,8,2),(int)substr($start,0,4))
+          || $list<1 || $user<1 || ($freq==='weekly'&&($weekday<1||$weekday>7))
+          || (in_array($freq,['monthly','annually'],true)&&($monthDay<1||$monthDay>31))
+          || ($freq==='annually'&&($annualMonth<1||$annualMonth>12||($annualMonth===2&&$monthDay>29)||(in_array($annualMonth,[4,6,9,11],true)&&$monthDay>30)))
+          || ($freq==='quarterly'&&($offset<0||$offset>365)) || !in_array($sundayAction,['skip','monday'],true)) {
+          \\App\\Response::json(['message'=>'Invalid checklist task details'],422);return true;
+        }
+        $q=$pdo->prepare('SELECT COUNT(*) FROM employee_checklist_tasks WHERE id=? AND organization_id=?');
+        $q->execute([$id,$org]);if (!(int)$q->fetchColumn()) {\\App\\Response::json(['message'=>'Task not found'],404);return true;}
+        $q=$pdo->prepare('SELECT COUNT(*) FROM employee_checklists WHERE id=? AND organization_id=? AND active=1');
+        $q->execute([$list,$org]);if (!(int)$q->fetchColumn()) {\\App\\Response::json(['message'=>'Checklist not found'],422);return true;}
+        $q=$pdo->prepare('SELECT COUNT(*) FROM users WHERE id=? AND organization_id=?');
+        $q->execute([$user,$org]);if (!(int)$q->fetchColumn()) {\\App\\Response::json(['message'=>'Employee not found'],422);return true;}
+        $q=$pdo->prepare('UPDATE employee_checklist_tasks SET checklist_id=?,title=?,assigned_user_id=?,frequency=?,start_date=?,weekday_num=?,month_day=?,exclude_sundays=?,quarter_offset=?,annual_month=?,sunday_action=? WHERE id=? AND organization_id=?');
+        $q->execute([$list,$title,$user,$freq,$start,$weekday,$monthDay,!empty($body['exclude_sundays'])?1:0,$offset,$annualMonth,$sundayAction,$id,$org]);
+        $json(['updated'=>true]);return true;
+      }
       if ($method === 'PUT') {
         $q=$pdo->prepare('UPDATE employee_checklist_tasks SET active=? WHERE id=? AND organization_id=?');
         $q->execute([!empty($body['active'])?1:0,(int)($body['id']??0),$org]);
