@@ -171,7 +171,7 @@ function HistoryTable({history,from,to,setFrom,setTo,search,setSearch,employee,s
   const employees=[...new Set(history.map(h=>h.employee_name).filter(Boolean))].sort();
   const checklists=[...new Set(history.map(h=>h.checklist_name).filter(Boolean))].sort();
   const actions=[...new Set(history.map(h=>h.action).filter(Boolean))].sort();
-  const filtered=history.filter(h=>(!employee||h.employee_name===employee)&&(!checklist||h.checklist_name===checklist)&&(!action||h.action===action)&&(!search||[h.checklist_name,h.task_title,h.employee_name,h.action,h.updated_by,h.details].some(v=>String(v||"").toLowerCase().includes(search.toLowerCase()))));
+  const filtered=history.filter(h=>String(h.action||"").trim().toLowerCase()==="task completed"&&(!employee||h.employee_name===employee)&&(!checklist||h.checklist_name===checklist)&&(!action||h.action===action)&&(!search||[h.checklist_name,h.task_title,h.employee_name,h.action,h.updated_by,h.details].some(v=>String(v||"").toLowerCase().includes(search.toLowerCase()))));
   const pages=Math.max(1,Math.ceil(filtered.length/20));
   const current=Math.min(page,pages);
   const rows=filtered.slice((current-1)*20,current*20);
@@ -183,7 +183,7 @@ function HistoryTable({history,from,to,setFrom,setTo,search,setSearch,employee,s
       <label>To Date<input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label>
       <label>Employee<select aria-label="Employee" value={employee} onChange={e=>setEmployee(e.target.value)}><option value="">All Employees</option>{employees.map(v=><option key={v}>{v}</option>)}</select></label>
       <label>Checklist<select aria-label="Checklist" value={checklist} onChange={e=>setChecklist(e.target.value)}><option value="">All Checklists</option>{checklists.map(v=><option key={v}>{v}</option>)}</select></label>
-      <label>Action<select aria-label="Action" value={action} onChange={e=>setAction(e.target.value)}><option value="">All Actions</option>{actions.map(v=><option key={v}>{v}</option>)}</select></label>
+      
       <label>Search<input placeholder="Search task or checklist..." aria-label="Search history" value={search} onChange={e=>setSearch(e.target.value)}/></label>
     </div>
     <div className="check-history-table-wrap"><table className="check-history-table"><thead><tr><th>#</th><th>Update Date &amp; Time</th><th>Checklist</th><th>Task</th><th>Employee</th><th>Action</th><th>Details</th><th>Updated By</th><th>Action</th></tr></thead><tbody>{rows.map((h,i)=><tr key={h.id}><td>{(current-1)*20+i+1}</td><td className="check-history-date">{h.updated_at?display(h.updated_at.slice(0,10))+" "+h.updated_at.slice(11,16):"—"}</td><td><span className="check-history-checklist">{h.checklist_name||"—"}</span></td><td>{h.task_title||"—"}</td><td>{h.employee_name||"—"}</td><td><span className={"check-history-pill check-history-pill--"+actionTone(h.action)}>{h.action}</span></td><td>{h.details||(h.due_date?"Task date: "+display(h.due_date):"—")}</td><td>{h.updated_by||"Not recorded"}</td><td><button type="button" className="check-history-delete" onClick={()=>onDelete(h.id)}>Delete</button></td></tr>)}</tbody></table></div>
