@@ -87,7 +87,7 @@ export default function ChecklistPage({mode,currentUser}) {
             const hasTasks=tasks.some(t=>String(t.checklist_id)===String(l.id));
             return <div key={l.id} className={"check-group-entry check-group-entry--"+(index%8)+(expanded?" is-selected":"")}><button type="button" className="check-group-card-main" aria-expanded={expanded} onClick={()=>setOpenChecklist(expanded?"":String(l.id))}>
               <span className="check-group-card-icon" aria-hidden="true">☷</span><span className="check-group-card-text"><strong>{l.title}</strong><small>{rows.length} Task{rows.length===1?"":"s"}</small></span>
-            </button>{!hasTasks&&<button type="button" className="check-group-delete" disabled={busy} title={"Delete "+l.title} aria-label={"Delete checklist "+l.title} onClick={()=>{setListToDelete(l);setError("");}}>Delete</button>}</div>;
+            </button>{!hasTasks&&<button type="button" className="check-group-delete" disabled={busy} title={"Delete "+l.title} aria-label={"Delete checklist "+l.title} onClick={()=>{setListToDelete(l);setError("");}}><span aria-hidden="true">🗑</span> Delete</button>}</div>;
           })}
         </div>
         {visibleLists.length===0&&<p>No matching checklists.</p>}
