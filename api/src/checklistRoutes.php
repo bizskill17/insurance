@@ -24,7 +24,7 @@ function handleChecklistRoutes(string $path, string $method): bool {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     // Add scheduling fields without changing existing task records.
     $columns=$pdo->query("SHOW COLUMNS FROM employee_checklist_tasks")->fetchAll(PDO::FETCH_COLUMN);
-    foreach (['quarter_offset'=>'SMALLINT UNSIGNED NULL','annual_month'=>'TINYINT UNSIGNED NULL','sunday_action'=>"VARCHAR(12) NOT NULL DEFAULT 'skip'"] as $col=>$definition) {
+    foreach (['quarter_offset'=>'SMALLINT UNSIGNED NULL','annual_month'=>'TINYINT UNSIGNED NULL','sunday_action'=>"VARCHAR(12) NOT NULL DEFAULT 'skip'",'deleted_at'=>'DATETIME NULL'] as $col=>$definition) {
       if (!in_array($col,$columns,true)) $pdo->exec("ALTER TABLE employee_checklist_tasks ADD COLUMN ".$col." ".$definition);
     }
     $pdo->exec("CREATE TABLE IF NOT EXISTS employee_checklist_completions (
@@ -54,7 +54,7 @@ function handleChecklistRoutes(string $path, string $method): bool {
       $q=$pdo->prepare('SELECT * FROM employee_checklists WHERE organization_id=? ORDER BY active DESC,id DESC');
       $q->execute([$org]);$json($q->fetchAll(PDO::FETCH_ASSOC));return true;
     }
-    if ($route === 'tasks') {
+    if ($route === 'tasks' && $method !== 'DELETE') {
       if ($method === 'POST') {
         $title=trim((string)($body['title']??''));
         $freq=(string)($body['frequency']??'daily');
@@ -120,24 +120,33 @@ function handleChecklistRoutes(string $path, string $method): bool {
         $q=$pdo->prepare('UPDATE employee_checklist_tasks SET active=? WHERE id=? AND organization_id=?');
         $q->execute([!empty($body['active'])?1:0,(int)($body['id']??0),$org]);
       }
-      $q=$pdo->prepare('SELECT t.*,c.title AS checklist_name,u.full_name AS employee_name,c.active AS checklist_active FROM employee_checklist_tasks t JOIN employee_checklists c ON c.id=t.checklist_id AND c.organization_id=t.organization_id LEFT JOIN users u ON u.id=t.assigned_user_id AND u.organization_id=t.organization_id WHERE t.organization_id=? ORDER BY t.id DESC');
+      $q=$pdo->prepare('SELECT t.*,c.title AS checklist_name,u.full_name AS employee_name,c.active AS checklist_active FROM employee_checklist_tasks t JOIN employee_checklists c ON c.id=t.checklist_id AND c.organization_id=t.organization_id LEFT JOIN users u ON u.id=t.assigned_user_id AND u.organization_id=t.organization_id WHERE t.organization_id=? AND t.deleted_at IS NULL ORDER BY t.id DESC');
       $q->execute([$org]);$json($q->fetchAll(PDO::FETCH_ASSOC));return true;
     }
     if ($route === 'tasks' && $method === 'DELETE') {
       $id=(int)($body['id']??0);
-      if ($id<1) { \App\Response::json(['message'=>'Valid task ID is required'],422);return true; }
-      $q=$pdo->prepare('SELECT id FROM employee_checklist_tasks WHERE id=? AND organization_id=?');
+      $mode=(string)($body['mode']??'task_only');
+      if ($id<1 || !in_array($mode,['task_only','with_history'],true)) {
+        \App\Response::json(['message'=>'Valid task ID and deletion option are required'],422);return true;
+      }
+      $q=$pdo->prepare('SELECT id FROM employee_checklist_tasks WHERE id=? AND organization_id=? AND deleted_at IS NULL');
       $q->execute([$id,$org]);
       if (!$q->fetchColumn()) { \App\Response::json(['message'=>'Task not found'],404);return true; }
-      $pdo->beginTransaction();
-      try {
-        $q=$pdo->prepare('DELETE FROM employee_checklist_completions WHERE task_id=? AND organization_id=?');
+      if ($mode==='task_only') {
+        // Stop future occurrences while retaining existing completion history and task details.
+        $q=$pdo->prepare('UPDATE employee_checklist_tasks SET active=0,deleted_at=NOW() WHERE id=? AND organization_id=?');
         $q->execute([$id,$org]);
-        $q=$pdo->prepare('DELETE FROM employee_checklist_tasks WHERE id=? AND organization_id=?');
-        $q->execute([$id,$org]);
-        $pdo->commit();
-      } catch (Throwable $e) { $pdo->rollBack();throw $e; }
-      $json(['deleted'=>true]);return true;
+      } else {
+        $pdo->beginTransaction();
+        try {
+          $q=$pdo->prepare('DELETE FROM employee_checklist_completions WHERE task_id=? AND organization_id=?');
+          $q->execute([$id,$org]);
+          $q=$pdo->prepare('DELETE FROM employee_checklist_tasks WHERE id=? AND organization_id=?');
+          $q->execute([$id,$org]);
+          $pdo->commit();
+        } catch (Throwable $e) { $pdo->rollBack();throw $e; }
+      }
+      $json(['deleted'=>true,'mode'=>$mode]);return true;
     }
     if ($route === 'complete' && $method === 'POST') {
       $id=(int)($body['task_id']??0);$due=(string)($body['due_date']??'');
