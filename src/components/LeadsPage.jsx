@@ -176,8 +176,12 @@ function fyMonths(fyStart) {
   });
 }
 
-// One colour per financial-year tile, repeating.
+// One solid colour per financial year; a year keeps its colour in every view.
 const FY_TILE_COLORS = ["#1d4ed8", "#6d28d9", "#0f766e", "#c2410c", "#a21caf", "#047857", "#b91c1c", "#92400e"];
+
+function fyTileColor(fyStart) {
+  return FY_TILE_COLORS[fyStart % FY_TILE_COLORS.length];
+}
 
 // One solid colour per month tile, April to March.
 const MONTH_TILE_COLORS = [
@@ -752,7 +756,7 @@ export default function LeadsPage({ viewPath }) {
                 ) : null}
                 {loading && !records.length ? <p className="lead-periods__empty">Loading leads...</p> : null}
                 <div className="lead-periods__years" role="group" aria-label="Financial year">
-                  {periodStats.years.map((fyStart, index) => {
+                  {periodStats.years.map((fyStart) => {
                     const count = periodStats.fyCounts.get(fyStart) || 0;
                     const isCurrent = fyStart === currentFyStart();
                     return (
@@ -760,18 +764,16 @@ export default function LeadsPage({ viewPath }) {
                         key={fyStart}
                         type="button"
                         className={`fy-card ${isCurrent ? "is-current" : ""}`}
-                        style={{ "--tile-color": FY_TILE_COLORS[index % FY_TILE_COLORS.length] }}
+                        style={{ "--tile-color": fyTileColor(fyStart) }}
                         onClick={() => selectFy(fyStart)}
                       >
-                        <span className="fy-card__top">
+                        <span className="fy-card__text">
                           <span className="fy-card__label">{fyLabel(fyStart)}</span>
+                          <span className="fy-card__range">
+                            Apr {fyStart} – Mar {fyStart + 1}
+                          </span>
                         </span>
-                        <span className="fy-card__range">
-                          Apr {fyStart} – Mar {fyStart + 1}
-                        </span>
-                        <span className="fy-card__count">
-                          {count} <small>{count === 1 ? "lead" : "leads"}</small>
-                        </span>
+                        <span className="fy-card__count">{count}</span>
                       </button>
                     );
                   })}
@@ -785,13 +787,11 @@ export default function LeadsPage({ viewPath }) {
                         setSelectedMonth("no-date");
                       }}
                     >
-                      <span className="fy-card__top">
+                      <span className="fy-card__text">
                         <span className="fy-card__label">No date</span>
+                        <span className="fy-card__range">No due or follow-up date</span>
                       </span>
-                      <span className="fy-card__range">No due or follow-up date</span>
-                      <span className="fy-card__count">
-                        {periodStats.noDateCount} <small>{periodStats.noDateCount === 1 ? "lead" : "leads"}</small>
-                      </span>
+                      <span className="fy-card__count">{periodStats.noDateCount}</span>
                     </button>
                   ) : null}
                 </div>

@@ -4099,16 +4099,16 @@ body.table-dragging * {
 }
 
 .fy-card {
-  min-height: 120px;
-  padding: 18px 20px;
-  border: 2px solid var(--tile-color);
-  border-radius: 18px;
-  background: #fff;
-  color: var(--tile-color);
+  min-height: 96px;
+  padding: 16px 20px;
+  border: 3px solid var(--tile-color);
+  border-radius: 16px;
+  background: var(--tile-color);
+  color: #fff;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -4117,20 +4117,18 @@ body.table-dragging * {
 
 .fy-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--tile-color) 25%, transparent);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--tile-color) 35%, transparent);
 }
 
 .fy-card.is-current {
-  background: var(--tile-color);
-  color: #fff;
+  border-color: #18212f;
 }
 
-.fy-card__top {
-  width: 100%;
+.fy-card__text {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .fy-card__label {
@@ -4140,18 +4138,18 @@ body.table-dragging * {
 
 .fy-card__range {
   font-size: 13px;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .fy-card__count {
-  font-size: 34px;
+  min-width: 44px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--tile-color);
+  font-size: 22px;
   font-weight: 800;
-  line-height: 1.1;
-}
-
-.fy-card__count small {
-  font-size: 15px;
-  font-weight: 700;
+  text-align: center;
 }
 
 /* Breadcrumb row for steps 2 and 3 */
