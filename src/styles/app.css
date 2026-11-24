@@ -4136,14 +4136,6 @@ body.table-dragging * {
   font-weight: 800;
 }
 
-.fy-card__badge {
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
-  font-size: 12px;
-  font-weight: 700;
-}
-
 .fy-card__range {
   font-size: 13px;
   opacity: 0.85;

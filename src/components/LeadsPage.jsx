@@ -756,7 +756,6 @@ export default function LeadsPage({ viewPath }) {
                       >
                         <span className="fy-card__top">
                           <span className="fy-card__label">{fyLabel(fyStart)}</span>
-                          {isCurrent ? <span className="fy-card__badge">Current year</span> : null}
                         </span>
                         <span className="fy-card__range">
                           Apr {fyStart} – Mar {fyStart + 1}
