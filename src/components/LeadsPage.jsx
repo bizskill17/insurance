@@ -414,8 +414,9 @@ export default function LeadsPage({ viewPath }) {
   );
 
   // Financial-year and month tiles: pick a year, then a month, to list its leads.
-  const [selectedFy, setSelectedFy] = useState(() => currentFyStart());
-  const [selectedMonth, setSelectedMonth] = useState(() => currentMonthKey());
+  // Step by step: nothing chosen at first (only year tiles), then a year (its months), then a month (its leads).
+  const [selectedFy, setSelectedFy] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(null);
 
   const periodStats = useMemo(() => {
     const fyCounts = new Map();
@@ -462,10 +463,12 @@ export default function LeadsPage({ viewPath }) {
   }, [isActivityLog, records, selectedFy, selectedMonth]);
 
   const selectFy = (fyStart) => {
-    setSelectedFy(fyStart);
-    // Open the current month in the current year, otherwise the whole year.
-    setSelectedMonth(fyStart === currentFyStart() ? currentMonthKey() : "all");
+    // Clicking the open year again closes it.
+    setSelectedFy((current) => (current === fyStart && selectedMonth !== "no-date" ? null : fyStart));
+    setSelectedMonth(null);
   };
+
+  const showLeadTable = isActivityLog || Boolean(selectedMonth);
 
   const filterConfigs = useMemo(() => {
     if (isActivityLog) {
@@ -736,9 +739,9 @@ export default function LeadsPage({ viewPath }) {
                 <button
                   key={fyStart}
                   type="button"
-                  className={`fy-tile ${fyStart === selectedFy && selectedMonth !== "no-date" ? "is-selected" : ""}`}
+                  className={`fy-tile ${fyStart === selectedFy ? "is-selected" : ""}`}
                   style={{ "--tile-color": FY_TILE_COLORS[index % FY_TILE_COLORS.length] }}
-                  aria-pressed={fyStart === selectedFy && selectedMonth !== "no-date"}
+                  aria-pressed={fyStart === selectedFy}
                   onClick={() => selectFy(fyStart)}
                 >
                   <span className="fy-tile__label">{fyLabel(fyStart)}</span>
@@ -752,16 +755,26 @@ export default function LeadsPage({ viewPath }) {
                   className={`fy-tile ${selectedMonth === "no-date" ? "is-selected" : ""}`}
                   style={{ "--tile-color": "#475569" }}
                   aria-pressed={selectedMonth === "no-date"}
-                  onClick={() => setSelectedMonth("no-date")}
+                  onClick={() => {
+                    setSelectedFy(null);
+                    setSelectedMonth("no-date");
+                  }}
                 >
                   <span className="fy-tile__label">No date</span>
                   <span className="fy-tile__count">{periodStats.noDateCount}</span>
                   <span className="fy-tile__noun">{periodStats.noDateCount === 1 ? "lead" : "leads"}</span>
                 </button>
               ) : null}
+              {!showLeadTable ? (
+                <button type="button" className="primary-button lead-periods__add" onClick={openAddLead}>
+                  Add Lead
+                </button>
+              ) : null}
             </div>
 
-            {selectedMonth !== "no-date" ? (
+            {selectedFy === null ? (
+              <p className="lead-periods__hint">Select a financial year to see its months.</p>
+            ) : (
               <div
                 className="lead-periods__months"
                 role="group"
@@ -805,10 +818,14 @@ export default function LeadsPage({ viewPath }) {
                   );
                 })}
               </div>
+            )}
+            {selectedFy !== null && !selectedMonth ? (
+              <p className="lead-periods__hint">Select a month to see its leads.</p>
             ) : null}
           </div>
         ) : null}
 
+        {showLeadTable ? (
         <ResponsiveDataView
           key={`${viewPath}-${refreshKey}`}
           title={viewConfig.title}
@@ -835,6 +852,7 @@ export default function LeadsPage({ viewPath }) {
           }
           onClearCustomFilters={() => {}}
         />
+        ) : null}
       </section>
 
       {isLeadModalOpen ? (
