@@ -4225,94 +4225,71 @@ body.table-dragging * {
   background: #eef2ff;
 }
 
-/* Step 2: 12 month cards */
+/* Step 2: 12 month tiles, one line each, a solid colour per month */
 .lead-month-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
-@media (max-width: 1100px) {
-  .lead-month-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .lead-month-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 .month-card {
-  min-height: 110px;
-  padding: 14px 16px;
-  border: 2px solid var(--tile-color);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--tile-color) 6%, #fff);
-  color: color-mix(in srgb, var(--tile-color) 85%, #000);
+  height: 52px;
+  padding: 0 14px;
+  border: 3px solid var(--tile-color);
+  border-radius: 12px;
+  background: var(--tile-color);
+  color: #fff;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   font: inherit;
-  text-align: left;
   cursor: pointer;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 .month-card:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--tile-color) 22%, transparent);
-}
-
-.month-card.is-current {
-  background: var(--tile-color);
-  color: #fff;
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--tile-color) 35%, transparent);
 }
 
 .month-card.is-empty {
-  border-style: dashed;
-  border-color: #cbd5e1;
-  background: #fff;
-  color: #94a3b8;
+  opacity: 0.78;
   cursor: default;
 }
 
-.month-card.is-current.is-empty {
-  border-style: solid;
-  border-color: var(--tile-color);
-  color: var(--tile-color);
-}
-
-.month-card__top {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+.month-card.is-current {
+  border-color: #18212f;
 }
 
 .month-card__name {
-  font-size: 16px;
-  font-weight: 800;
-}
-
-.month-card__year {
-  font-size: 12px;
-  opacity: 0.8;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .month-card__count {
-  margin-top: auto;
-  font-size: 26px;
+  min-width: 34px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--tile-color);
+  font-size: 16px;
   font-weight: 800;
-  line-height: 1.1;
+  text-align: center;
 }
 
-.month-card__count small {
-  font-size: 13px;
-  font-weight: 700;
+.month-card.is-empty .month-card__count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
 }
 
 

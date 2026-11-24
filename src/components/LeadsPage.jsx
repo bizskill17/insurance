@@ -179,6 +179,12 @@ function fyMonths(fyStart) {
 // One colour per financial-year tile, repeating.
 const FY_TILE_COLORS = ["#1d4ed8", "#6d28d9", "#0f766e", "#c2410c", "#a21caf", "#047857", "#b91c1c", "#92400e"];
 
+// One solid colour per month tile, April to March.
+const MONTH_TILE_COLORS = [
+  "#0369a1", "#15803d", "#a16207", "#be123c", "#6d28d9", "#c2410c",
+  "#0f766e", "#be185d", "#4338ca", "#b45309", "#047857", "#7e22ce"
+];
+
 // Row colour by status: Converted green, Lost orange.
 function leadRowClassName(lead) {
   if (lead.lead_status === "Converted") return "row--converted";
@@ -863,16 +869,8 @@ export default function LeadsPage({ viewPath }) {
                 </nav>
 
                 {selectedFy !== null && !selectedMonth ? (
-                  <div
-                    className="lead-month-grid"
-                    role="group"
-                    aria-label={`Months of ${fyLabel(selectedFy)}`}
-                    style={{
-                      "--tile-color":
-                        FY_TILE_COLORS[Math.max(0, periodStats.years.indexOf(selectedFy)) % FY_TILE_COLORS.length]
-                    }}
-                  >
-                    {fyMonths(selectedFy).map((month) => {
+                  <div className="lead-month-grid" role="group" aria-label={`Months of ${fyLabel(selectedFy)}`}>
+                    {fyMonths(selectedFy).map((month, index) => {
                       const count = periodStats.monthCounts.get(month.key) || 0;
                       const isCurrent = month.key === currentMonthKey();
                       return (
@@ -886,22 +884,14 @@ export default function LeadsPage({ viewPath }) {
                           ]
                             .filter(Boolean)
                             .join(" ")}
+                          style={{ "--tile-color": MONTH_TILE_COLORS[index] }}
                           disabled={count === 0}
                           onClick={() => setSelectedMonth(month.key)}
                         >
-                          <span className="month-card__top">
-                            <span className="month-card__name">{MONTH_NAMES[Number(month.key.slice(5)) - 1]}</span>
+                          <span className="month-card__name">
+                            {MONTH_NAMES[Number(month.key.slice(5)) - 1]} {month.year}
                           </span>
-                          <span className="month-card__year">{month.year}</span>
-                          <span className="month-card__count">
-                            {count ? (
-                              <>
-                                {count} <small>{count === 1 ? "lead" : "leads"}</small>
-                              </>
-                            ) : (
-                              <small>No leads</small>
-                            )}
-                          </span>
+                          <span className="month-card__count">{count}</span>
                         </button>
                       );
                     })}
