@@ -82,6 +82,13 @@ function getCurrentViewName(pathname) {
   return "";
 }
 
+// Pages that open a form on top of another list keep that list's state.
+function pageStateKey(pathname) {
+  if (pathname === "/leads/add") return "/leads/all";
+  if (pathname === "/tasks/add") return "/tasks/all";
+  return pathname;
+}
+
 export default function AppLayout({ currentUser, allowedMenuSections, allowedRoutes, onLogout }) {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(() => getIsMobileViewport());
@@ -243,7 +250,9 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
           ) : null}
         </div>
         <div className="content-body">
-          <Outlet />
+          {/* A new key per menu page, so filters and other state of the previous page are not carried over.
+              Add Lead / Add Task open a form over the All list, so they share its key. */}
+          <Outlet key={pageStateKey(location.pathname)} />
         </div>
         <TableDragScroll />
       </main>
