@@ -2122,7 +2122,8 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
             exit;
         }
 
-        if (isFinalLeadStatus((string) $lead['lead_status'])) {
+        // Lost leads can still be updated (followed up again); Converted and Canceled are closed.
+        if (in_array((string) $lead['lead_status'], ['Converted', 'Canceled'], true)) {
             Response::json([
                 'status' => 'error',
                 'message' => 'This lead is already closed and cannot be updated.'

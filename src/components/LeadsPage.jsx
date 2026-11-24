@@ -575,7 +575,8 @@ export default function LeadsPage({ viewPath }) {
       );
     }
 
-    const canFollowUp = !finalLeadStatuses.includes(String(lead.lead_status || ""));
+    // Lost leads can still be followed up (e.g. the client comes back); Converted and Canceled are closed.
+    const canFollowUp = !["Converted", "Canceled"].includes(String(lead.lead_status || ""));
 
     return (
       <div className="table-actions">
