@@ -954,6 +954,13 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
         $counts['tasks-activity-log'] = $scopedCount('SELECT count(*) FROM task_updates WHERE organization_id = :organization_id');
 
         $counts['all-policies'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id');
+        // Claims: Pending = no Final Settlement Date (same rule as the Pending list); Claim Master = all claims.
+        try {
+            $counts['claims-pending'] = $scopedCount('SELECT count(*) FROM claims WHERE organization_id = :organization_id AND final_settlement_date IS NULL');
+            $counts['claims-all'] = $scopedCount('SELECT count(*) FROM claims WHERE organization_id = :organization_id');
+        } catch (PDOException $claimsCountException) {
+            // The claims table may not exist yet on older databases.
+        }
         $counts['renew-policy'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND coalesce(renewal_status, "") <> "Renewed" AND coalesce(policy_status, "") <> "Inactive" AND coalesce(inactive_reason, "") = ""');
         $counts['renew-policy-upcoming-45-days'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND risk_end_date >= curdate() AND risk_end_date <= date_add(curdate(), interval 45 day) AND coalesce(renewal_status, "") <> "Renewed" AND coalesce(policy_status, "") <> "Inactive" AND coalesce(inactive_reason, "") = ""');
         $counts['renew-policy-overdue'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND risk_end_date < curdate() AND coalesce(renewal_status, "") <> "Renewed" AND coalesce(policy_status, "") <> "Inactive" AND coalesce(inactive_reason, "") = ""');
