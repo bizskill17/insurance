@@ -4079,15 +4079,8 @@ body.table-dragging * {
 .lead-periods__head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
-}
-
-.lead-periods__title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 800;
-  color: #1f2a37;
 }
 
 .lead-periods__years {

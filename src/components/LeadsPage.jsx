@@ -737,7 +737,6 @@ export default function LeadsPage({ viewPath }) {
             {selectedFy === null && !selectedMonth ? (
               <>
                 <div className="lead-periods__head">
-                  <h2 className="lead-periods__title">Choose a financial year</h2>
                   <button type="button" className="primary-button" onClick={openAddLead}>
                     + Add Lead
                   </button>
