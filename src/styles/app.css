@@ -4028,3 +4028,25 @@ body.table-dragging * {
   cursor: grabbing !important;
   user-select: none !important;
 }
+
+/* Group heading rows in tables (e.g. leads grouped by month) */
+.master-table__group-row td {
+  padding: 10px 16px;
+  background: #e8eefc;
+  border-top: 2px solid #2d57d7;
+  border-bottom: 1px solid #c7d4f3;
+  cursor: default;
+}
+
+.master-table__group-label {
+  margin-right: 12px;
+  color: #1e3a8a;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.master-table__group-count {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+}

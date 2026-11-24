@@ -1,5 +1,5 @@
 import { API_BASE } from "../config/api";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ActionIconDisplay } from "./ActionIcon";
 import MultiSelectFilter from "./MultiSelectFilter";
 import RecordDetailModal from "./RecordDetailModal";
@@ -119,7 +119,11 @@ export default function ResponsiveDataView({
   detailTitle = null,
   getDetailRows = null,
   loadDetailData = null,
-  renderDetailExtra = null
+  renderDetailExtra = null,
+  // Optional grouping, e.g. by month: (record) => ({ key, label, order, sortValue }).
+  // Rows are ordered by group `order`; inside a group by the chosen column sort, or by `sortValue`.
+  groupBy = null,
+  groupNoun = "records"
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState(initialSort);
@@ -143,10 +147,36 @@ export default function ResponsiveDataView({
     [records, searchTerm, searchKeys, activeFilters]
   );
 
-  const sortedRecords = useMemo(
-    () => sortRecords(filteredRecords, sortConfig),
-    [filteredRecords, sortConfig]
-  );
+  const sortedRecords = useMemo(() => {
+    const sorted = sortRecords(filteredRecords, sortConfig);
+    if (!groupBy) {
+      return sorted;
+    }
+    const withGroups = sorted.map((record, position) => ({ record, position, group: groupBy(record) }));
+    withGroups.sort((left, right) => {
+      if (left.group.order !== right.group.order) {
+        return left.group.order < right.group.order ? -1 : 1;
+      }
+      if (!sortConfig && left.group.sortValue !== right.group.sortValue) {
+        return String(left.group.sortValue || "") < String(right.group.sortValue || "") ? -1 : 1;
+      }
+      return left.position - right.position;
+    });
+    return withGroups.map((item) => item.record);
+  }, [filteredRecords, sortConfig, groupBy]);
+
+  // How many records each group has across all pages (shown in the group heading).
+  const groupCounts = useMemo(() => {
+    if (!groupBy) {
+      return null;
+    }
+    const counts = new Map();
+    sortedRecords.forEach((record) => {
+      const { key } = groupBy(record);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    return counts;
+  }, [sortedRecords, groupBy]);
   const totalPages = Math.max(1, Math.ceil(sortedRecords.length / pageSize));
   const pageStart = (currentPage - 1) * pageSize;
   const paginatedRecords = useMemo(
@@ -388,9 +418,25 @@ export default function ResponsiveDataView({
                     </td>
                   </tr>
                 ) : (
-                  paginatedRecords.map((record, index) => (
+                  paginatedRecords.map((record, index) => {
+                    const group = groupBy ? groupBy(record) : null;
+                    const previousGroup = groupBy && index > 0 ? groupBy(paginatedRecords[index - 1]) : null;
+                    const startsGroup = group && (!previousGroup || previousGroup.key !== group.key);
+
+                    return (
+                    <Fragment key={record[rowKey] ?? index}>
+                    {startsGroup ? (
+                      <tr className="master-table__group-row">
+                        <td colSpan={columns.length + (renderActions ? 2 : 1)}>
+                          <span className="master-table__group-label">{group.label}</span>
+                          <span className="master-table__group-count">
+                            {groupCounts?.get(group.key) || 0}{" "}
+                            {(groupCounts?.get(group.key) || 0) === 1 ? groupNoun.replace(/s$/, "") : groupNoun}
+                          </span>
+                        </td>
+                      </tr>
+                    ) : null}
                     <tr
-                      key={record[rowKey] ?? index}
                       className="master-table__row"
                       onDoubleClick={(event) => {
                         if (event.target.closest("input, select, textarea, button, a")) {
@@ -467,7 +513,9 @@ export default function ResponsiveDataView({
                         </td>
                       ) : null}
                     </tr>
-                  ))
+                    </Fragment>
+                    );
+                  })
                 )}
               </tbody>
             </table>

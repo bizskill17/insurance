@@ -128,6 +128,28 @@ function emptyLeadForm() {
   };
 }
 
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
+// Leads are grouped by Month-Year of the Next Follow Up Date when it is filled,
+// otherwise of the Due Date. Leads with neither date go to the end.
+function groupLeadByMonth(lead) {
+  const date = String(lead.next_follow_up_date || lead.due_date || "").slice(0, 10);
+  const match = /^(\d{4})-(\d{2})-\d{2}$/.exec(date);
+  if (!match) {
+    return { key: "no-date", label: "No date", order: "9999-99", sortValue: "" };
+  }
+  const [, year, month] = match;
+  return {
+    key: `${year}-${month}`,
+    label: `${MONTH_NAMES[Number(month) - 1]} ${year}`,
+    order: `${year}-${month}`,
+    sortValue: date
+  };
+}
+
 // Statuses that can be chosen in Edit Lead.
 const editableLeadStatuses = ["Pending First Follow Up", "Pending Repeat Follow Up", "Converted", "Lost", "Canceled"];
 
@@ -630,6 +652,8 @@ export default function LeadsPage({ viewPath }) {
           filterConfigs={filterConfigs}
           renderActions={isActivityLog ? null : renderLeadActions}
           rowKey={isActivityLog ? "activity_key" : "id"}
+          groupBy={isActivityLog ? null : groupLeadByMonth}
+          groupNoun="leads"
           headerExtras={
             !isActivityLog ? (
               <button type="button" className="primary-button" onClick={openAddLead}>
