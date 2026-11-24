@@ -439,8 +439,8 @@ export default function LeadsPage({ viewPath }) {
         monthCounts.set(monthKey, (monthCounts.get(monthKey) || 0) + 1);
       });
     }
-    // Always offer the current financial year, newest year first.
-    const years = new Set([...fyCounts.keys(), currentFyStart()]);
+    // Only years that have leads, newest first.
+    const years = new Set(fyCounts.keys());
     return {
       years: [...years].sort((left, right) => right - left),
       fyCounts,
@@ -747,6 +747,10 @@ export default function LeadsPage({ viewPath }) {
                     + Add Lead
                   </button>
                 </div>
+                {!loading && !periodStats.years.length && !periodStats.noDateCount ? (
+                  <p className="lead-periods__empty">{viewConfig.emptyMessage || "No leads found."}</p>
+                ) : null}
+                {loading && !records.length ? <p className="lead-periods__empty">Loading leads...</p> : null}
                 <div className="lead-periods__years" role="group" aria-label="Financial year">
                   {periodStats.years.map((fyStart, index) => {
                     const count = periodStats.fyCounts.get(fyStart) || 0;
