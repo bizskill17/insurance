@@ -734,94 +734,246 @@ export default function LeadsPage({ viewPath }) {
 
         {!isActivityLog ? (
           <div className="lead-periods">
-            <div className="lead-periods__years" role="group" aria-label="Financial year">
-              {periodStats.years.map((fyStart, index) => (
-                <button
-                  key={fyStart}
-                  type="button"
-                  className={`fy-tile ${fyStart === selectedFy ? "is-selected" : ""}`}
-                  style={{ "--tile-color": FY_TILE_COLORS[index % FY_TILE_COLORS.length] }}
-                  aria-pressed={fyStart === selectedFy}
-                  onClick={() => selectFy(fyStart)}
-                >
-                  <span className="fy-tile__label">{fyLabel(fyStart)}</span>
-                  <span className="fy-tile__count">{periodStats.fyCounts.get(fyStart) || 0}</span>
-                  <span className="fy-tile__noun">{(periodStats.fyCounts.get(fyStart) || 0) === 1 ? "lead" : "leads"}</span>
-                </button>
-              ))}
-              {periodStats.noDateCount ? (
-                <button
-                  type="button"
-                  className={`fy-tile ${selectedMonth === "no-date" ? "is-selected" : ""}`}
-                  style={{ "--tile-color": "#475569" }}
-                  aria-pressed={selectedMonth === "no-date"}
-                  onClick={() => {
-                    setSelectedFy(null);
-                    setSelectedMonth("no-date");
-                  }}
-                >
-                  <span className="fy-tile__label">No date</span>
-                  <span className="fy-tile__count">{periodStats.noDateCount}</span>
-                  <span className="fy-tile__noun">{periodStats.noDateCount === 1 ? "lead" : "leads"}</span>
-                </button>
-              ) : null}
-              {!showLeadTable ? (
-                <button type="button" className="primary-button lead-periods__add" onClick={openAddLead}>
-                  Add Lead
-                </button>
-              ) : null}
-            </div>
-
-            {selectedFy === null ? (
-              <p className="lead-periods__hint">Select a financial year to see its months.</p>
-            ) : (
-              <div
-                className="lead-periods__months"
-                role="group"
-                aria-label={`Months of ${fyLabel(selectedFy)}`}
-                style={{
-                  "--tile-color":
-                    FY_TILE_COLORS[Math.max(0, periodStats.years.indexOf(selectedFy)) % FY_TILE_COLORS.length]
-                }}
-              >
-                <button
-                  type="button"
-                  className={`month-tile month-tile--all ${selectedMonth === "all" ? "is-selected" : ""}`}
-                  aria-pressed={selectedMonth === "all"}
-                  onClick={() => setSelectedMonth("all")}
-                >
-                  <span className="month-tile__name">All months</span>
-                  <span className="month-tile__count">{periodStats.fyCounts.get(selectedFy) || 0}</span>
-                </button>
-                {fyMonths(selectedFy).map((month) => {
-                  const count = periodStats.monthCounts.get(month.key) || 0;
-                  return (
+            {selectedFy === null && !selectedMonth ? (
+              <>
+                <div className="lead-periods__head">
+                  <h2 className="lead-periods__title">Choose a financial year</h2>
+                  <button type="button" className="primary-button" onClick={openAddLead}>
+                    + Add Lead
+                  </button>
+                </div>
+                <div className="lead-periods__years" role="group" aria-label="Financial year">
+                  {periodStats.years.map((fyStart, index) => {
+                    const count = periodStats.fyCounts.get(fyStart) || 0;
+                    const busyMonths = fyMonths(fyStart).filter((month) => periodStats.monthCounts.get(month.key));
+                    const isCurrent = fyStart === currentFyStart();
+                    return (
+                      <button
+                        key={fyStart}
+                        type="button"
+                        className={`fy-card ${isCurrent ? "is-current" : ""}`}
+                        style={{ "--tile-color": FY_TILE_COLORS[index % FY_TILE_COLORS.length] }}
+                        onClick={() => selectFy(fyStart)}
+                      >
+                        <span className="fy-card__top">
+                          <span className="fy-card__label">{fyLabel(fyStart)}</span>
+                          {isCurrent ? <span className="fy-card__badge">Current year</span> : null}
+                        </span>
+                        <span className="fy-card__range">
+                          Apr {fyStart} – Mar {fyStart + 1}
+                        </span>
+                        <span className="fy-card__count">
+                          {count} <small>{count === 1 ? "lead" : "leads"}</small>
+                        </span>
+                        <span className="fy-card__chips">
+                          {busyMonths.length ? (
+                            <>
+                              {busyMonths.slice(0, 4).map((month) => (
+                                <span key={month.key} className="fy-card__chip">
+                                  {month.name} {month.year} · {periodStats.monthCounts.get(month.key)}
+                                </span>
+                              ))}
+                              {busyMonths.length > 4 ? (
+                                <span className="fy-card__chip">+{busyMonths.length - 4} more</span>
+                              ) : null}
+                            </>
+                          ) : (
+                            <span className="fy-card__none">No leads yet</span>
+                          )}
+                        </span>
+                        <span className="fy-card__open">Open months →</span>
+                      </button>
+                    );
+                  })}
+                  {periodStats.noDateCount ? (
                     <button
-                      key={month.key}
                       type="button"
-                      className={[
-                        "month-tile",
-                        selectedMonth === month.key ? "is-selected" : "",
-                        count === 0 ? "is-empty" : "",
-                        month.key === currentMonthKey() ? "is-current" : ""
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      aria-pressed={selectedMonth === month.key}
-                      onClick={() => setSelectedMonth(month.key)}
+                      className="fy-card"
+                      style={{ "--tile-color": "#475569" }}
+                      onClick={() => {
+                        setSelectedFy(null);
+                        setSelectedMonth("no-date");
+                      }}
                     >
-                      <span className="month-tile__name">
-                        {month.name} {month.year}
+                      <span className="fy-card__top">
+                        <span className="fy-card__label">No date</span>
                       </span>
-                      <span className="month-tile__count">{count}</span>
+                      <span className="fy-card__range">No due or follow-up date</span>
+                      <span className="fy-card__count">
+                        {periodStats.noDateCount} <small>{periodStats.noDateCount === 1 ? "lead" : "leads"}</small>
+                      </span>
+                      <span className="fy-card__open">Open leads →</span>
                     </button>
-                  );
-                })}
-              </div>
+                  ) : null}
+                </div>
+              </>
+            ) : (
+              <>
+                <nav className="lead-crumbs" aria-label="Breadcrumb">
+                  <button
+                    type="button"
+                    className="lead-crumbs__back"
+                    onClick={() => {
+                      if (selectedMonth && selectedMonth !== "no-date") {
+                        setSelectedMonth(null);
+                      } else {
+                        setSelectedFy(null);
+                        setSelectedMonth(null);
+                      }
+                    }}
+                  >
+                    ← Back
+                  </button>
+                  <button
+                    type="button"
+                    className="lead-crumbs__link"
+                    onClick={() => {
+                      setSelectedFy(null);
+                      setSelectedMonth(null);
+                    }}
+                  >
+                    Financial years
+                  </button>
+                  <span className="lead-crumbs__sep" aria-hidden="true">›</span>
+                  {selectedMonth === "no-date" ? (
+                    <>
+                      <span className="lead-crumbs__current">No date</span>
+                      <span className="lead-crumbs__pill">{periodStats.noDateCount} leads</span>
+                    </>
+                  ) : selectedMonth ? (
+                    <>
+                      <button type="button" className="lead-crumbs__link" onClick={() => setSelectedMonth(null)}>
+                        {fyLabel(selectedFy)}
+                      </button>
+                      <span className="lead-crumbs__sep" aria-hidden="true">›</span>
+                      <span className="lead-crumbs__current">
+                        {selectedMonth === "all"
+                          ? "All months"
+                          : (() => {
+                              const [year, month] = selectedMonth.split("-");
+                              return `${MONTH_NAMES[Number(month) - 1]} ${year}`;
+                            })()}
+                      </span>
+                      <span className="lead-crumbs__pill">
+                        {visibleLeadRecords.length} {visibleLeadRecords.length === 1 ? "lead" : "leads"}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="lead-crumbs__current">{fyLabel(selectedFy)}</span>
+                      <span className="lead-crumbs__pill">
+                        {periodStats.fyCounts.get(selectedFy) || 0}{" "}
+                        {(periodStats.fyCounts.get(selectedFy) || 0) === 1 ? "lead" : "leads"}
+                      </span>
+                    </>
+                  )}
+                  {!selectedMonth ? (
+                    <span className="lead-crumbs__actions">
+                      <button
+                        type="button"
+                        className="lead-crumbs__all"
+                        onClick={() => setSelectedMonth("all")}
+                      >
+                        All months · {periodStats.fyCounts.get(selectedFy) || 0}
+                      </button>
+                      <button type="button" className="primary-button" onClick={openAddLead}>
+                        + Add Lead
+                      </button>
+                    </span>
+                  ) : null}
+                </nav>
+
+                {selectedFy !== null && !selectedMonth ? (
+                  <div
+                    className="lead-month-grid"
+                    role="group"
+                    aria-label={`Months of ${fyLabel(selectedFy)}`}
+                    style={{
+                      "--tile-color":
+                        FY_TILE_COLORS[Math.max(0, periodStats.years.indexOf(selectedFy)) % FY_TILE_COLORS.length]
+                    }}
+                  >
+                    {fyMonths(selectedFy).map((month) => {
+                      const count = periodStats.monthCounts.get(month.key) || 0;
+                      const isCurrent = month.key === currentMonthKey();
+                      return (
+                        <button
+                          key={month.key}
+                          type="button"
+                          className={[
+                            "month-card",
+                            count === 0 ? "is-empty" : "",
+                            isCurrent ? "is-current" : ""
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                          disabled={count === 0}
+                          onClick={() => setSelectedMonth(month.key)}
+                        >
+                          <span className="month-card__top">
+                            <span className="month-card__name">{MONTH_NAMES[Number(month.key.slice(5)) - 1]}</span>
+                            {isCurrent ? <span className="month-card__badge">This month</span> : null}
+                          </span>
+                          <span className="month-card__year">{month.year}</span>
+                          <span className="month-card__count">
+                            {count ? (
+                              <>
+                                {count} <small>{count === 1 ? "lead" : "leads"}</small>
+                              </>
+                            ) : (
+                              <small>No leads</small>
+                            )}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
+                {selectedFy !== null && selectedMonth ? (
+                  <div
+                    className="lead-month-chips"
+                    role="group"
+                    aria-label="Jump to another month"
+                    style={{
+                      "--tile-color":
+                        FY_TILE_COLORS[Math.max(0, periodStats.years.indexOf(selectedFy)) % FY_TILE_COLORS.length]
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className={`lead-month-chip ${selectedMonth === "all" ? "is-selected" : ""}`}
+                      aria-pressed={selectedMonth === "all"}
+                      onClick={() => setSelectedMonth("all")}
+                    >
+                      All <span>{periodStats.fyCounts.get(selectedFy) || 0}</span>
+                    </button>
+                    {fyMonths(selectedFy).map((month) => {
+                      const count = periodStats.monthCounts.get(month.key) || 0;
+                      return (
+                        <button
+                          key={month.key}
+                          type="button"
+                          className={[
+                            "lead-month-chip",
+                            selectedMonth === month.key ? "is-selected" : "",
+                            count === 0 ? "is-empty" : ""
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                          aria-pressed={selectedMonth === month.key}
+                          disabled={count === 0}
+                          onClick={() => setSelectedMonth(month.key)}
+                        >
+                          {month.name}
+                          {count ? <span>{count}</span> : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </>
             )}
-            {selectedFy !== null && !selectedMonth ? (
-              <p className="lead-periods__hint">Select a month to see its leads.</p>
-            ) : null}
           </div>
         ) : null}
 

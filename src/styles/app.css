@@ -4068,132 +4068,359 @@ body.table-dragging * {
   background: #fde0bd;
 }
 
-/* Leads: financial-year tiles, then month tiles of the chosen year (compact) */
+/* Leads: step 1 year cards → step 2 month cards → step 3 table with a month strip */
 .lead-periods {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 12px;
 }
 
-.lead-periods__years {
+.lead-periods__head {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* "All months" + 12 months: one row on a laptop, even rows on smaller screens */
-.lead-periods__months {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
-  gap: 6px;
-  padding: 6px;
-  border: 1px solid color-mix(in srgb, var(--tile-color) 30%, #fff);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--tile-color) 5%, #fff);
-}
-
-.fy-tile {
-  min-height: 36px;
-  padding: 4px 14px;
-  border: 2px solid var(--tile-color);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--tile-color) 10%, #fff);
-  color: var(--tile-color);
-  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lead-periods__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #1f2a37;
+}
+
+.lead-periods__years {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.fy-card {
+  min-height: 170px;
+  padding: 18px 20px;
+  border: 2px solid var(--tile-color);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--tile-color);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   font: inherit;
+  text-align: left;
   cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
-.fy-tile:hover {
-  box-shadow: 0 3px 10px color-mix(in srgb, var(--tile-color) 25%, transparent);
+.fy-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--tile-color) 25%, transparent);
 }
 
-.fy-tile.is-selected {
+.fy-card.is-current {
   background: var(--tile-color);
   color: #fff;
 }
 
-.fy-tile__label {
-  font-size: 14px;
+.fy-card__top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fy-card__label {
+  font-size: 20px;
   font-weight: 800;
 }
 
-.fy-tile__count {
-  min-width: 26px;
-  padding: 1px 8px;
+.fy-card__badge {
+  padding: 3px 10px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--tile-color) 18%, #fff);
-  color: var(--tile-color);
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fy-card__range {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.fy-card__count {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.fy-card__count small {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.fy-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fy-card__chip {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tile-color) 12%, #fff);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fy-card.is-current .fy-card__chip {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.fy-card__none {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.fy-card__open {
+  margin-top: auto;
   font-size: 13px;
   font-weight: 800;
-  text-align: center;
 }
 
-.fy-tile.is-selected .fy-tile__count {
+/* Breadcrumb row for steps 2 and 3 */
+.lead-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.lead-crumbs__back {
+  height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: #eef2f7;
+  color: #334155;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lead-crumbs__back:hover {
+  background: #e2e8f0;
+}
+
+.lead-crumbs__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2d57d7;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lead-crumbs__link:hover {
+  text-decoration: underline;
+}
+
+.lead-crumbs__sep {
+  color: #94a3b8;
+}
+
+.lead-crumbs__current {
+  font-weight: 800;
+  color: #1f2a37;
+}
+
+.lead-crumbs__pill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.lead-crumbs__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lead-crumbs__all {
+  height: 40px;
+  padding: 0 16px;
+  border: 2px solid #2d57d7;
+  border-radius: 12px;
   background: #fff;
+  color: #2d57d7;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }
 
-.fy-tile__noun {
-  display: none;
+.lead-crumbs__all:hover {
+  background: #eef2ff;
 }
 
-.month-tile {
-  min-width: 0;
-  min-height: 32px;
-  padding: 4px 8px;
-  border: 1px solid color-mix(in srgb, var(--tile-color) 35%, #fff);
-  border-radius: 8px;
+/* Step 2: 12 month cards */
+.lead-month-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1100px) {
+  .lead-month-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .lead-month-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.month-card {
+  min-height: 110px;
+  padding: 14px 16px;
+  border: 2px solid var(--tile-color);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--tile-color) 6%, #fff);
+  color: color-mix(in srgb, var(--tile-color) 85%, #000);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.month-card:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--tile-color) 22%, transparent);
+}
+
+.month-card.is-current {
+  background: var(--tile-color);
+  color: #fff;
+}
+
+.month-card.is-empty {
+  border-style: dashed;
+  border-color: #cbd5e1;
   background: #fff;
-  color: color-mix(in srgb, var(--tile-color) 80%, #000);
+  color: #94a3b8;
+  cursor: default;
+}
+
+.month-card.is-current.is-empty {
+  border-style: solid;
+  border-color: var(--tile-color);
+  color: var(--tile-color);
+}
+
+.month-card__top {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  font: inherit;
-  cursor: pointer;
 }
 
-.month-tile:hover {
-  background: color-mix(in srgb, var(--tile-color) 10%, #fff);
+.month-card__name {
+  font-size: 16px;
+  font-weight: 800;
 }
 
-.month-tile__name {
-  font-size: 12px;
+.month-card__badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
 }
 
-.month-tile__count {
-  font-size: 14px;
+.month-card.is-current.is-empty .month-card__badge {
+  background: color-mix(in srgb, var(--tile-color) 12%, #fff);
+}
+
+.month-card__year {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.month-card__count {
+  margin-top: auto;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.month-card__count small {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Step 3: slim month strip above the table */
+.lead-month-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--tile-color) 25%, #fff);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--tile-color) 4%, #fff);
+}
+
+.lead-month-chip {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--tile-color) 45%, #fff);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tile-color) 8%, #fff);
+  color: color-mix(in srgb, var(--tile-color) 85%, #000);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lead-month-chip span {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #fff;
   font-weight: 800;
 }
 
-.month-tile.is-empty {
+.lead-month-chip.is-empty {
+  border-color: transparent;
+  background: none;
   color: #94a3b8;
-  border-color: #e2e8f0;
+  font-weight: 600;
+  cursor: default;
 }
 
-.month-tile.is-current {
-  border-width: 2px;
-  border-color: var(--tile-color);
-}
-
-.month-tile.is-selected,
-.month-tile.is-selected:hover {
+.lead-month-chip.is-selected {
   background: var(--tile-color);
   border-color: var(--tile-color);
   color: #fff;
 }
 
-.lead-periods__hint {
-  margin: 2px 0 0;
-  color: #536273;
-  font-size: 14px;
+.lead-month-chip.is-selected span {
+  color: var(--tile-color);
 }
 
-.lead-periods__add {
-  margin-left: auto;
-}
