@@ -133,37 +133,51 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December"
 ];
 
-// Leads are grouped by Month-Year of the Next Follow Up Date when it is filled,
-// otherwise of the Due Date. Order: the current month first, then coming months
-// (soonest first), then earlier months (most recent first); leads with neither date last.
-function groupLeadByMonth(lead) {
-  const date = String(lead.next_follow_up_date || lead.due_date || "").slice(0, 10);
-  const match = /^(\d{4})-(\d{2})-\d{2}$/.exec(date);
-  if (!match) {
-    return { key: "no-date", label: "No date", order: "3", sortValue: "" };
-  }
-  const [, year, month] = match;
-  const monthIndex = Number(year) * 12 + Number(month) - 1;
-  const now = new Date();
-  const currentIndex = now.getFullYear() * 12 + now.getMonth();
-  const label = `${MONTH_NAMES[Number(month) - 1]} ${year}`;
-
-  let order;
-  if (monthIndex === currentIndex) {
-    order = "0";
-  } else if (monthIndex > currentIndex) {
-    order = `1-${String(monthIndex).padStart(6, "0")}`;
-  } else {
-    order = `2-${String(999999 - monthIndex).padStart(6, "0")}`;
-  }
-
-  return {
-    key: `${year}-${month}`,
-    label,
-    order,
-    sortValue: date
-  };
+// A lead's month is taken from its Next Follow Up Date when filled, otherwise its Due Date.
+function leadDate(lead) {
+  return String(lead.next_follow_up_date || lead.due_date || "").slice(0, 10);
 }
+
+// Financial year (April to March) and month of a lead, from the same date as above.
+function leadPeriod(lead) {
+  const match = /^(\d{4})-(\d{2})-\d{2}$/.exec(leadDate(lead));
+  if (!match) {
+    return { fyStart: null, monthKey: "no-date" };
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  return { fyStart: month >= 4 ? year : year - 1, monthKey: `${match[1]}-${match[2]}` };
+}
+
+function currentFyStart() {
+  const now = new Date();
+  return now.getMonth() + 1 >= 4 ? now.getFullYear() : now.getFullYear() - 1;
+}
+
+function currentMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function fyLabel(fyStart) {
+  return `FY ${fyStart}-${String((fyStart + 1) % 100).padStart(2, "0")}`;
+}
+
+// The 12 months of a financial year, April to March.
+function fyMonths(fyStart) {
+  return Array.from({ length: 12 }, (_, index) => {
+    const monthNumber = ((index + 3) % 12) + 1;
+    const year = monthNumber >= 4 ? fyStart : fyStart + 1;
+    return {
+      key: `${year}-${String(monthNumber).padStart(2, "0")}`,
+      name: MONTH_NAMES[monthNumber - 1].slice(0, 3),
+      year
+    };
+  });
+}
+
+// One colour per financial-year tile, repeating.
+const FY_TILE_COLORS = ["#1d4ed8", "#6d28d9", "#0f766e", "#c2410c", "#a21caf", "#047857", "#b91c1c", "#92400e"];
 
 // Row colour by status: Converted green, Lost orange.
 function leadRowClassName(lead) {
@@ -399,11 +413,59 @@ export default function LeadsPage({ viewPath }) {
     [categories, leadForm.category_id]
   );
 
-  // Each lead carries its Month Year key (same rule as the grouping) for the Month Year filter.
-  const recordsWithMonth = useMemo(
-    () => (isActivityLog ? records : records.map((record) => ({ ...record, month_year: groupLeadByMonth(record).key }))),
-    [isActivityLog, records]
-  );
+  // Financial-year and month tiles: pick a year, then a month, to list its leads.
+  const [selectedFy, setSelectedFy] = useState(() => currentFyStart());
+  const [selectedMonth, setSelectedMonth] = useState(() => currentMonthKey());
+
+  const periodStats = useMemo(() => {
+    const fyCounts = new Map();
+    const monthCounts = new Map();
+    let noDateCount = 0;
+    if (!isActivityLog) {
+      records.forEach((record) => {
+        const { fyStart, monthKey } = leadPeriod(record);
+        if (fyStart === null) {
+          noDateCount += 1;
+          return;
+        }
+        fyCounts.set(fyStart, (fyCounts.get(fyStart) || 0) + 1);
+        monthCounts.set(monthKey, (monthCounts.get(monthKey) || 0) + 1);
+      });
+    }
+    // Always offer the current financial year, newest year first.
+    const years = new Set([...fyCounts.keys(), currentFyStart()]);
+    return {
+      years: [...years].sort((left, right) => right - left),
+      fyCounts,
+      monthCounts,
+      noDateCount
+    };
+  }, [isActivityLog, records]);
+
+  const visibleLeadRecords = useMemo(() => {
+    if (isActivityLog) {
+      return records;
+    }
+    if (selectedMonth === "no-date") {
+      return records.filter((record) => leadPeriod(record).fyStart === null);
+    }
+    return records
+      .filter((record) => {
+        const { fyStart, monthKey } = leadPeriod(record);
+        if (fyStart !== selectedFy) {
+          return false;
+        }
+        return selectedMonth === "all" || monthKey === selectedMonth;
+      })
+      // Earliest follow-up / due date first.
+      .sort((left, right) => leadDate(left).localeCompare(leadDate(right)));
+  }, [isActivityLog, records, selectedFy, selectedMonth]);
+
+  const selectFy = (fyStart) => {
+    setSelectedFy(fyStart);
+    // Open the current month in the current year, otherwise the whole year.
+    setSelectedMonth(fyStart === currentFyStart() ? currentMonthKey() : "all");
+  };
 
   const filterConfigs = useMemo(() => {
     if (isActivityLog) {
@@ -414,21 +476,7 @@ export default function LeadsPage({ viewPath }) {
       ];
     }
 
-    // Month Year options in the same order as the month groups (current month first).
-    const monthOptions = new Map();
-    records.forEach((record) => {
-      const group = groupLeadByMonth(record);
-      monthOptions.set(group.key, group);
-    });
-
     return [
-      {
-        key: "month_year",
-        label: "Month Year",
-        options: [...monthOptions.values()]
-          .sort((left, right) => (left.order < right.order ? -1 : left.order > right.order ? 1 : 0))
-          .map((group) => ({ value: group.key, label: group.label }))
-      },
       { key: "priority", label: "Priority", options: buildFilterOptions(records, "priority") },
       { key: "lead_status", label: "Status", options: buildFilterOptions(records, "lead_status") },
       { key: "assigned_to_name", label: "Assigned To", options: buildFilterOptions(records, "assigned_to_name") },
@@ -681,10 +729,90 @@ export default function LeadsPage({ viewPath }) {
         {message ? <p className="feedback feedback--success">{message}</p> : null}
         {error ? <p className="feedback feedback--error">{error}</p> : null}
 
+        {!isActivityLog ? (
+          <div className="lead-periods">
+            <div className="lead-periods__years" role="group" aria-label="Financial year">
+              {periodStats.years.map((fyStart, index) => (
+                <button
+                  key={fyStart}
+                  type="button"
+                  className={`fy-tile ${fyStart === selectedFy && selectedMonth !== "no-date" ? "is-selected" : ""}`}
+                  style={{ "--tile-color": FY_TILE_COLORS[index % FY_TILE_COLORS.length] }}
+                  aria-pressed={fyStart === selectedFy && selectedMonth !== "no-date"}
+                  onClick={() => selectFy(fyStart)}
+                >
+                  <span className="fy-tile__label">{fyLabel(fyStart)}</span>
+                  <span className="fy-tile__count">{periodStats.fyCounts.get(fyStart) || 0}</span>
+                  <span className="fy-tile__noun">{(periodStats.fyCounts.get(fyStart) || 0) === 1 ? "lead" : "leads"}</span>
+                </button>
+              ))}
+              {periodStats.noDateCount ? (
+                <button
+                  type="button"
+                  className={`fy-tile ${selectedMonth === "no-date" ? "is-selected" : ""}`}
+                  style={{ "--tile-color": "#475569" }}
+                  aria-pressed={selectedMonth === "no-date"}
+                  onClick={() => setSelectedMonth("no-date")}
+                >
+                  <span className="fy-tile__label">No date</span>
+                  <span className="fy-tile__count">{periodStats.noDateCount}</span>
+                  <span className="fy-tile__noun">{periodStats.noDateCount === 1 ? "lead" : "leads"}</span>
+                </button>
+              ) : null}
+            </div>
+
+            {selectedMonth !== "no-date" ? (
+              <div
+                className="lead-periods__months"
+                role="group"
+                aria-label={`Months of ${fyLabel(selectedFy)}`}
+                style={{
+                  "--tile-color":
+                    FY_TILE_COLORS[Math.max(0, periodStats.years.indexOf(selectedFy)) % FY_TILE_COLORS.length]
+                }}
+              >
+                <button
+                  type="button"
+                  className={`month-tile month-tile--all ${selectedMonth === "all" ? "is-selected" : ""}`}
+                  aria-pressed={selectedMonth === "all"}
+                  onClick={() => setSelectedMonth("all")}
+                >
+                  <span className="month-tile__name">All months</span>
+                  <span className="month-tile__count">{periodStats.fyCounts.get(selectedFy) || 0}</span>
+                </button>
+                {fyMonths(selectedFy).map((month) => {
+                  const count = periodStats.monthCounts.get(month.key) || 0;
+                  return (
+                    <button
+                      key={month.key}
+                      type="button"
+                      className={[
+                        "month-tile",
+                        selectedMonth === month.key ? "is-selected" : "",
+                        count === 0 ? "is-empty" : "",
+                        month.key === currentMonthKey() ? "is-current" : ""
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      aria-pressed={selectedMonth === month.key}
+                      onClick={() => setSelectedMonth(month.key)}
+                    >
+                      <span className="month-tile__name">
+                        {month.name} {month.year}
+                      </span>
+                      <span className="month-tile__count">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
         <ResponsiveDataView
           key={`${viewPath}-${refreshKey}`}
           title={viewConfig.title}
-          records={recordsWithMonth}
+          records={visibleLeadRecords}
           columns={currentColumns}
           loading={loading}
           error=""
@@ -694,9 +822,7 @@ export default function LeadsPage({ viewPath }) {
           filterConfigs={filterConfigs}
           renderActions={isActivityLog ? null : renderLeadActions}
           rowKey={isActivityLog ? "activity_key" : "id"}
-          groupBy={isActivityLog ? null : groupLeadByMonth}
           getRowClassName={isActivityLog ? null : leadRowClassName}
-          groupNoun="leads"
           headerExtras={
             !isActivityLog ? (
               <button type="button" className="primary-button" onClick={openAddLead}>
