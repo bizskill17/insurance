@@ -911,48 +911,6 @@ export default function LeadsPage({ viewPath }) {
                   </div>
                 ) : null}
 
-                {selectedFy !== null && selectedMonth ? (
-                  <div
-                    className="lead-month-chips"
-                    role="group"
-                    aria-label="Jump to another month"
-                    style={{
-                      "--tile-color":
-                        FY_TILE_COLORS[Math.max(0, periodStats.years.indexOf(selectedFy)) % FY_TILE_COLORS.length]
-                    }}
-                  >
-                    <button
-                      type="button"
-                      className={`lead-month-chip ${selectedMonth === "all" ? "is-selected" : ""}`}
-                      aria-pressed={selectedMonth === "all"}
-                      onClick={() => setSelectedMonth("all")}
-                    >
-                      All <span>{periodStats.fyCounts.get(selectedFy) || 0}</span>
-                    </button>
-                    {fyMonths(selectedFy).map((month) => {
-                      const count = periodStats.monthCounts.get(month.key) || 0;
-                      return (
-                        <button
-                          key={month.key}
-                          type="button"
-                          className={[
-                            "lead-month-chip",
-                            selectedMonth === month.key ? "is-selected" : "",
-                            count === 0 ? "is-empty" : ""
-                          ]
-                            .filter(Boolean)
-                            .join(" ")}
-                          aria-pressed={selectedMonth === month.key}
-                          disabled={count === 0}
-                          onClick={() => setSelectedMonth(month.key)}
-                        >
-                          {month.name}
-                          {count ? <span>{count}</span> : null}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : null}
               </>
             )}
           </div>
