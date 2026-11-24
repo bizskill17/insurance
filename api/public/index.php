@@ -1687,7 +1687,7 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
         }
 
         $existingLeadStatement = $pdo->prepare(
-            'SELECT id, lead_status
+            'SELECT id, lead_status, next_follow_up_date
              FROM leads
              WHERE id = :id
                AND organization_id = :organization_id
@@ -1735,6 +1735,60 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
             : null;
         $leadStatus = deriveLeadStatusFromAssignment($assignedToUserId, $hasUpdates, (string) $existingLead['lead_status']);
 
+        // Status and Next Follow Up Date can be changed in Edit Lead. A change is also
+        // recorded as a lead update (like the update button), so history, Update By and
+        // the "today" counts stay right.
+        $requestedStatus = trim((string) ($payload['lead_status'] ?? ''));
+        $requestedNextFollowUp = trim((string) ($payload['next_follow_up_date'] ?? ''));
+        $editStatusProvided = $requestedStatus !== '';
+        $statusChanged = false;
+        $nextFollowUpChanged = false;
+        $nextFollowUpToSave = $existingLead['next_follow_up_date'] ?? null;
+
+        if ($editStatusProvided) {
+            $allowedLeadStatuses = ['Pending Assigning', 'Pending First Follow Up', 'Pending Repeat Follow Up', 'Converted', 'Lost', 'Canceled'];
+            if (!in_array($requestedStatus, $allowedLeadStatuses, true)) {
+                Response::json(['status' => 'error', 'message' => 'Status is not valid.'], 422);
+                exit;
+            }
+            if ($requestedNextFollowUp !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $requestedNextFollowUp) !== 1) {
+                Response::json(['status' => 'error', 'message' => 'Next Follow Up Date is not a valid date.'], 422);
+                exit;
+            }
+
+            $isOpenStatus = !isFinalLeadStatus($requestedStatus);
+            $statusChanged = $requestedStatus !== (string) $existingLead['lead_status'];
+            $existingNextFollowUp = substr((string) ($existingLead['next_follow_up_date'] ?? ''), 0, 10);
+
+            if ($statusChanged && $isOpenStatus && $requestedStatus !== 'Pending Assigning' && $requestedNextFollowUp === '') {
+                Response::json(['status' => 'error', 'message' => 'Next Follow Up Date is required when the lead is not converted.'], 422);
+                exit;
+            }
+
+            if ($statusChanged) {
+                $leadStatus = $requestedStatus;
+            }
+            $nextFollowUpToSave = $isOpenStatus && $requestedNextFollowUp !== '' ? $requestedNextFollowUp : null;
+            $nextFollowUpChanged = (string) ($nextFollowUpToSave ?? '') !== $existingNextFollowUp;
+        }
+
+        // Who made the change: the signed-in user if they are a user of this organization,
+        // otherwise the assigned user. Without either, the change is saved without a history row.
+        $statusChangedByUserId = null;
+        foreach ([(int) ($payload['status_changed_by_user_id'] ?? 0), (int) ($assignedToUserId ?? 0)] as $candidateUserId) {
+            if ($candidateUserId <= 0) {
+                continue;
+            }
+            $userCheck = $pdo->prepare('SELECT id FROM users WHERE id = :id AND organization_id = :organization_id LIMIT 1');
+            $userCheck->bindValue(':id', $candidateUserId, PDO::PARAM_INT);
+            bindOrganizationId($userCheck, $organizationId);
+            $userCheck->execute();
+            if ($userCheck->fetchColumn()) {
+                $statusChangedByUserId = $candidateUserId;
+                break;
+            }
+        }
+
         $statement = $pdo->prepare(
             'UPDATE leads
              SET lead_date = :lead_date,
@@ -1746,11 +1800,15 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
                  category_id = :category_id,
                  sub_category_id = :sub_category_id,
                  notes = :notes,
-                 lead_status = :lead_status
+                 lead_status = :lead_status,
+                 next_follow_up_date = :next_follow_up_date,
+                 latest_update_date = CASE WHEN :touch_latest_update = 1 THEN CURDATE() ELSE latest_update_date END
              WHERE id = :id
                AND organization_id = :organization_id'
         );
         bindOrganizationId($statement, $organizationId);
+        $statement->bindValue(':next_follow_up_date', $nextFollowUpToSave, $nextFollowUpToSave === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        $statement->bindValue(':touch_latest_update', ($statusChanged || $nextFollowUpChanged) ? 1 : 0, PDO::PARAM_INT);
         $statement->bindValue(':lead_date', $payload['lead_date']);
         $statement->bindValue(':description', trim((string) ($payload['description'] ?? '')) !== '' ? $payload['description'] : null);
         $statement->bindValue(':due_date', trim((string) ($payload['due_date'] ?? '')) !== '' ? $payload['due_date'] : null);
@@ -1764,6 +1822,26 @@ $counts['tasks-added-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE or
         $statement->bindValue(':id', $leadId, PDO::PARAM_INT);
         bindOrganizationId($statement, $organizationId);
         $statement->execute();
+
+        if (($statusChanged || $nextFollowUpChanged) && $statusChangedByUserId !== null) {
+            $historyStatus = match ($leadStatus) {
+                'Converted' => 'Success',
+                'Lost' => 'Lost',
+                'Canceled' => 'Cancel',
+                default => 'Follow Up Again',
+            };
+            $insertHistory = $pdo->prepare(
+                'INSERT INTO lead_updates (organization_id, lead_id, status, update_date, update_by_user_id, next_follow_up_date, remarks)
+                 VALUES (:organization_id, :lead_id, :status, CURDATE(), :update_by_user_id, :next_follow_up_date, :remarks)'
+            );
+            bindOrganizationId($insertHistory, $organizationId);
+            $insertHistory->bindValue(':lead_id', $leadId, PDO::PARAM_INT);
+            $insertHistory->bindValue(':status', $historyStatus);
+            $insertHistory->bindValue(':update_by_user_id', $statusChangedByUserId, PDO::PARAM_INT);
+            $insertHistory->bindValue(':next_follow_up_date', $nextFollowUpToSave, $nextFollowUpToSave === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $insertHistory->bindValue(':remarks', $statusChanged ? sprintf('Status changed to %s in Edit Lead', $leadStatus) : 'Next follow up date changed in Edit Lead');
+            $insertHistory->execute();
+        }
 
         Response::json([
             'status' => 'ok',

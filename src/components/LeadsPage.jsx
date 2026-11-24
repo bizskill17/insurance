@@ -5,6 +5,7 @@ import FormLabel from "./FormLabel";
 import MasterPage from "./MasterPage";
 import ResponsiveDataView from "./ResponsiveDataView";
 import { API_BASE } from "../config/api";
+import { getStoredAuthUser } from "../utils/auth";
 import { ButtonSpinner, Spinner } from "./Spinner";
 import { buildFilterOptions } from "../utils/dataView";
 import { formatCellValue } from "../utils/formatting";
@@ -121,9 +122,14 @@ function emptyLeadForm() {
     assigned_to_user_id: "",
     category_id: "",
     sub_category_id: "",
-    notes: ""
+    notes: "",
+    lead_status: "",
+    next_follow_up_date: ""
   };
 }
+
+// Statuses that can be chosen in Edit Lead.
+const editableLeadStatuses = ["Pending First Follow Up", "Pending Repeat Follow Up", "Converted", "Lost", "Canceled"];
 
 function emptyUpdateForm() {
   return {
@@ -186,7 +192,9 @@ function normalizeLeadToForm(lead) {
     assigned_to_user_id: lead.assigned_to_user_id ? String(lead.assigned_to_user_id) : "",
     category_id: lead.category_id ? String(lead.category_id) : "",
     sub_category_id: lead.sub_category_id ? String(lead.sub_category_id) : "",
-    notes: lead.notes || ""
+    notes: lead.notes || "",
+    lead_status: lead.lead_status || "",
+    next_follow_up_date: String(lead.next_follow_up_date || "").slice(0, 10)
   };
 }
 
@@ -203,6 +211,7 @@ export default function LeadsPage({ viewPath }) {
   const [customers, setCustomers] = useState([]);
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
   const [leadForm, setLeadForm] = useState(() => emptyLeadForm());
+  const [originalLeadStatus, setOriginalLeadStatus] = useState("");
   const [updateForm, setUpdateForm] = useState(() => emptyUpdateForm());
   const [editingLeadId, setEditingLeadId] = useState(null);
   const [selectedLead, setSelectedLead] = useState(null);
@@ -396,6 +405,7 @@ export default function LeadsPage({ viewPath }) {
     setError("");
     setEditingLeadId(lead.id);
     setLeadForm(normalizeLeadToForm(lead));
+    setOriginalLeadStatus(lead.lead_status || "");
     setIsAssigneeOnly(false);
     setIsLeadModalOpen(true);
   };
@@ -405,6 +415,7 @@ export default function LeadsPage({ viewPath }) {
     setError("");
     setEditingLeadId(lead.id);
     setLeadForm(normalizeLeadToForm(lead));
+    setOriginalLeadStatus(lead.lead_status || "");
     setIsAssigneeOnly(true);
     setIsLeadModalOpen(true);
   };
@@ -465,7 +476,11 @@ export default function LeadsPage({ viewPath }) {
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify(leadForm)
+          body: JSON.stringify(
+            editingLeadId
+              ? { ...leadForm, status_changed_by_user_id: getStoredAuthUser()?.id || "" }
+              : leadForm
+          )
         }
       );
 
@@ -763,6 +778,49 @@ export default function LeadsPage({ viewPath }) {
                         ))}
                       </SearchableSelect>
                     </label>
+
+                    {editingLeadId ? (
+                      <>
+                        <label className="form-field">
+                          <FormLabel required>Status</FormLabel>
+                          <SearchableSelect
+                            required
+                            value={leadForm.lead_status}
+                            onChange={(event) => handleLeadFormChange("lead_status", event.target.value)}
+                          >
+                            {[
+                              ...(originalLeadStatus && !editableLeadStatuses.includes(originalLeadStatus)
+                                ? [originalLeadStatus]
+                                : []),
+                              ...editableLeadStatuses
+                            ].map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))}
+                          </SearchableSelect>
+                        </label>
+                        {!finalLeadStatuses.includes(leadForm.lead_status) ? (
+                          <label className="form-field">
+                            <FormLabel
+                              required={
+                                leadForm.lead_status !== originalLeadStatus && leadForm.lead_status !== "Pending Assigning"
+                              }
+                            >
+                              Next Follow Up Date
+                            </FormLabel>
+                            <input
+                              type="date"
+                              required={
+                                leadForm.lead_status !== originalLeadStatus && leadForm.lead_status !== "Pending Assigning"
+                              }
+                              value={leadForm.next_follow_up_date}
+                              onChange={(event) => handleLeadFormChange("next_follow_up_date", event.target.value)}
+                            />
+                          </label>
+                        ) : null}
+                      </>
+                    ) : null}
 
                     <label className="form-field">
                       <FormLabel>Notes</FormLabel>
