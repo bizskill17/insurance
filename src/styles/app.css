@@ -4008,3 +4008,23 @@ button {
 /* Early weeks open downward to avoid the fixed page header. */
 .check-calendar-grid>button:nth-child(-n + 21) .check-calendar-hover{bottom:auto;top:calc(100% + 10px)}
 @media(max-width:700px){.check-calendar-hover{display:none!important}}
+
+/* Drag tables with the mouse (TableDragScroll.jsx): open hand over the rows,
+   closed hand while dragging; buttons and links keep their own pointer. */
+.table-wrap tbody,
+.master-table-wrap tbody,
+.table-wrap .master-table__row,
+.master-table-wrap .master-table__row {
+  cursor: grab;
+}
+
+.table-wrap tbody :is(a, button, input, select, textarea, label, .cell-text__toggle),
+.master-table-wrap tbody :is(a, button, input, select, textarea, label, .cell-text__toggle) {
+  cursor: pointer;
+}
+
+body.table-dragging,
+body.table-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
