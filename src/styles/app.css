@@ -4097,7 +4097,7 @@ body.table-dragging * {
 }
 
 .fy-card {
-  min-height: 170px;
+  min-height: 120px;
   padding: 18px 20px;
   border: 2px solid var(--tile-color);
   border-radius: 18px;
@@ -4158,35 +4158,6 @@ body.table-dragging * {
 .fy-card__count small {
   font-size: 15px;
   font-weight: 700;
-}
-
-.fy-card__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.fy-card__chip {
-  padding: 2px 9px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--tile-color) 12%, #fff);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.fy-card.is-current .fy-card__chip {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.fy-card__none {
-  font-size: 12px;
-  opacity: 0.75;
-}
-
-.fy-card__open {
-  margin-top: auto;
-  font-size: 13px;
-  font-weight: 800;
 }
 
 /* Breadcrumb row for steps 2 and 3 */

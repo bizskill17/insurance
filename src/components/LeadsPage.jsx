@@ -745,7 +745,6 @@ export default function LeadsPage({ viewPath }) {
                 <div className="lead-periods__years" role="group" aria-label="Financial year">
                   {periodStats.years.map((fyStart, index) => {
                     const count = periodStats.fyCounts.get(fyStart) || 0;
-                    const busyMonths = fyMonths(fyStart).filter((month) => periodStats.monthCounts.get(month.key));
                     const isCurrent = fyStart === currentFyStart();
                     return (
                       <button
@@ -765,23 +764,6 @@ export default function LeadsPage({ viewPath }) {
                         <span className="fy-card__count">
                           {count} <small>{count === 1 ? "lead" : "leads"}</small>
                         </span>
-                        <span className="fy-card__chips">
-                          {busyMonths.length ? (
-                            <>
-                              {busyMonths.slice(0, 4).map((month) => (
-                                <span key={month.key} className="fy-card__chip">
-                                  {month.name} {month.year} · {periodStats.monthCounts.get(month.key)}
-                                </span>
-                              ))}
-                              {busyMonths.length > 4 ? (
-                                <span className="fy-card__chip">+{busyMonths.length - 4} more</span>
-                              ) : null}
-                            </>
-                          ) : (
-                            <span className="fy-card__none">No leads yet</span>
-                          )}
-                        </span>
-                        <span className="fy-card__open">Open months →</span>
                       </button>
                     );
                   })}
@@ -802,7 +784,6 @@ export default function LeadsPage({ viewPath }) {
                       <span className="fy-card__count">
                         {periodStats.noDateCount} <small>{periodStats.noDateCount === 1 ? "lead" : "leads"}</small>
                       </span>
-                      <span className="fy-card__open">Open leads →</span>
                     </button>
                   ) : null}
                 </div>
