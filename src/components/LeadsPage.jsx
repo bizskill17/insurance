@@ -159,7 +159,7 @@ function groupLeadByMonth(lead) {
 
   return {
     key: `${year}-${month}`,
-    label: monthIndex === currentIndex ? `${label} · Current month` : label,
+    label,
     order,
     sortValue: date
   };
@@ -399,6 +399,12 @@ export default function LeadsPage({ viewPath }) {
     [categories, leadForm.category_id]
   );
 
+  // Each lead carries its Month Year key (same rule as the grouping) for the Month Year filter.
+  const recordsWithMonth = useMemo(
+    () => (isActivityLog ? records : records.map((record) => ({ ...record, month_year: groupLeadByMonth(record).key }))),
+    [isActivityLog, records]
+  );
+
   const filterConfigs = useMemo(() => {
     if (isActivityLog) {
       return [
@@ -408,7 +414,21 @@ export default function LeadsPage({ viewPath }) {
       ];
     }
 
+    // Month Year options in the same order as the month groups (current month first).
+    const monthOptions = new Map();
+    records.forEach((record) => {
+      const group = groupLeadByMonth(record);
+      monthOptions.set(group.key, group);
+    });
+
     return [
+      {
+        key: "month_year",
+        label: "Month Year",
+        options: [...monthOptions.values()]
+          .sort((left, right) => (left.order < right.order ? -1 : left.order > right.order ? 1 : 0))
+          .map((group) => ({ value: group.key, label: group.label }))
+      },
       { key: "priority", label: "Priority", options: buildFilterOptions(records, "priority") },
       { key: "lead_status", label: "Status", options: buildFilterOptions(records, "lead_status") },
       { key: "assigned_to_name", label: "Assigned To", options: buildFilterOptions(records, "assigned_to_name") },
@@ -664,7 +684,7 @@ export default function LeadsPage({ viewPath }) {
         <ResponsiveDataView
           key={`${viewPath}-${refreshKey}`}
           title={viewConfig.title}
-          records={records}
+          records={recordsWithMonth}
           columns={currentColumns}
           loading={loading}
           error=""
