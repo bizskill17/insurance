@@ -165,6 +165,13 @@ function groupLeadByMonth(lead) {
   };
 }
 
+// Row colour by status: Converted green, Lost orange.
+function leadRowClassName(lead) {
+  if (lead.lead_status === "Converted") return "row--converted";
+  if (lead.lead_status === "Lost") return "row--lost";
+  return "";
+}
+
 // Statuses that can be chosen in Edit Lead.
 const editableLeadStatuses = ["Pending First Follow Up", "Pending Repeat Follow Up", "Converted", "Lost", "Canceled"];
 
@@ -668,6 +675,7 @@ export default function LeadsPage({ viewPath }) {
           renderActions={isActivityLog ? null : renderLeadActions}
           rowKey={isActivityLog ? "activity_key" : "id"}
           groupBy={isActivityLog ? null : groupLeadByMonth}
+          getRowClassName={isActivityLog ? null : leadRowClassName}
           groupNoun="leads"
           headerExtras={
             !isActivityLog ? (

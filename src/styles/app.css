@@ -4050,3 +4050,20 @@ body.table-dragging * {
   font-size: 13px;
   font-weight: 600;
 }
+
+/* Lead rows by status */
+.master-table__row.row--converted td {
+  background: #dcfce7;
+}
+
+.master-table__row.row--converted:hover td {
+  background: #c9f5d9;
+}
+
+.master-table__row.row--lost td {
+  background: #ffedd5;
+}
+
+.master-table__row.row--lost:hover td {
+  background: #fde0bd;
+}

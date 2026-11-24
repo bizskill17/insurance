@@ -123,7 +123,9 @@ export default function ResponsiveDataView({
   // Optional grouping, e.g. by month: (record) => ({ key, label, order, sortValue }).
   // Rows are ordered by group `order`; inside a group by the chosen column sort, or by `sortValue`.
   groupBy = null,
-  groupNoun = "records"
+  groupNoun = "records",
+  // Optional extra class per row, e.g. to colour rows by status.
+  getRowClassName = null
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState(initialSort);
@@ -437,7 +439,7 @@ export default function ResponsiveDataView({
                       </tr>
                     ) : null}
                     <tr
-                      className="master-table__row"
+                      className={["master-table__row", getRowClassName ? getRowClassName(record) : ""].filter(Boolean).join(" ")}
                       onDoubleClick={(event) => {
                         if (event.target.closest("input, select, textarea, button, a")) {
                           return;
