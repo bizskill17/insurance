@@ -893,7 +893,6 @@ export default function LeadsPage({ viewPath }) {
                         >
                           <span className="month-card__top">
                             <span className="month-card__name">{MONTH_NAMES[Number(month.key.slice(5)) - 1]}</span>
-                            {isCurrent ? <span className="month-card__badge">This month</span> : null}
                           </span>
                           <span className="month-card__year">{month.year}</span>
                           <span className="month-card__count">
