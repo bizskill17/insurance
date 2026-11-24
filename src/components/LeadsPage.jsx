@@ -134,18 +134,33 @@ const MONTH_NAMES = [
 ];
 
 // Leads are grouped by Month-Year of the Next Follow Up Date when it is filled,
-// otherwise of the Due Date. Leads with neither date go to the end.
+// otherwise of the Due Date. Order: the current month first, then coming months
+// (soonest first), then earlier months (most recent first); leads with neither date last.
 function groupLeadByMonth(lead) {
   const date = String(lead.next_follow_up_date || lead.due_date || "").slice(0, 10);
   const match = /^(\d{4})-(\d{2})-\d{2}$/.exec(date);
   if (!match) {
-    return { key: "no-date", label: "No date", order: "9999-99", sortValue: "" };
+    return { key: "no-date", label: "No date", order: "3", sortValue: "" };
   }
   const [, year, month] = match;
+  const monthIndex = Number(year) * 12 + Number(month) - 1;
+  const now = new Date();
+  const currentIndex = now.getFullYear() * 12 + now.getMonth();
+  const label = `${MONTH_NAMES[Number(month) - 1]} ${year}`;
+
+  let order;
+  if (monthIndex === currentIndex) {
+    order = "0";
+  } else if (monthIndex > currentIndex) {
+    order = `1-${String(monthIndex).padStart(6, "0")}`;
+  } else {
+    order = `2-${String(999999 - monthIndex).padStart(6, "0")}`;
+  }
+
   return {
     key: `${year}-${month}`,
-    label: `${MONTH_NAMES[Number(month) - 1]} ${year}`,
-    order: `${year}-${month}`,
+    label: monthIndex === currentIndex ? `${label} · Current month` : label,
+    order,
     sortValue: date
   };
 }
