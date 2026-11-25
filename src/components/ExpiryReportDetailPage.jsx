@@ -108,8 +108,11 @@ async function readApiJson(response) {
   }
 }
 
-export default function ExpiryReportDetailPage() {
-  const { reportType, reportValue } = useParams();
+// A menu item (e.g. Next 7 Days) passes the report directly; links use the URL instead.
+export default function ExpiryReportDetailPage(props) {
+  const params = useParams();
+  const reportType = props.reportType || params.reportType;
+  const reportValue = props.reportValue || params.reportValue;
   const config = useMemo(
     () => getExpiryConfig(reportType, reportValue),
     [reportType, reportValue]

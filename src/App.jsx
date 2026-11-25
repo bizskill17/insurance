@@ -49,6 +49,11 @@ function buildRoutes(items, currentUser) {
           <AttachDocumentsPage />
         ) : item.path === "/reports/expiry-reports" || item.path.startsWith("/reports/expiry-reports/section/") ? (
           <ExpiryReportsPage />
+        ) : /^\/reports\/expiry-reports\/(month|day|week|year)\/[^/]+$/.test(item.path) ? (
+          <ExpiryReportDetailPage
+            reportType={item.path.split("/")[3]}
+            reportValue={item.path.split("/")[4]}
+          />
         ) : [
           "/reports/policies-added",
           "/reports/policies-renewed-today",
